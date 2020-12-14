@@ -51,8 +51,8 @@ func New(levels ...Level) (*Log, error) {
 		Timestamp:       Timestamp,
 		Levels:          Levels{},
 		ShowFilePath:    false,
-		ShowFuncName:    true,
-		ShowFileLine:    true,
+		ShowFuncName:    false,
+		ShowFileLine:    false,
 		FatalStatusCode: 1,
 		skip:            SKIP,
 	}
@@ -404,6 +404,7 @@ func (l *Log) Debugln(a ...interface{}) (n int, err error) {
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string. It returns the number of bytes written
 // and any write error encountered.
+// Always displays file path, function name and file line in the log message.
 func (l *Log) Ftrace(w io.Writer, a ...interface{}) (n int, err error) {
 	return l.echo(l.skip, w, TRACE, a...)
 }
@@ -411,6 +412,7 @@ func (l *Log) Ftrace(w io.Writer, a ...interface{}) (n int, err error) {
 // Ftracef creates message with TRACE level, according to a format
 // specifier and writes to w. It returns the number of bytes written
 // and any write error encountered.
+// Always displays file path, function name and file line in the log message.
 func (l *Log) Ftracef(w io.Writer, format string,
 	a ...interface{}) (n int, err error) {
 	return l.echof(l.skip, w, TRACE, format, a...)
@@ -420,6 +422,7 @@ func (l *Log) Ftracef(w io.Writer, format string,
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
+// Always displays file path, function name and file line in the log message.
 func (l *Log) Ftraceln(w io.Writer, a ...interface{}) (n int, err error) {
 	return l.echoln(l.skip, w, TRACE, a...)
 }
@@ -428,6 +431,7 @@ func (l *Log) Ftraceln(w io.Writer, a ...interface{}) (n int, err error) {
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
+// Always displays file path, function name and file line in the log message.
 func (l *Log) Trace(a ...interface{}) (n int, err error) {
 	return l.echo(l.skip, l.Writer, TRACE, a...)
 }
@@ -435,6 +439,7 @@ func (l *Log) Trace(a ...interface{}) (n int, err error) {
 // Tracef creates message with TRACE level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
+// Always displays file path, function name and file line in the log message.
 func (l *Log) Tracef(format string, a ...interface{}) (n int, err error) {
 	return l.echof(l.skip, l.Writer, TRACE, format, a...)
 }
@@ -443,6 +448,7 @@ func (l *Log) Tracef(format string, a ...interface{}) (n int, err error) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended. It returns the number
 // of bytes written and any write error encountered.
+// Always displays file path, function name and file line in the log message.
 func (l *Log) Traceln(a ...interface{}) (n int, err error) {
 	return l.echoln(l.skip, l.Writer, TRACE, a...)
 }

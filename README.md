@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 0.0.11*
+*Version: 0.0.12*
 
 
 # log
@@ -378,6 +378,7 @@ path, function name and file line.
 Ftrace creates message with TRACE level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
 string. It returns the number of bytes written and any write error encountered.
+Always displays file path, function name and file line in the log message.
 
 #### func (*Log) Ftracef
 
@@ -386,7 +387,8 @@ string. It returns the number of bytes written and any write error encountered.
 
 Ftracef creates message with TRACE level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
-encountered.
+encountered. Always displays file path, function name and file line in the log
+message.
 
 #### func (*Log) Ftraceln
 
@@ -395,7 +397,8 @@ encountered.
 Ftraceln creates message with TRACE level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
 is appended. It returns the number of bytes written and any write error
-encountered.
+encountered. Always displays file path, function name and file line in the log
+message.
 
 #### func (*Log) Fwarn
 
@@ -455,7 +458,8 @@ error encountered.
 Trace creates message with TRACE level, using the default formats for its
 operands and writes to log.Writer. Spaces are added between operands when
 neither is a string. It returns the number of bytes written and any write error
-encountered.
+encountered. Always displays file path, function name and file line in the log
+message.
 
 #### func (*Log) Tracef
 
@@ -463,7 +467,8 @@ encountered.
 
 Tracef creates message with TRACE level, according to a format specifier and
 writes to log.Writer. It returns the number of bytes written and any write error
-encountered.
+encountered. Always displays file path, function name and file line in the log
+message.
 
 #### func (*Log) Traceln
 
@@ -472,7 +477,8 @@ encountered.
 Traceln creates message with TRACE, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
 a newline is appended. It returns the number of bytes written and any write
-error encountered.
+error encountered. Always displays file path, function name and file line in the
+log message.
 
 #### func (*Log) Warn
 
