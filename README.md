@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 0.0.4*
+*Version: 0.0.5*
 
 
 # log
@@ -157,6 +157,10 @@ Set sets active log levels.
     	// ShowFileLine if true appends the line number in the go-file
     	// where the logging method was called.
     	ShowFileLine bool
+
+    	// FatalStatusCode the exit code when calling the Fatal method.
+    	// Default - 1. If the code is <= 0, the forced exit will not occur.
+    	FatalStatusCode int
     }
 
 
@@ -230,29 +234,26 @@ error encountered.
 
 #### func (*Log) Fatal
 
-    func (l *Log) Fatal(a ...interface{}) (n int, err error)
+    func (l *Log) Fatal(a ...interface{})
 
 Fatal creates message with FATAL level, using the default formats for its
 operands and writes to log.Writer. Spaces are added between operands when
-neither is a string. It returns the number of bytes written and any write error
-encountered.
+neither is a string. Performs forced exit from the program with status - 1.
 
 #### func (*Log) Fatalf
 
-    func (l *Log) Fatalf(format string, a ...interface{}) (n int, err error)
+    func (l *Log) Fatalf(format string, a ...interface{})
 
 Fatalf creates message with FATAL level, according to a format specifier and
-writes to log.Writer. It returns the number of bytes written and any write error
-encountered.
+writes to log.Writer. Performs forced exit from the program with status - 1.
 
 #### func (*Log) Fatalln
 
-    func (l *Log) Fatalln(a ...interface{}) (n int, err error)
+    func (l *Log) Fatalln(a ...interface{})
 
 Fatalln creates message with FATAL, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
-a newline is appended. It returns the number of bytes written and any write
-error encountered.
+a newline is appended. Performs forced exit from the program with status - 1.
 
 #### func (*Log) Fdebug
 
@@ -308,29 +309,27 @@ encountered.
 
 #### func (*Log) Ffatal
 
-    func (l *Log) Ffatal(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Ffatal(w io.Writer, a ...interface{})
 
 Ffatal creates message with FATAL level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
-string. It returns the number of bytes written and any write error encountered.
+string. Performs forced exit from the program with status - 1.
 
 #### func (*Log) Ffatalf
 
-    func (l *Log) Ffatalf(w io.Writer, format string,
-    	a ...interface{}) (n int, err error)
+    func (l *Log) Ffatalf(w io.Writer, format string, a ...interface{})
 
 Ffatalf creates message with FATAL level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
-encountered.
+encountered. Performs forced exit from the program with status - 1.
 
 #### func (*Log) Ffatalln
 
-    func (l *Log) Ffatalln(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Ffatalln(w io.Writer, a ...interface{})
 
 Ffatalln creates message with FATAL level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
-is appended. It returns the number of bytes written and any write error
-encountered.
+is appended. Performs forced exit from the program with status - 1.
 
 #### func (*Log) Finfo
 
