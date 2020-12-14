@@ -126,20 +126,17 @@ func (l *Log) echoln(skip int, w io.Writer, level Level,
 // Copy returns copy of the log object.
 func (l *Log) Copy() *Log {
 	var log = Log{
-		Writer:       l.Writer,
-		Timestamp:    l.Timestamp,
-		Levels:       l.Levels,
-		ShowFilePath: l.ShowFilePath,
-		ShowFuncName: l.ShowFuncName,
-		ShowFileLine: l.ShowFileLine,
+		Writer:          l.Writer,
+		Timestamp:       l.Timestamp,
+		Levels:          l.Levels,
+		ShowFilePath:    l.ShowFilePath,
+		ShowFuncName:    l.ShowFuncName,
+		ShowFileLine:    l.ShowFileLine,
+		FatalStatusCode: l.FatalStatusCode,
+		skip:            l.skip,
 	}
 
 	return &log
-}
-
-// Skip sets skip for stack.
-func (l *Log) Skip(skip int) {
-	l.skip = skip
 }
 
 // Format sets the message prefix display configuration flags for display:
