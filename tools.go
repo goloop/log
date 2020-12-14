@@ -24,20 +24,20 @@ func getPrefix(trace *Trace, format, timestampFormat string, level Level,
 	var path, name, line string
 	timestamp := time.Now().Format(timestampFormat)
 
-	if showFilePath {
+	if showFilePath || level == TRACE {
 		path = fmt.Sprintf("%s ", trace.FilePath)
 	}
 
-	if showFuncName {
+	if showFuncName || level == TRACE {
 		name = trace.FuncName
-		if showFileLine {
+		if showFileLine || level == TRACE {
 			name += ":"
 		} else {
 			name += " "
 		}
 	}
 
-	if showFileLine {
+	if showFileLine || level == TRACE {
 		line = fmt.Sprintf("%d ", trace.FileLine)
 	}
 
