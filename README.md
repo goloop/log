@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 0.0.8*
+*Version: 0.0.9*
 
 
 # log
@@ -76,7 +76,7 @@ To use this module import it as:
 
 ## Usage
 
-    const SKIP = 5
+    const SKIP = 4
 
 SKIP default stack offset values.
 
