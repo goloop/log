@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 0.0.9*
+*Version: 0.0.10*
 
 
 # log
@@ -447,12 +447,6 @@ Infoln creates message with INFO, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
 a newline is appended. It returns the number of bytes written and any write
 error encountered.
-
-#### func (*Log) Skip
-
-    func (l *Log) Skip(skip int)
-
-Skip sets skip for stack.
 
 #### func (*Log) Trace
 
