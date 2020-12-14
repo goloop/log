@@ -155,6 +155,7 @@ func TestFfatal(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.FatalStatusCode = 0
 		l.Ffatal(buf, s.data...)
 
 		res := buf.String()
@@ -195,6 +196,7 @@ func TestFfatalf(t *testing.T) {
 	l, _ := New()
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+		l.FatalStatusCode = 0
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Ffatalf(buf, s.format, s.data...)
 
@@ -236,6 +238,7 @@ func TestFfatalln(t *testing.T) {
 	l, _ := New()
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+		l.FatalStatusCode = 0
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Ffatalln(buf, s.data...)
 
@@ -277,6 +280,7 @@ func TestFatal(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
+		l.FatalStatusCode = 0
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Fatal(s.data...)
 
@@ -319,6 +323,7 @@ func TestFatalf(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
+		l.FatalStatusCode = 0
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Fatalf(s.format, s.data...)
 
@@ -361,6 +366,7 @@ func TestFatalln(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
+		l.FatalStatusCode = 0
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Fatalln(s.data...)
 

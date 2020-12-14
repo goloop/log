@@ -32,6 +32,10 @@ type Log struct {
 	// ShowFileLine if true appends the line number in the go-file
 	// where the logging method was called.
 	ShowFileLine bool
+
+	// FatalStatusCode the exit code when calling the Fatal method.
+	// Default - 1. If the code is <= 0, the forced exit will not occur.
+	FatalStatusCode int
 }
 
 // New returns new Log object.
@@ -40,12 +44,13 @@ type Log struct {
 // only the specified logging levels will be activated.
 func New(levels ...Level) (*Log, error) {
 	var log = Log{
-		Writer:       os.Stdout,
-		Timestamp:    Timestamp,
-		Levels:       Levels{},
-		ShowFilePath: false,
-		ShowFuncName: true,
-		ShowFileLine: true,
+		Writer:          os.Stdout,
+		Timestamp:       Timestamp,
+		Levels:          Levels{},
+		ShowFilePath:    false,
+		ShowFuncName:    true,
+		ShowFileLine:    true,
+		FatalStatusCode: 1,
 	}
 
 	if len(levels) > 0 {
@@ -138,49 +143,67 @@ func (l *Log) Format(showFilePath, showFuncName, showFileLine bool) {
 
 // Ffatal creates message with FATAL level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
-// when neither is a string. It returns the number of bytes written
-// and any write error encountered.
-func (l *Log) Ffatal(w io.Writer, a ...interface{}) (n int, err error) {
-	return l.echo(SKIP, w, FATAL, a...)
+// when neither is a string. Performs forced exit from the program
+// with status - 1.
+func (l *Log) Ffatal(w io.Writer, a ...interface{}) {
+	l.echo(SKIP, w, FATAL, a...)
+	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
+		os.Exit(l.FatalStatusCode)
+	}
 }
 
 // Ffatalf creates message with FATAL level, according to a format
 // specifier and writes to w. It returns the number of bytes written
-// and any write error encountered.
-func (l *Log) Ffatalf(w io.Writer, format string,
-	a ...interface{}) (n int, err error) {
-	return l.echof(SKIP, w, FATAL, format, a...)
+// and any write error encountered. Performs forced exit from the
+// program with status - 1.
+func (l *Log) Ffatalf(w io.Writer, format string, a ...interface{}) {
+	l.echof(SKIP, w, FATAL, format, a...)
+	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
+		os.Exit(l.FatalStatusCode)
+	}
 }
 
 // Ffatalln creates message with FATAL level, using the default formats
 // for its operands and writes to w. Spaces are always added between
-// operands and a newline is appended. It returns the number of bytes
-// written and any write error encountered.
-func (l *Log) Ffatalln(w io.Writer, a ...interface{}) (n int, err error) {
-	return l.echoln(SKIP, w, FATAL, a...)
+// operands and a newline is appended. Performs forced exit from the
+// program with status - 1.
+func (l *Log) Ffatalln(w io.Writer, a ...interface{}) {
+	l.echoln(SKIP, w, FATAL, a...)
+	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
+		os.Exit(l.FatalStatusCode)
+	}
 }
 
 // Fatal creates message with FATAL level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
-// operands when neither is a string. It returns the number of bytes
-// written and any write error encountered.
-func (l *Log) Fatal(a ...interface{}) (n int, err error) {
-	return l.echo(SKIP, l.Writer, FATAL, a...)
+// operands when neither is a string. Performs forced exit from the
+// program with status - 1.
+func (l *Log) Fatal(a ...interface{}) {
+	l.echo(SKIP, l.Writer, FATAL, a...)
+	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
+		os.Exit(l.FatalStatusCode)
+	}
 }
 
-// Fatalf creates message with FATAL level, according to a format specifier
-// and writes to log.Writer. It returns the number of bytes written and any
-// write error encountered.
-func (l *Log) Fatalf(format string, a ...interface{}) (n int, err error) {
-	return l.echof(SKIP, l.Writer, FATAL, format, a...)
+// Fatalf creates message with FATAL level, according to a format
+// specifier and writes to log.Writer. Performs forced exit from
+// the program with status - 1.
+func (l *Log) Fatalf(format string, a ...interface{}) {
+	l.echof(SKIP, l.Writer, FATAL, format, a...)
+	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
+		os.Exit(l.FatalStatusCode)
+	}
 }
 
 // Fatalln creates message with FATAL, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
-// between operands and a newline is appended. It returns the number
-// of bytes written and any write error encountered.
-func (l *Log) Fatalln(a ...interface{}) (n int, err error) {
-	return l.echoln(SKIP, l.Writer, FATAL, a...)
+// between operands and a newline is appended. Performs forced exit from
+// the program with status - 1.
+func (l *Log) Fatalln(a ...interface{}) {
+	l.echoln(SKIP, l.Writer, FATAL, a...)
+	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
+		os.Exit(l.FatalStatusCode)
+	}
 }
 
 // Ferror creates message with ERROR level, using the default formats
