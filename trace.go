@@ -6,7 +6,7 @@ import (
 )
 
 // SKIP default stack offset values.
-const SKIP = 5
+const SKIP = 4
 
 // Trace contains the top-level trace information where the
 // logging method was called.
