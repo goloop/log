@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 0.0.1*
+*Version: 0.0.3*
 
 
 # log
@@ -52,16 +52,18 @@ To install this module use `go get` as:
 
 To use this module import it as:
 
+    package main
+
     import "github.com/goloop/log"
 
     var Log = log.New()
 
     func main() {
-        Llog.Debugln("The log was created successfully!")
+        Log.Debugln("The log was created successfully!")
 
         // Disable some logging levels.
-        Llog.Levels.Delete(log.DEBUG)
-        Llog.Debugln("This message will not be shown!")
+        Log.Levels.Delete(log.DEBUG)
+        Log.Debugln("This message will not be shown!")
     }
 
 
