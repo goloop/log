@@ -47,16 +47,23 @@ To use this module import it as:
 
     package main
 
-    import "github.com/goloop/log"
+    import (
+        "github.com/goloop/log"
+    )
 
-    var Log = log.New()
+    type App struct {
+        Log *log.Log
+    }
 
     func main() {
-        Log.Debugln("The log was created successfully!")
+        var app = &App{}
+        app.Log, _ = log.New()
 
-        // Disable some logging levels.
-        Log.Levels.Delete(log.DEBUG)
-        Log.Debugln("This message will not be shown!")
+        app.Log.Levels.Delete(log.TRACE)
+
+        app.Log.Debugln("This information will be shown on the screen")
+        app.Log.Tracef("%s\n%s\n", "Trace level was deactivated,",
+            "this message willn't be displayed")
     }
 */
 package log
