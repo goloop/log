@@ -27,7 +27,7 @@ func TestEcho(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New(DEBUG, ERROR, FATAL)
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -71,7 +71,7 @@ func TestEchof(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New(DEBUG, ERROR, FATAL)
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -114,7 +114,7 @@ func TestEcholn(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -155,7 +155,7 @@ func TestFfatal(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -198,7 +198,7 @@ func TestFfatalf(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.FatalStatusCode = 0
@@ -241,7 +241,7 @@ func TestFfatalln(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.FatalStatusCode = 0
@@ -283,7 +283,7 @@ func TestFatal(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -327,7 +327,7 @@ func TestFatalf(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -371,7 +371,7 @@ func TestFatalln(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -414,7 +414,7 @@ func TestFerror(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -456,7 +456,7 @@ func TestFerrorf(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -498,7 +498,7 @@ func TestFerrorln(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -539,7 +539,7 @@ func TestError(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -582,7 +582,7 @@ func TestErrorf(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -625,7 +625,7 @@ func TestErrorln(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -667,7 +667,7 @@ func TestFwarn(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -709,7 +709,7 @@ func TestFwarnf(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -751,7 +751,7 @@ func TestFwarnln(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -792,7 +792,7 @@ func TestWarn(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -835,7 +835,7 @@ func TestWarnf(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -878,7 +878,7 @@ func TestWarnln(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -920,7 +920,7 @@ func TestFinfo(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -962,7 +962,7 @@ func TestFinfof(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -1004,7 +1004,7 @@ func TestFinfoln(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -1045,7 +1045,7 @@ func TestInfo(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -1088,7 +1088,7 @@ func TestInfof(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -1131,7 +1131,7 @@ func TestInfoln(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -1173,7 +1173,7 @@ func TestFdebug(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -1215,7 +1215,7 @@ func TestFdebugf(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -1257,7 +1257,7 @@ func TestFdebugln(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -1298,7 +1298,7 @@ func TestDebug(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -1341,7 +1341,7 @@ func TestDebugf(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -1384,7 +1384,7 @@ func TestDebugln(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -1426,7 +1426,7 @@ func TestFtrace(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -1468,7 +1468,7 @@ func TestFtracef(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -1510,7 +1510,7 @@ func TestFtraceln(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
@@ -1551,7 +1551,7 @@ func TestTrace(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -1594,7 +1594,7 @@ func TestTracef(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
@@ -1637,7 +1637,7 @@ func TestTraceln(t *testing.T) {
 
 	trace := getTrace(3)
 	l, _ := New()
-	l.Skip(5)
+	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
