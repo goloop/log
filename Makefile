@@ -77,7 +77,7 @@ commit:
 ifeq ($(am),)
 	@echo "You must provide a message to commit as: make commit am='Commit message'"
 else
-	@make readme && \
+	@$(MAKE) readme && \
 		git add . && git commit -am "${am}" && \
 		git tag ${VERSION} && \
 		git push -u origin --all && \
