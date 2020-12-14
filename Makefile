@@ -73,3 +73,13 @@ ifeq (, $(shell which godocdown))
 endif
 	@godocdown -plain=true -template=.godocdown.md ./ | \
 		sed -e 's/\.VERSION/${VERSION}/g' > README.md
+commit:
+ifeq ($(am),)
+	@echo "You must provide a message to commit as: make commit am='Commit message'"
+else
+	@make readme && \
+		git add . && git commit -am "${am}" && \
+		git tag ${VERSION} && \
+		git push -u origin --all && \
+		git push -u origin --tag
+endif
