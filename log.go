@@ -37,8 +37,8 @@ type Log struct {
 	// Default - 1. If the code is <= 0, the forced exit will not occur.
 	FatalStatusCode int
 
-	// Skip default stack offset.
-	Skip int
+	// The skip is default stack offset.
+	skip int
 }
 
 // New returns new Log object.
@@ -54,7 +54,7 @@ func New(levels ...Level) (*Log, error) {
 		ShowFuncName:    true,
 		ShowFileLine:    true,
 		FatalStatusCode: 1,
-		Skip:            SKIP,
+		skip:            SKIP,
 	}
 
 	if len(levels) > 0 {
@@ -137,6 +137,11 @@ func (l *Log) Copy() *Log {
 	return &log
 }
 
+// Skip sets skip for stack.
+func (l *Log) Skip(skip int) {
+	l.skip = skip
+}
+
 // Format sets the message prefix display configuration flags for display:
 // file path, function name and file line.
 func (l *Log) Format(showFilePath, showFuncName, showFileLine bool) {
@@ -150,7 +155,7 @@ func (l *Log) Format(showFilePath, showFuncName, showFileLine bool) {
 // when neither is a string. Performs forced exit from the program
 // with status - 1.
 func (l *Log) Ffatal(w io.Writer, a ...interface{}) {
-	l.echo(l.Skip, w, FATAL, a...)
+	l.echo(l.skip, w, FATAL, a...)
 	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
 		os.Exit(l.FatalStatusCode)
 	}
@@ -161,7 +166,7 @@ func (l *Log) Ffatal(w io.Writer, a ...interface{}) {
 // and any write error encountered. Performs forced exit from the
 // program with status - 1.
 func (l *Log) Ffatalf(w io.Writer, format string, a ...interface{}) {
-	l.echof(l.Skip, w, FATAL, format, a...)
+	l.echof(l.skip, w, FATAL, format, a...)
 	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
 		os.Exit(l.FatalStatusCode)
 	}
@@ -172,7 +177,7 @@ func (l *Log) Ffatalf(w io.Writer, format string, a ...interface{}) {
 // operands and a newline is appended. Performs forced exit from the
 // program with status - 1.
 func (l *Log) Ffatalln(w io.Writer, a ...interface{}) {
-	l.echoln(l.Skip, w, FATAL, a...)
+	l.echoln(l.skip, w, FATAL, a...)
 	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
 		os.Exit(l.FatalStatusCode)
 	}
@@ -183,7 +188,7 @@ func (l *Log) Ffatalln(w io.Writer, a ...interface{}) {
 // operands when neither is a string. Performs forced exit from the
 // program with status - 1.
 func (l *Log) Fatal(a ...interface{}) {
-	l.echo(l.Skip, l.Writer, FATAL, a...)
+	l.echo(l.skip, l.Writer, FATAL, a...)
 	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
 		os.Exit(l.FatalStatusCode)
 	}
@@ -193,7 +198,7 @@ func (l *Log) Fatal(a ...interface{}) {
 // specifier and writes to log.Writer. Performs forced exit from
 // the program with status - 1.
 func (l *Log) Fatalf(format string, a ...interface{}) {
-	l.echof(l.Skip, l.Writer, FATAL, format, a...)
+	l.echof(l.skip, l.Writer, FATAL, format, a...)
 	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
 		os.Exit(l.FatalStatusCode)
 	}
@@ -204,7 +209,7 @@ func (l *Log) Fatalf(format string, a ...interface{}) {
 // between operands and a newline is appended. Performs forced exit from
 // the program with status - 1.
 func (l *Log) Fatalln(a ...interface{}) {
-	l.echoln(l.Skip, l.Writer, FATAL, a...)
+	l.echoln(l.skip, l.Writer, FATAL, a...)
 	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
 		os.Exit(l.FatalStatusCode)
 	}
@@ -215,7 +220,7 @@ func (l *Log) Fatalln(a ...interface{}) {
 // when neither is a string. It returns the number of bytes written
 // and any write error encountered.
 func (l *Log) Ferror(w io.Writer, a ...interface{}) (n int, err error) {
-	return l.echo(l.Skip, w, ERROR, a...)
+	return l.echo(l.skip, w, ERROR, a...)
 }
 
 // Ferrorf creates message with ERROR level, according to a format
@@ -223,7 +228,7 @@ func (l *Log) Ferror(w io.Writer, a ...interface{}) (n int, err error) {
 // and any write error encountered.
 func (l *Log) Ferrorf(w io.Writer, format string,
 	a ...interface{}) (n int, err error) {
-	return l.echof(l.Skip, w, ERROR, format, a...)
+	return l.echof(l.skip, w, ERROR, format, a...)
 }
 
 // Ferrorln creates message with ERROR level, using the default formats
@@ -231,7 +236,7 @@ func (l *Log) Ferrorf(w io.Writer, format string,
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func (l *Log) Ferrorln(w io.Writer, a ...interface{}) (n int, err error) {
-	return l.echoln(l.Skip, w, ERROR, a...)
+	return l.echoln(l.skip, w, ERROR, a...)
 }
 
 // Error creates message with ERROR level, using the default formats
@@ -239,14 +244,14 @@ func (l *Log) Ferrorln(w io.Writer, a ...interface{}) (n int, err error) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func (l *Log) Error(a ...interface{}) (n int, err error) {
-	return l.echo(l.Skip, l.Writer, ERROR, a...)
+	return l.echo(l.skip, l.Writer, ERROR, a...)
 }
 
 // Errorf creates message with ERROR level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func (l *Log) Errorf(format string, a ...interface{}) (n int, err error) {
-	return l.echof(l.Skip, l.Writer, ERROR, format, a...)
+	return l.echof(l.skip, l.Writer, ERROR, format, a...)
 }
 
 // Errorln creates message with ERROR, level using the default formats
@@ -254,7 +259,7 @@ func (l *Log) Errorf(format string, a ...interface{}) (n int, err error) {
 // between operands and a newline is appended. It returns the number
 // of bytes written and any write error encountered.
 func (l *Log) Errorln(a ...interface{}) (n int, err error) {
-	return l.echoln(l.Skip, l.Writer, ERROR, a...)
+	return l.echoln(l.skip, l.Writer, ERROR, a...)
 }
 
 // Fwarn creates message with WARN level, using the default formats
@@ -262,7 +267,7 @@ func (l *Log) Errorln(a ...interface{}) (n int, err error) {
 // when neither is a string. It returns the number of bytes written
 // and any write error encountered.
 func (l *Log) Fwarn(w io.Writer, a ...interface{}) (n int, err error) {
-	return l.echo(l.Skip, w, WARN, a...)
+	return l.echo(l.skip, w, WARN, a...)
 }
 
 // Fwarnf creates message with WARN level, according to a format
@@ -270,7 +275,7 @@ func (l *Log) Fwarn(w io.Writer, a ...interface{}) (n int, err error) {
 // and any write error encountered.
 func (l *Log) Fwarnf(w io.Writer, format string,
 	a ...interface{}) (n int, err error) {
-	return l.echof(l.Skip, w, WARN, format, a...)
+	return l.echof(l.skip, w, WARN, format, a...)
 }
 
 // Fwarnln creates message with WARN level, using the default formats
@@ -278,7 +283,7 @@ func (l *Log) Fwarnf(w io.Writer, format string,
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func (l *Log) Fwarnln(w io.Writer, a ...interface{}) (n int, err error) {
-	return l.echoln(l.Skip, w, WARN, a...)
+	return l.echoln(l.skip, w, WARN, a...)
 }
 
 // Warn creates message with WARN level, using the default formats
@@ -286,14 +291,14 @@ func (l *Log) Fwarnln(w io.Writer, a ...interface{}) (n int, err error) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func (l *Log) Warn(a ...interface{}) (n int, err error) {
-	return l.echo(l.Skip, l.Writer, WARN, a...)
+	return l.echo(l.skip, l.Writer, WARN, a...)
 }
 
 // Warnf creates message with WARN level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func (l *Log) Warnf(format string, a ...interface{}) (n int, err error) {
-	return l.echof(l.Skip, l.Writer, WARN, format, a...)
+	return l.echof(l.skip, l.Writer, WARN, format, a...)
 }
 
 // Warnln creates message with WARN, level using the default formats
@@ -301,7 +306,7 @@ func (l *Log) Warnf(format string, a ...interface{}) (n int, err error) {
 // between operands and a newline is appended. It returns the number
 // of bytes written and any write error encountered.
 func (l *Log) Warnln(a ...interface{}) (n int, err error) {
-	return l.echoln(l.Skip, l.Writer, WARN, a...)
+	return l.echoln(l.skip, l.Writer, WARN, a...)
 }
 
 // Finfo creates message with INFO level, using the default formats
@@ -309,7 +314,7 @@ func (l *Log) Warnln(a ...interface{}) (n int, err error) {
 // when neither is a string. It returns the number of bytes written
 // and any write error encountered.
 func (l *Log) Finfo(w io.Writer, a ...interface{}) (n int, err error) {
-	return l.echo(l.Skip, w, INFO, a...)
+	return l.echo(l.skip, w, INFO, a...)
 }
 
 // Finfof creates message with INFO level, according to a format
@@ -317,7 +322,7 @@ func (l *Log) Finfo(w io.Writer, a ...interface{}) (n int, err error) {
 // and any write error encountered.
 func (l *Log) Finfof(w io.Writer, format string,
 	a ...interface{}) (n int, err error) {
-	return l.echof(l.Skip, w, INFO, format, a...)
+	return l.echof(l.skip, w, INFO, format, a...)
 }
 
 // Finfoln creates message with INFO level, using the default formats
@@ -325,7 +330,7 @@ func (l *Log) Finfof(w io.Writer, format string,
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func (l *Log) Finfoln(w io.Writer, a ...interface{}) (n int, err error) {
-	return l.echoln(l.Skip, w, INFO, a...)
+	return l.echoln(l.skip, w, INFO, a...)
 }
 
 // Info creates message with INFO level, using the default formats
@@ -333,14 +338,14 @@ func (l *Log) Finfoln(w io.Writer, a ...interface{}) (n int, err error) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func (l *Log) Info(a ...interface{}) (n int, err error) {
-	return l.echo(l.Skip, l.Writer, INFO, a...)
+	return l.echo(l.skip, l.Writer, INFO, a...)
 }
 
 // Infof creates message with INFO level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func (l *Log) Infof(format string, a ...interface{}) (n int, err error) {
-	return l.echof(l.Skip, l.Writer, INFO, format, a...)
+	return l.echof(l.skip, l.Writer, INFO, format, a...)
 }
 
 // Infoln creates message with INFO, level using the default formats
@@ -348,7 +353,7 @@ func (l *Log) Infof(format string, a ...interface{}) (n int, err error) {
 // between operands and a newline is appended. It returns the number
 // of bytes written and any write error encountered.
 func (l *Log) Infoln(a ...interface{}) (n int, err error) {
-	return l.echoln(l.Skip, l.Writer, INFO, a...)
+	return l.echoln(l.skip, l.Writer, INFO, a...)
 }
 
 // Fdebug creates message with DEBUG level, using the default formats
@@ -356,7 +361,7 @@ func (l *Log) Infoln(a ...interface{}) (n int, err error) {
 // when neither is a string. It returns the number of bytes written
 // and any write error encountered.
 func (l *Log) Fdebug(w io.Writer, a ...interface{}) (n int, err error) {
-	return l.echo(l.Skip, w, DEBUG, a...)
+	return l.echo(l.skip, w, DEBUG, a...)
 }
 
 // Fdebugf creates message with DEBUG level, according to a format
@@ -364,7 +369,7 @@ func (l *Log) Fdebug(w io.Writer, a ...interface{}) (n int, err error) {
 // and any write error encountered.
 func (l *Log) Fdebugf(w io.Writer, format string,
 	a ...interface{}) (n int, err error) {
-	return l.echof(l.Skip, w, DEBUG, format, a...)
+	return l.echof(l.skip, w, DEBUG, format, a...)
 }
 
 // Fdebugln creates message with DEBUG level, using the default formats
@@ -372,7 +377,7 @@ func (l *Log) Fdebugf(w io.Writer, format string,
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func (l *Log) Fdebugln(w io.Writer, a ...interface{}) (n int, err error) {
-	return l.echoln(l.Skip, w, DEBUG, a...)
+	return l.echoln(l.skip, w, DEBUG, a...)
 }
 
 // Debug creates message with DEBUG level, using the default formats
@@ -380,14 +385,14 @@ func (l *Log) Fdebugln(w io.Writer, a ...interface{}) (n int, err error) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func (l *Log) Debug(a ...interface{}) (n int, err error) {
-	return l.echo(l.Skip, l.Writer, DEBUG, a...)
+	return l.echo(l.skip, l.Writer, DEBUG, a...)
 }
 
 // Debugf creates message with DEBUG level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func (l *Log) Debugf(format string, a ...interface{}) (n int, err error) {
-	return l.echof(l.Skip, l.Writer, DEBUG, format, a...)
+	return l.echof(l.skip, l.Writer, DEBUG, format, a...)
 }
 
 // Debugln creates message with DEBUG, level using the default formats
@@ -395,7 +400,7 @@ func (l *Log) Debugf(format string, a ...interface{}) (n int, err error) {
 // between operands and a newline is appended. It returns the number
 // of bytes written and any write error encountered.
 func (l *Log) Debugln(a ...interface{}) (n int, err error) {
-	return l.echoln(l.Skip, l.Writer, DEBUG, a...)
+	return l.echoln(l.skip, l.Writer, DEBUG, a...)
 }
 
 // Ftrace creates message with TRACE level, using the default formats
@@ -403,7 +408,7 @@ func (l *Log) Debugln(a ...interface{}) (n int, err error) {
 // when neither is a string. It returns the number of bytes written
 // and any write error encountered.
 func (l *Log) Ftrace(w io.Writer, a ...interface{}) (n int, err error) {
-	return l.echo(l.Skip, w, TRACE, a...)
+	return l.echo(l.skip, w, TRACE, a...)
 }
 
 // Ftracef creates message with TRACE level, according to a format
@@ -411,7 +416,7 @@ func (l *Log) Ftrace(w io.Writer, a ...interface{}) (n int, err error) {
 // and any write error encountered.
 func (l *Log) Ftracef(w io.Writer, format string,
 	a ...interface{}) (n int, err error) {
-	return l.echof(l.Skip, w, TRACE, format, a...)
+	return l.echof(l.skip, w, TRACE, format, a...)
 }
 
 // Ftraceln creates message with TRACE level, using the default formats
@@ -419,7 +424,7 @@ func (l *Log) Ftracef(w io.Writer, format string,
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func (l *Log) Ftraceln(w io.Writer, a ...interface{}) (n int, err error) {
-	return l.echoln(l.Skip, w, TRACE, a...)
+	return l.echoln(l.skip, w, TRACE, a...)
 }
 
 // Trace creates message with TRACE level, using the default formats
@@ -427,14 +432,14 @@ func (l *Log) Ftraceln(w io.Writer, a ...interface{}) (n int, err error) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func (l *Log) Trace(a ...interface{}) (n int, err error) {
-	return l.echo(l.Skip, l.Writer, TRACE, a...)
+	return l.echo(l.skip, l.Writer, TRACE, a...)
 }
 
 // Tracef creates message with TRACE level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func (l *Log) Tracef(format string, a ...interface{}) (n int, err error) {
-	return l.echof(l.Skip, l.Writer, TRACE, format, a...)
+	return l.echof(l.skip, l.Writer, TRACE, format, a...)
 }
 
 // Traceln creates message with TRACE, level using the default formats
@@ -442,5 +447,5 @@ func (l *Log) Tracef(format string, a ...interface{}) (n int, err error) {
 // between operands and a newline is appended. It returns the number
 // of bytes written and any write error encountered.
 func (l *Log) Traceln(a ...interface{}) (n int, err error) {
-	return l.echoln(l.Skip, l.Writer, TRACE, a...)
+	return l.echoln(l.skip, l.Writer, TRACE, a...)
 }
