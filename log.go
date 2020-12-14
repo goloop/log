@@ -36,6 +36,9 @@ type Log struct {
 	// FatalStatusCode the exit code when calling the Fatal method.
 	// Default - 1. If the code is <= 0, the forced exit will not occur.
 	FatalStatusCode int
+
+	// Skip default stack offset.
+	Skip int
 }
 
 // New returns new Log object.
@@ -51,6 +54,7 @@ func New(levels ...Level) (*Log, error) {
 		ShowFuncName:    true,
 		ShowFileLine:    true,
 		FatalStatusCode: 1,
+		Skip:            SKIP,
 	}
 
 	if len(levels) > 0 {
