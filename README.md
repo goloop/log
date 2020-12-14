@@ -168,6 +168,9 @@ Set sets active log levels.
     	// FatalStatusCode the exit code when calling the Fatal method.
     	// Default - 1. If the code is <= 0, the forced exit will not occur.
     	FatalStatusCode int
+
+    	// Skip default stack offset.
+    	Skip int
     }
 
 
