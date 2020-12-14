@@ -41,6 +41,10 @@ Commands:
 		
 		Requires `godocdown`, install as:
 		go get github.com/robertkrimen/godocdown/godocdown
+	git.commit
+		Update readme, create commit and update tag from the .module file.
+
+		Usage as: make git.commit am="Commit message"
 endef
 
 # Constants.
@@ -73,7 +77,7 @@ ifeq (, $(shell which godocdown))
 endif
 	@godocdown -plain=true -template=.godocdown.md ./ | \
 		sed -e 's/\.VERSION/${VERSION}/g' > README.md
-commit: readme
+git.commit: readme
 ifeq ($(am),)
 	@echo "You must provide a message to commit as: make commit am='Commit message'"
 else
