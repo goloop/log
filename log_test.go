@@ -1,5 +1,6 @@
 package log
 
+/*
 import (
 	"bytes"
 	"fmt"
@@ -30,11 +31,11 @@ func TestEcho(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.echo(4, buf, s.level, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, s.level, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, s.level, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
 		if l.Levels.All(s.level) {
@@ -74,11 +75,11 @@ func TestEchof(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.echof(4, buf, s.level, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.Timestamp, s.level,
+		prefix := getPrefix(trace, s.format, l.TimestampFormat, s.level,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
@@ -117,11 +118,11 @@ func TestEcholn(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.echoln(4, buf, s.level, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, s.level, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, s.level, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
 		if l.Levels.All(s.level) {
@@ -158,12 +159,12 @@ func TestFfatal(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.FatalStatusCode = 0
 		l.Ffatal(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, FATAL, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, FATAL, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
 		if l.Levels.All(FATAL) {
@@ -202,11 +203,11 @@ func TestFfatalf(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.FatalStatusCode = 0
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Ffatalf(buf, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.Timestamp, FATAL,
+		prefix := getPrefix(trace, s.format, l.TimestampFormat, FATAL,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
@@ -245,11 +246,11 @@ func TestFfatalln(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.FatalStatusCode = 0
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Ffatalln(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, FATAL, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, FATAL, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
 		if l.Levels.All(FATAL) {
@@ -288,11 +289,11 @@ func TestFatal(t *testing.T) {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
 		l.FatalStatusCode = 0
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Fatal(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, FATAL, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, FATAL, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
 		if l.Levels.All(FATAL) {
@@ -332,11 +333,11 @@ func TestFatalf(t *testing.T) {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
 		l.FatalStatusCode = 0
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Fatalf(s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.Timestamp, FATAL,
+		prefix := getPrefix(trace, s.format, l.TimestampFormat, FATAL,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
@@ -376,11 +377,11 @@ func TestFatalln(t *testing.T) {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
 		l.FatalStatusCode = 0
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Fatalln(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, FATAL, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, FATAL, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
 		if l.Levels.All(FATAL) {
@@ -417,11 +418,11 @@ func TestFerror(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Ferror(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, ERROR, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, ERROR, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
 		if l.Levels.All(ERROR) {
@@ -459,11 +460,11 @@ func TestFerrorf(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Ferrorf(buf, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.Timestamp, ERROR,
+		prefix := getPrefix(trace, s.format, l.TimestampFormat, ERROR,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
@@ -501,11 +502,11 @@ func TestFerrorln(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Ferrorln(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, ERROR, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, ERROR, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
 		if l.Levels.All(ERROR) {
@@ -543,11 +544,11 @@ func TestError(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Error(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, ERROR, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, ERROR, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
 		if l.Levels.All(ERROR) {
@@ -586,11 +587,11 @@ func TestErrorf(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Errorf(s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.Timestamp, ERROR,
+		prefix := getPrefix(trace, s.format, l.TimestampFormat, ERROR,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
@@ -629,11 +630,11 @@ func TestErrorln(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Errorln(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, ERROR, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, ERROR, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
 		if l.Levels.All(ERROR) {
@@ -670,11 +671,11 @@ func TestFwarn(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Fwarn(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, WARN, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, WARN, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
 		if l.Levels.All(WARN) {
@@ -712,11 +713,11 @@ func TestFwarnf(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Fwarnf(buf, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.Timestamp, WARN,
+		prefix := getPrefix(trace, s.format, l.TimestampFormat, WARN,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
@@ -754,11 +755,11 @@ func TestFwarnln(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Fwarnln(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, WARN, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, WARN, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
 		if l.Levels.All(WARN) {
@@ -796,11 +797,11 @@ func TestWarn(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Warn(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, WARN, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, WARN, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
 		if l.Levels.All(WARN) {
@@ -839,11 +840,11 @@ func TestWarnf(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Warnf(s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.Timestamp, WARN,
+		prefix := getPrefix(trace, s.format, l.TimestampFormat, WARN,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
@@ -882,11 +883,11 @@ func TestWarnln(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Warnln(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, WARN, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, WARN, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
 		if l.Levels.All(WARN) {
@@ -923,11 +924,11 @@ func TestFinfo(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Finfo(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, INFO, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, INFO, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
 		if l.Levels.All(INFO) {
@@ -965,11 +966,11 @@ func TestFinfof(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Finfof(buf, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.Timestamp, INFO,
+		prefix := getPrefix(trace, s.format, l.TimestampFormat, INFO,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
@@ -1007,11 +1008,11 @@ func TestFinfoln(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Finfoln(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, INFO, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, INFO, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
 		if l.Levels.All(INFO) {
@@ -1049,11 +1050,11 @@ func TestInfo(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Info(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, INFO, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, INFO, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
 		if l.Levels.All(INFO) {
@@ -1092,11 +1093,11 @@ func TestInfof(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Infof(s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.Timestamp, INFO,
+		prefix := getPrefix(trace, s.format, l.TimestampFormat, INFO,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
@@ -1135,11 +1136,11 @@ func TestInfoln(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Infoln(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, INFO, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, INFO, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
 		if l.Levels.All(INFO) {
@@ -1176,11 +1177,11 @@ func TestFdebug(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Fdebug(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, DEBUG, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, DEBUG, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
 		if l.Levels.All(DEBUG) {
@@ -1218,11 +1219,11 @@ func TestFdebugf(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Fdebugf(buf, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.Timestamp, DEBUG,
+		prefix := getPrefix(trace, s.format, l.TimestampFormat, DEBUG,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
@@ -1260,11 +1261,11 @@ func TestFdebugln(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Fdebugln(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, DEBUG, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, DEBUG, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
 		if l.Levels.All(DEBUG) {
@@ -1302,11 +1303,11 @@ func TestDebug(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Debug(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, DEBUG, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, DEBUG, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
 		if l.Levels.All(DEBUG) {
@@ -1345,11 +1346,11 @@ func TestDebugf(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Debugf(s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.Timestamp, DEBUG,
+		prefix := getPrefix(trace, s.format, l.TimestampFormat, DEBUG,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
@@ -1388,11 +1389,11 @@ func TestDebugln(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Debugln(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, DEBUG, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, DEBUG, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
 		if l.Levels.All(DEBUG) {
@@ -1429,11 +1430,11 @@ func TestFtrace(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Ftrace(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, TRACE, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, TRACE, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
 		if l.Levels.All(TRACE) {
@@ -1471,11 +1472,11 @@ func TestFtracef(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Ftracef(buf, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.Timestamp, TRACE,
+		prefix := getPrefix(trace, s.format, l.TimestampFormat, TRACE,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
@@ -1513,11 +1514,11 @@ func TestFtraceln(t *testing.T) {
 	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Ftraceln(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, TRACE, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, TRACE, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
 		if l.Levels.All(TRACE) {
@@ -1555,11 +1556,11 @@ func TestTrace(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Trace(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, TRACE, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, TRACE, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
 		if l.Levels.All(TRACE) {
@@ -1598,11 +1599,11 @@ func TestTracef(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Tracef(s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.Timestamp, TRACE,
+		prefix := getPrefix(trace, s.format, l.TimestampFormat, TRACE,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
@@ -1641,11 +1642,11 @@ func TestTraceln(t *testing.T) {
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
 		l.Writer = buf
-		l.Format(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
 		l.Traceln(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.Timestamp, TRACE, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormat, TRACE, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
 		if l.Levels.All(TRACE) {
@@ -1660,3 +1661,4 @@ func TestTraceln(t *testing.T) {
 		}
 	}
 }
+*/

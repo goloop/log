@@ -1,25 +1,81 @@
 package log
 
 import (
+	"io"
+	"os"
+)
+
+const (
+	None            = 0
+	TimestampFormat = "01.02.2006 15:04:05"
+)
+
+// New returns new Log object.
+// Takes zero or more log levels as arguments. If logging levels are not
+// specified, all possible logging levels will be activated, otherwise
+// only the specified logging levels will be activated.
+func New(levels ...Levels) (*Log, error) {
+	var log = Log{
+		Writer:          os.Stdout,
+		TimestampFormat: TimestampFormat,
+		ShowFilePath:    false,
+		ShowFuncName:    false,
+		ShowFileLine:    false,
+		FatalStatusCode: 1,
+
+		levelControl: Levels{},
+		skip:         SKIP,
+	}
+
+	if len(levels) > 0 {
+		log.Levels.Set(levels...)
+	} else {
+		log.Levels.Set(FATAL, ERROR, WARN, INFO, DEBUG, TRACE)
+	}
+
+	return &log, nil
+}
+
+// Log is the logger object.
+type Log struct {
+	// Writer is the message receiver object (os.Stdout by default).
+	Writer io.Writer
+
+	// TimestampFormat defines the time and date format for the
+	// timestamp in the log message.
+	TimestampFormat string
+
+	// Formats is the flag-holder where flags responsible for
+	// formatting the log message prefix.
+	Formats Formats
+
+	// Levels is the flag-holder where flags responsible for
+	// levels of the logging: Panic, Fatal, Error, Warn, Info etc.
+	Levels Levels
+
+	// The skip is default stack offset.
+	skip int
+}
+
+/*
+
+import (
 	"fmt"
 	"io"
 	"os"
 )
 
-// Timestamp is the format for displaying the time stamp in the log message.
-const Timestamp = "01.02.2006 15:04:05"
+	// TimestampFormat it is a date and time format.
+const TimestampFormat = "01.02.2006 15:04:05"
 
-// Log this is the logging object.
+// Log is the logger object.
 type Log struct {
 	// Writer is the message receiver object (os.Stdout by default).
 	Writer io.Writer
 
-	// Timestamp is the format for displaying the
+	// TimestampFormat is the format for displaying the
 	// time stamp in the log message.
-	Timestamp string
-
-	// Levels map of available levels.
-	Levels Levels
+	TimestampFormat string
 
 	// ShowFilePath if true appends the full path to the go-file,
 	// the logging method was called.
@@ -37,6 +93,9 @@ type Log struct {
 	// Default - 1. If the code is <= 0, the forced exit will not occur.
 	FatalStatusCode int
 
+	// The levelControl stores active log levels.
+	levelControl levelMap
+
 	// The skip is default stack offset.
 	skip int
 }
@@ -48,13 +107,14 @@ type Log struct {
 func New(levels ...Level) (*Log, error) {
 	var log = Log{
 		Writer:          os.Stdout,
-		Timestamp:       Timestamp,
-		Levels:          Levels{},
+		TimestampFormat: TimestampFormat,
 		ShowFilePath:    false,
 		ShowFuncName:    false,
 		ShowFileLine:    false,
 		FatalStatusCode: 1,
-		skip:            SKIP,
+
+		levelControl: Levels{},
+		skip:         SKIP,
 	}
 
 	if len(levels) > 0 {
@@ -78,7 +138,7 @@ func (l *Log) echo(skip int, w io.Writer, level Level,
 	}
 
 	// Generate log prefix.
-	prefix := getPrefix(trace, "", l.Timestamp, level,
+	prefix := getPrefix(trace, "", l.TimestampFormat, level,
 		l.ShowFilePath, l.ShowFuncName, l.ShowFileLine)
 	a = append([]interface{}{prefix}, a...)
 
@@ -97,7 +157,7 @@ func (l *Log) echof(skip int, w io.Writer, level Level, format string,
 	}
 
 	// Generate log prefix.
-	prefix := getPrefix(trace, format, l.Timestamp, level,
+	prefix := getPrefix(trace, format, l.TimestampFormat, level,
 		l.ShowFilePath, l.ShowFuncName, l.ShowFileLine)
 
 	return fmt.Fprintf(w, prefix, a...)
@@ -115,7 +175,7 @@ func (l *Log) echoln(skip int, w io.Writer, level Level,
 	}
 
 	// Generate log prefix.
-	prefix := getPrefix(trace, "", l.Timestamp, level,
+	prefix := getPrefix(trace, "", l.TimestampFormat, level,
 		l.ShowFilePath, l.ShowFuncName, l.ShowFileLine)
 	prefix = prefix[:len(prefix)-1] // remove trailing space
 	a = append([]interface{}{prefix}, a...)
@@ -127,7 +187,7 @@ func (l *Log) echoln(skip int, w io.Writer, level Level,
 func (l *Log) Copy() *Log {
 	var log = Log{
 		Writer:          l.Writer,
-		Timestamp:       l.Timestamp,
+		TimestampFormat: l.TimestampFormat,
 		Levels:          l.Levels,
 		ShowFilePath:    l.ShowFilePath,
 		ShowFuncName:    l.ShowFuncName,
@@ -139,9 +199,9 @@ func (l *Log) Copy() *Log {
 	return &log
 }
 
-// Format sets the message prefix display configuration flags for display:
+// Display sets the message prefix format configuration flags for display:
 // file path, function name and file line.
-func (l *Log) Format(showFilePath, showFuncName, showFileLine bool) {
+func (l *Log) Display(showFilePath, showFuncName, showFileLine bool) {
 	l.ShowFilePath = showFilePath
 	l.ShowFuncName = showFuncName
 	l.ShowFileLine = showFileLine
@@ -452,3 +512,4 @@ func (l *Log) Tracef(format string, a ...interface{}) (n int, err error) {
 func (l *Log) Traceln(a ...interface{}) (n int, err error) {
 	return l.echoln(l.skip, l.Writer, TRACE, a...)
 }
+*/
