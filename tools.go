@@ -1,63 +1,34 @@
 package log
 
-/*
 import (
 	"fmt"
-	"time"
 )
 
-// The getActiveLevels returns only active level list.
-func getActiveLevels(levelControl levelMap) []Level {
-	var result = make([]Level, 0, len(m))
-	for level, value := range levelContorl {
-		if value {
-			result = append(result, key)
-		}
+// The getPrefix creates a log-message prefix without timestamp.
+func getPrefix(level Level, formats Formats, ss *StackSlice) string {
+	var label, path, name, line string
+
+	// Get level name.
+	label = fmt.Sprintf("[%s] ", LevelNames[level])
+
+	// Configure prefix format.
+	if ok, err := formats.FilePath(); ok && err == nil {
+		path = fmt.Sprintf("%s ", ss.FilePath)
 	}
 
-	return result
-}
-
-// The getPrefix creates a log message prefix based on the collected call
-// stack data, time and log level.
-func getPrefix(trace *Trace, textFormat, timestampFormat string, level Level,
-	showFilePath, showFuncName, showFileLine bool) string {
-	var path, name, line string
-	timestamp := time.Now().Format(timestampFormat)
-
-	if showFilePath || level == TRACE {
-		path = fmt.Sprintf("%s ", trace.FilePath)
-	}
-
-	if showFuncName || level == TRACE {
-		name = trace.FuncName
-		if showFileLine || level == TRACE {
+	if ok, err := formats.FuncName(); ok && err == nil {
+		name = ss.FuncName
+		if ok, err := formats.LineNumber(); ok && err == nil {
 			name += ":"
 		} else {
 			name += " "
 		}
 	}
 
-	if showFileLine || level == TRACE {
-		line = fmt.Sprintf("%d ", trace.FileLine)
+	if ok, err := formats.LineNumber(); ok && err == nil {
+		line = fmt.Sprintf("%d ", ss.FileLine)
 	}
 
-	r := fmt.Sprintf("%s [%s] %s%s%s", timestamp, level, path, name, line)
-	if len(textFormat) > 0 {
-		r += textFormat
-	}
-
-	return r
+	// Generate prefix.
+	return label + path + name + line
 }
-
-// The in function returns true if levels contains specified log level.
-func in(level Level, levels ...Level) bool {
-	for _, item := range levels {
-		if level == item {
-			return true
-		}
-	}
-
-	return false
-}
-*/
