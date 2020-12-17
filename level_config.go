@@ -8,7 +8,7 @@ import (
 
 const (
 	// Panic is the panic-type logging level.
-	Panic Level = 1 << iota
+	Panic LevelFlag = 1 << iota
 
 	// Fatal is the fatal-type logging level.
 	Fatal
@@ -28,13 +28,13 @@ const (
 	// Trace is the trace-type logging level.
 	Trace
 
-	// The maxLevelsValue is a special flag that indicating the
-	// maximum allowed for Levels type.
-	maxLevelsValue Levels = (1 << iota) - 1
+	// The maxLevelConfig is a special flag that indicating the
+	// maximum allowed for LevelConfig type.
+	maxLevelConfig LevelConfig = (1 << iota) - 1
 )
 
-// The LevelNames associates human-readable headings with log levels.
-var LevelNames = map[Level]string{
+// The LevelFlagNames associates human-readable headings with log levels.
+var LevelNames = map[LevelFlag]string{
 	Panic: "PANIC",
 	Fatal: "FATAL",
 	Error: "ERROR",
@@ -44,25 +44,25 @@ var LevelNames = map[Level]string{
 	Trace: "TRACE",
 }
 
-// Level is the type of single flags of the the Levels.
-type Level uint8
+// LevelFlag is the type of single flags of the the LevelConfig.
+type LevelFlag uint8
 
 // The IsValid returns true if value contains one of the available flags.
 // The custom flags cannot be valid since they should not affect the
 // formatting settings. The zero value is an invalid flag too.
-func (l *Level) IsValid() bool {
-	return bits.OnesCount(uint(*l)) == 1 && *l <= Level(maxLevelsValue+1)>>1
+func (l *LevelFlag) IsValid() bool {
+	return bits.OnesCount(uint(*l)) == 1 && *l <= LevelFlag(maxLevelConfig+1)>>1
 }
 
-// Levels type is designed to control the flags responsible
+// LevelConfig type is designed to control the flags responsible
 // for adding in the log message additional information as:
 // file path, function name and line number.
-type Levels Level
+type LevelConfig LevelFlag
 
 // The Has method returns true if value contains the specified flag.
 // Returns false and an error if the value is invalid or an
 // invalid flag is specified.
-func (l *Levels) Has(flag Level) (bool, error) {
+func (l *LevelConfig) Has(flag LevelFlag) (bool, error) {
 	switch {
 	case !flag.IsValid():
 		return false, errors.New("incorrect flag value")
@@ -70,48 +70,48 @@ func (l *Levels) Has(flag Level) (bool, error) {
 		return false, errors.New("the object is damaged")
 	}
 
-	return *l&Levels(flag) == Levels(flag), nil // *l&flag != 0, nil
+	return *l&LevelConfig(flag) == LevelConfig(flag), nil // *l&flag != 0, nil
 }
 
 // IsValid returns true if value contains zero, one or an
-// unique sum of valid Level flags. The zero value is a valid value.
-func (l *Levels) IsValid() bool {
-	return *l <= maxLevelsValue
+// unique sum of valid LevelFlag flags. The zero value is a valid value.
+func (l *LevelConfig) IsValid() bool {
+	return *l <= maxLevelConfig
 }
 
 // Panic returns true if value contains the Panic flag.
 // Returns false and an error if the value is invalid.
-func (l *Levels) Panic() (bool, error) {
+func (l *LevelConfig) Panic() (bool, error) {
 	return l.Has(Panic)
 }
 
 // Fatal returns true if value contains the Fatal flag.
 // Returns false and an error if the value is invalid.
-func (l *Levels) Fatal() (bool, error) {
+func (l *LevelConfig) Fatal() (bool, error) {
 	return l.Has(Fatal)
 }
 
 // Error returns true if value contains the Error flag.
 // Returns false and an error if the value is invalid.
-func (l *Levels) Error() (bool, error) {
+func (l *LevelConfig) Error() (bool, error) {
 	return l.Has(Error)
 }
 
 // Info returns true if value contains the Info flag.
 // Returns false and an error if the value is invalid.
-func (l *Levels) Info() (bool, error) {
+func (l *LevelConfig) Info() (bool, error) {
 	return l.Has(Info)
 }
 
 // Debug returns true if value contains the Debug flag.
 // Returns false and an error if the value is invalid.
-func (l *Levels) Debug() (bool, error) {
+func (l *LevelConfig) Debug() (bool, error) {
 	return l.Has(Debug)
 }
 
 // Trace returns true if value contains the Trace flag.
 // Returns false and an error if the value is invalid.
-func (l *Levels) Trace() (bool, error) {
+func (l *LevelConfig) Trace() (bool, error) {
 	return l.Has(Trace)
 }
 
@@ -119,8 +119,8 @@ func (l *Levels) Trace() (bool, error) {
 // The flags that were set previously will be discarded.
 // Returns a new value if all is well or old value and an
 // error if one or more invalid flags are specified.
-func (l *Levels) Set(flags ...Level) (Levels, error) {
-	var r Levels
+func (l *LevelConfig) Set(flags ...LevelFlag) (LevelConfig, error) {
+	var r LevelConfig
 
 	for _, flag := range flags {
 		if !flag.IsValid() {
@@ -128,7 +128,7 @@ func (l *Levels) Set(flags ...Level) (Levels, error) {
 		}
 
 		if ok, _ := r.Has(flag); !ok {
-			r += Levels(flag)
+			r += LevelConfig(flag)
 		}
 	}
 
@@ -139,7 +139,7 @@ func (l *Levels) Set(flags ...Level) (Levels, error) {
 // Add adds the specified flags ignores duplicates or flags that value
 // already contains. Returns a new value if all is well or old value and
 // an error if one or more invalid flags are specified.
-func (l *Levels) Add(flags ...Level) (Levels, error) {
+func (l *LevelConfig) Add(flags ...LevelFlag) (LevelConfig, error) {
 	var r = *l
 
 	for _, flag := range flags {
@@ -148,7 +148,7 @@ func (l *Levels) Add(flags ...Level) (Levels, error) {
 		}
 
 		if ok, _ := r.Has(flag); !ok {
-			r += Levels(flag)
+			r += LevelConfig(flag)
 		}
 	}
 
@@ -159,7 +159,7 @@ func (l *Levels) Add(flags ...Level) (Levels, error) {
 // Delete deletes the specified flags ignores duplicates or
 // flags that were not set. Returns a new value if all is well or
 // old value and an error if one or more invalid flags are specified.
-func (l *Levels) Delete(flags ...Level) (Levels, error) {
+func (l *LevelConfig) Delete(flags ...LevelFlag) (LevelConfig, error) {
 	var r = *l
 
 	for _, flag := range flags {
@@ -168,7 +168,7 @@ func (l *Levels) Delete(flags ...Level) (Levels, error) {
 		}
 
 		if ok, _ := r.Has(flag); ok {
-			r -= Levels(flag)
+			r -= LevelConfig(flag)
 		}
 	}
 
@@ -178,7 +178,7 @@ func (l *Levels) Delete(flags ...Level) (Levels, error) {
 
 // All returns true if all of the specified flags are set.
 // Returns false and an error if one or more of the specified flags is invalid.
-func (l *Levels) All(flags ...Level) (bool, error) {
+func (l *LevelConfig) All(flags ...LevelFlag) (bool, error) {
 	for _, flag := range flags {
 		if ok, err := l.Has(flag); !ok || err != nil {
 			return false, err
@@ -190,7 +190,7 @@ func (l *Levels) All(flags ...Level) (bool, error) {
 
 // Any returns true if at least one of the specified flags is set.
 // Returns false and an error if one or more of the specified flags is invalid.
-func (l *Levels) Any(flags ...Level) (bool, error) {
+func (l *LevelConfig) Any(flags ...LevelFlag) (bool, error) {
 	for _, flag := range flags {
 		if ok, err := l.Has(flag); ok || err != nil {
 			return ok, err

@@ -15,29 +15,29 @@ const (
 // TestEcho tests Log.echo method.
 func TestEcho(t *testing.T) {
 	type test struct {
-		level   Level
-		levels  []Level
-		formats []Format
+		level   LevelFlag
+		levels  []LevelFlag
+		formats []FormatFlag
 		data    []interface{}
 	}
 
 	var tests = []test{
 		{
 			Error,
-			[]Level{Info, Debug, Trace},
-			[]Format{FilePath},
+			[]LevelFlag{Info, Debug, Trace},
+			[]FormatFlag{FilePath},
 			[]interface{}{"1", "2", "3"},
 		},
 		{
 			Info,
-			[]Level{Info, Debug, Trace},
-			[]Format{FilePath, FuncName, LineNumber},
+			[]LevelFlag{Info, Debug, Trace},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
 			[]interface{}{"1", "2", "3"},
 		},
 		{
 			Debug,
-			[]Level{Info, Debug, Trace},
-			[]Format{FuncName},
+			[]LevelFlag{Info, Debug, Trace},
+			[]FormatFlag{FuncName},
 			[]interface{}{"1", "2", "3"},
 		},
 	}
@@ -46,16 +46,17 @@ func TestEcho(t *testing.T) {
 		var buf = new(bytes.Buffer)
 		l, _ := New(s.levels...)
 		l.skip += testSkipSeek
-		l.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats...)
 		l.echo(skip, s.level, buf, s.data...)
 
 		exp := ""
 		res := buf.String()
 		ss := getStackSlice(testSkip)
 
-		if ok, _ := l.Levels.All(s.level); ok {
+		if ok, _ := l.Config.Levels.All(s.level); ok {
 			res = res[19:]
-			exp = getPrefix(s.level, l.Formats, ss) + fmt.Sprint(s.data...)
+			exp = getPrefix(s.level, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -67,9 +68,9 @@ func TestEcho(t *testing.T) {
 // TestEchof tests Log.echof method.
 func TestEchof(t *testing.T) {
 	type test struct {
-		level   Level
-		levels  []Level
-		formats []Format
+		level   LevelFlag
+		levels  []LevelFlag
+		formats []FormatFlag
 		data    []interface{}
 		layout  string
 	}
@@ -77,22 +78,22 @@ func TestEchof(t *testing.T) {
 	var tests = []test{
 		{
 			Error,
-			[]Level{Info, Debug, Trace},
-			[]Format{FilePath},
+			[]LevelFlag{Info, Debug, Trace},
+			[]FormatFlag{FilePath},
 			[]interface{}{"1", "2", "3"},
 			"%s + %s - %s",
 		},
 		{
 			Info,
-			[]Level{Info, Debug, Trace},
-			[]Format{FilePath, FuncName, LineNumber},
+			[]LevelFlag{Info, Debug, Trace},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
 			[]interface{}{"1", "2", "3"},
 			"%s / %s + %s",
 		},
 		{
 			Debug,
-			[]Level{Info, Debug, Trace},
-			[]Format{FuncName},
+			[]LevelFlag{Info, Debug, Trace},
+			[]FormatFlag{FuncName},
 			[]interface{}{"1", "2", "3"},
 			"%s * %s + %s",
 		},
@@ -102,16 +103,16 @@ func TestEchof(t *testing.T) {
 		var buf = new(bytes.Buffer)
 		l, _ := New(s.levels...)
 		l.skip += testSkipSeek
-		l.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats...)
 		l.echof(skip, s.level, buf, s.layout, s.data...)
 
 		exp := ""
 		res := buf.String()
 		ss := getStackSlice(testSkip)
 
-		if ok, _ := l.Levels.All(s.level); ok {
+		if ok, _ := l.Config.Levels.All(s.level); ok {
 			res = res[19:]
-			exp = getPrefix(s.level, l.Formats, ss) +
+			exp = getPrefix(s.level, l.Config.Formats, ss) +
 				fmt.Sprintf(s.layout, s.data...)
 		}
 
@@ -124,29 +125,29 @@ func TestEchof(t *testing.T) {
 // TestEcholn tests Log.echoln method.
 func TestEcholn(t *testing.T) {
 	type test struct {
-		level   Level
-		levels  []Level
-		formats []Format
+		level   LevelFlag
+		levels  []LevelFlag
+		formats []FormatFlag
 		data    []interface{}
 	}
 
 	var tests = []test{
 		{
 			Error,
-			[]Level{Info, Debug, Trace},
-			[]Format{FilePath},
+			[]LevelFlag{Info, Debug, Trace},
+			[]FormatFlag{FilePath},
 			[]interface{}{"1", "2", "3"},
 		},
 		{
 			Info,
-			[]Level{Info, Debug, Trace},
-			[]Format{FilePath, FuncName, LineNumber},
+			[]LevelFlag{Info, Debug, Trace},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
 			[]interface{}{"1", "2", "3"},
 		},
 		{
 			Debug,
-			[]Level{Info, Debug, Trace},
-			[]Format{FuncName},
+			[]LevelFlag{Info, Debug, Trace},
+			[]FormatFlag{FuncName},
 			[]interface{}{"1", "2", "3"},
 		},
 	}
@@ -155,16 +156,16 @@ func TestEcholn(t *testing.T) {
 		var buf = new(bytes.Buffer)
 		l, _ := New(s.levels...)
 		l.skip += testSkipSeek
-		l.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats...)
 		l.echoln(skip, s.level, buf, s.data...)
 
 		exp := ""
 		res := buf.String()
 		ss := getStackSlice(testSkip)
 
-		if ok, _ := l.Levels.All(s.level); ok {
+		if ok, _ := l.Config.Levels.All(s.level); ok {
 			res = res[19:]
-			exp = getPrefix(s.level, l.Formats, ss) +
+			exp = getPrefix(s.level, l.Config.Formats, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -185,7 +186,7 @@ import (
 // TestEcho tests echo method.
 func TestEcho(t *testing.T) {
 	type test struct {
-		level Level
+		level LevelFlag
 		data  []interface{}
 
 		showFilePath bool
@@ -209,10 +210,10 @@ func TestEcho(t *testing.T) {
 		l.echo(4, buf, s.level, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, s.level, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, s.level, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
-		if l.Levels.All(s.level) {
+		if l.Config.Levels.All(s.level) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -228,7 +229,7 @@ func TestEcho(t *testing.T) {
 // TestEchof tests echof method.
 func TestEchof(t *testing.T) {
 	type test struct {
-		level  Level
+		level  LevelFlag
 		format string
 		data   []interface{}
 
@@ -253,11 +254,11 @@ func TestEchof(t *testing.T) {
 		l.echof(4, buf, s.level, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormat, s.level,
+		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, s.level,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
-		if l.Levels.All(s.level) {
+		if l.Config.Levels.All(s.level) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -273,7 +274,7 @@ func TestEchof(t *testing.T) {
 // TestEcholn tests echoln method.
 func TestEcholn(t *testing.T) {
 	type test struct {
-		level Level
+		level LevelFlag
 		data  []interface{}
 
 		showFilePath bool
@@ -296,10 +297,10 @@ func TestEcholn(t *testing.T) {
 		l.echoln(4, buf, s.level, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, s.level, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, s.level, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
-		if l.Levels.All(s.level) {
+		if l.Config.Levels.All(s.level) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -338,10 +339,10 @@ func TestFfatal(t *testing.T) {
 		l.Ffatal(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, FATAL, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, FATAL, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
-		if l.Levels.All(FATAL) {
+		if l.Config.Levels.All(FATAL) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -381,11 +382,11 @@ func TestFfatalf(t *testing.T) {
 		l.Ffatalf(buf, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormat, FATAL,
+		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, FATAL,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
-		if l.Levels.All(FATAL) {
+		if l.Config.Levels.All(FATAL) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -424,10 +425,10 @@ func TestFfatalln(t *testing.T) {
 		l.Ffatalln(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, FATAL, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, FATAL, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
-		if l.Levels.All(FATAL) {
+		if l.Config.Levels.All(FATAL) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -467,10 +468,10 @@ func TestFatal(t *testing.T) {
 		l.Fatal(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, FATAL, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, FATAL, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
-		if l.Levels.All(FATAL) {
+		if l.Config.Levels.All(FATAL) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -511,11 +512,11 @@ func TestFatalf(t *testing.T) {
 		l.Fatalf(s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormat, FATAL,
+		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, FATAL,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
-		if l.Levels.All(FATAL) {
+		if l.Config.Levels.All(FATAL) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -555,10 +556,10 @@ func TestFatalln(t *testing.T) {
 		l.Fatalln(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, FATAL, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, FATAL, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
-		if l.Levels.All(FATAL) {
+		if l.Config.Levels.All(FATAL) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -596,10 +597,10 @@ func TestFerror(t *testing.T) {
 		l.Ferror(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, ERROR, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, ERROR, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
-		if l.Levels.All(ERROR) {
+		if l.Config.Levels.All(ERROR) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -638,11 +639,11 @@ func TestFerrorf(t *testing.T) {
 		l.Ferrorf(buf, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormat, ERROR,
+		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, ERROR,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
-		if l.Levels.All(ERROR) {
+		if l.Config.Levels.All(ERROR) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -680,10 +681,10 @@ func TestFerrorln(t *testing.T) {
 		l.Ferrorln(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, ERROR, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, ERROR, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
-		if l.Levels.All(ERROR) {
+		if l.Config.Levels.All(ERROR) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -722,10 +723,10 @@ func TestError(t *testing.T) {
 		l.Error(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, ERROR, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, ERROR, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
-		if l.Levels.All(ERROR) {
+		if l.Config.Levels.All(ERROR) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -765,11 +766,11 @@ func TestErrorf(t *testing.T) {
 		l.Errorf(s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormat, ERROR,
+		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, ERROR,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
-		if l.Levels.All(ERROR) {
+		if l.Config.Levels.All(ERROR) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -808,10 +809,10 @@ func TestErrorln(t *testing.T) {
 		l.Errorln(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, ERROR, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, ERROR, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
-		if l.Levels.All(ERROR) {
+		if l.Config.Levels.All(ERROR) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -849,10 +850,10 @@ func TestFwarn(t *testing.T) {
 		l.Fwarn(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, WARN, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, WARN, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
-		if l.Levels.All(WARN) {
+		if l.Config.Levels.All(WARN) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -891,11 +892,11 @@ func TestFwarnf(t *testing.T) {
 		l.Fwarnf(buf, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormat, WARN,
+		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, WARN,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
-		if l.Levels.All(WARN) {
+		if l.Config.Levels.All(WARN) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -933,10 +934,10 @@ func TestFwarnln(t *testing.T) {
 		l.Fwarnln(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, WARN, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, WARN, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
-		if l.Levels.All(WARN) {
+		if l.Config.Levels.All(WARN) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -975,10 +976,10 @@ func TestWarn(t *testing.T) {
 		l.Warn(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, WARN, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, WARN, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
-		if l.Levels.All(WARN) {
+		if l.Config.Levels.All(WARN) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1018,11 +1019,11 @@ func TestWarnf(t *testing.T) {
 		l.Warnf(s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormat, WARN,
+		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, WARN,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
-		if l.Levels.All(WARN) {
+		if l.Config.Levels.All(WARN) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1061,10 +1062,10 @@ func TestWarnln(t *testing.T) {
 		l.Warnln(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, WARN, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, WARN, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
-		if l.Levels.All(WARN) {
+		if l.Config.Levels.All(WARN) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1102,10 +1103,10 @@ func TestFinfo(t *testing.T) {
 		l.Finfo(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, INFO, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, INFO, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
-		if l.Levels.All(INFO) {
+		if l.Config.Levels.All(INFO) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1144,11 +1145,11 @@ func TestFinfof(t *testing.T) {
 		l.Finfof(buf, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormat, INFO,
+		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, INFO,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
-		if l.Levels.All(INFO) {
+		if l.Config.Levels.All(INFO) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1186,10 +1187,10 @@ func TestFinfoln(t *testing.T) {
 		l.Finfoln(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, INFO, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, INFO, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
-		if l.Levels.All(INFO) {
+		if l.Config.Levels.All(INFO) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1228,10 +1229,10 @@ func TestInfo(t *testing.T) {
 		l.Info(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, INFO, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, INFO, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
-		if l.Levels.All(INFO) {
+		if l.Config.Levels.All(INFO) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1271,11 +1272,11 @@ func TestInfof(t *testing.T) {
 		l.Infof(s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormat, INFO,
+		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, INFO,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
-		if l.Levels.All(INFO) {
+		if l.Config.Levels.All(INFO) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1314,10 +1315,10 @@ func TestInfoln(t *testing.T) {
 		l.Infoln(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, INFO, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, INFO, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
-		if l.Levels.All(INFO) {
+		if l.Config.Levels.All(INFO) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1355,10 +1356,10 @@ func TestFdebug(t *testing.T) {
 		l.Fdebug(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, DEBUG, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, DEBUG, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
-		if l.Levels.All(DEBUG) {
+		if l.Config.Levels.All(DEBUG) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1397,11 +1398,11 @@ func TestFdebugf(t *testing.T) {
 		l.Fdebugf(buf, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormat, DEBUG,
+		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, DEBUG,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
-		if l.Levels.All(DEBUG) {
+		if l.Config.Levels.All(DEBUG) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1439,10 +1440,10 @@ func TestFdebugln(t *testing.T) {
 		l.Fdebugln(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, DEBUG, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, DEBUG, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
-		if l.Levels.All(DEBUG) {
+		if l.Config.Levels.All(DEBUG) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1481,10 +1482,10 @@ func TestDebug(t *testing.T) {
 		l.Debug(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, DEBUG, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, DEBUG, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
-		if l.Levels.All(DEBUG) {
+		if l.Config.Levels.All(DEBUG) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1524,11 +1525,11 @@ func TestDebugf(t *testing.T) {
 		l.Debugf(s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormat, DEBUG,
+		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, DEBUG,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
-		if l.Levels.All(DEBUG) {
+		if l.Config.Levels.All(DEBUG) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1567,10 +1568,10 @@ func TestDebugln(t *testing.T) {
 		l.Debugln(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, DEBUG, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, DEBUG, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
-		if l.Levels.All(DEBUG) {
+		if l.Config.Levels.All(DEBUG) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1608,10 +1609,10 @@ func TestFtrace(t *testing.T) {
 		l.Ftrace(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, TRACE, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, TRACE, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
-		if l.Levels.All(TRACE) {
+		if l.Config.Levels.All(TRACE) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1650,11 +1651,11 @@ func TestFtracef(t *testing.T) {
 		l.Ftracef(buf, s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormat, TRACE,
+		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, TRACE,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
-		if l.Levels.All(TRACE) {
+		if l.Config.Levels.All(TRACE) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1692,10 +1693,10 @@ func TestFtraceln(t *testing.T) {
 		l.Ftraceln(buf, s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, TRACE, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, TRACE, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
-		if l.Levels.All(TRACE) {
+		if l.Config.Levels.All(TRACE) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1734,10 +1735,10 @@ func TestTrace(t *testing.T) {
 		l.Trace(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, TRACE, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, TRACE, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
 
-		if l.Levels.All(TRACE) {
+		if l.Config.Levels.All(TRACE) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1777,11 +1778,11 @@ func TestTracef(t *testing.T) {
 		l.Tracef(s.format, s.data...)
 
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormat, TRACE,
+		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, TRACE,
 			s.showFilePath, s.showFuncName, s.showFileLine)
 		exp := fmt.Sprintf(prefix, s.data...)
 
-		if l.Levels.All(TRACE) {
+		if l.Config.Levels.All(TRACE) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
@@ -1820,10 +1821,10 @@ func TestTraceln(t *testing.T) {
 		l.Traceln(s.data...)
 
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormat, TRACE, s.showFilePath,
+		exp := getPrefix(trace, "", l.TimestampFormatFlag, TRACE, s.showFilePath,
 			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
 
-		if l.Levels.All(TRACE) {
+		if l.Config.Levels.All(TRACE) {
 			res = res[20:]
 			exp = exp[20:]
 		} else {
