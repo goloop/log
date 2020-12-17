@@ -2,46 +2,10 @@ package log
 
 import "testing"
 
-// TestFormatsPrivateHas tests has method.
-func TestFormatsPrivateHas(t *testing.T) {
+// TestFormatIsValid tests Format.IsValid method.
+func TestFormatIsValid(t *testing.T) {
 	type test struct {
-		value  Formats
-		target Formats
-		result bool
-	}
-
-	var tests = []test{
-		{FilePath, FilePath, true},
-		{FilePath, FuncName, false},
-		{FuncName, FuncName, true},
-		{FuncName, LineNumber, false},
-		{LineNumber, LineNumber, true},
-		{LineNumber, FilePath, false},
-		{FilePath + FuncName, FilePath, true},
-		{FilePath + FuncName, FuncName, true},
-		{FilePath + FuncName, LineNumber, false},
-		{FilePath + FuncName + LineNumber, FilePath, true},
-		{FilePath + FuncName + LineNumber, FuncName, true},
-		{FilePath + FuncName + LineNumber, LineNumber, true},
-		{FilePath + FuncName + LineNumber, maxFormatsValue, false},
-		{FilePath + LineNumber, FuncName, false},
-		{FilePath + LineNumber, LineNumber, true},
-		{FilePath + LineNumber, FilePath, true},
-		{FilePath + LineNumber, None, false},
-	}
-
-	for i, s := range tests {
-		if ok, _ := s.value.has(s.target); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-
-// TestFormatsIsValid tests IsValid method.
-func TestFormatsIsValid(t *testing.T) {
-	type test struct {
-		value  Formats
+		value  Format
 		result bool
 	}
 
@@ -49,10 +13,11 @@ func TestFormatsIsValid(t *testing.T) {
 		{FilePath, true},
 		{FuncName, true},
 		{LineNumber, true},
-		{FilePath + FilePath, true},
-		{FilePath + FilePath + LineNumber, true},
-		{maxFormatsValue + 1, false},
-		{None, true},
+		{FilePath + FilePath, true}, // FilePath + FilePath == FuncName
+		{FilePath + FuncName, false},
+		{Format(maxFormatsValue + 1), false},
+		{None, false},
+		{0, false},
 	}
 
 	for i, s := range tests {
@@ -63,18 +28,83 @@ func TestFormatsIsValid(t *testing.T) {
 	}
 }
 
-// TestFormatsSet tests Set method.
+// TestFormatsIsValid tests Formats.IsValid method.
+func TestFormatsIsValid(t *testing.T) {
+	type test struct {
+		value  Formats
+		result bool
+	}
+
+	var tests = []test{
+		{Formats(FilePath), true},
+		{Formats(FuncName), true},
+		{Formats(LineNumber), true},
+		{Formats(FilePath + FilePath), true},
+		{Formats(FilePath + FilePath + LineNumber), true},
+		{Formats(maxFormatsValue + 1), false},
+		{None, true},
+		{0, true},
+	}
+
+	for i, s := range tests {
+		if ok := s.value.IsValid(); ok != s.result {
+			t.Errorf("test for %d is failed, "+
+				"expected %t but %t", i, s.result, ok)
+		}
+	}
+}
+
+// TestFormatsPrivateHas tests Formats.Has method.
+func TestFormatsPrivateHas(t *testing.T) {
+	type test struct {
+		value  Formats
+		target Format
+		result bool
+	}
+
+	var tests = []test{
+		{Formats(FilePath), FilePath, true},
+		{Formats(FilePath), FuncName, false},
+		{Formats(FuncName), FuncName, true},
+		{Formats(FuncName), LineNumber, false},
+		{Formats(LineNumber), LineNumber, true},
+		{Formats(LineNumber), FilePath, false},
+		{Formats(FilePath + FuncName), FilePath, true},
+		{Formats(FilePath + FuncName), FuncName, true},
+		{Formats(FilePath + FuncName), LineNumber, false},
+		{Formats(FilePath + FuncName + LineNumber), FilePath, true},
+		{Formats(FilePath + FuncName + LineNumber), FuncName, true},
+		{Formats(FilePath + FuncName + LineNumber), LineNumber, true},
+		{Formats(FilePath + FuncName + LineNumber), 0, false},
+		{Formats(FilePath + LineNumber), FuncName, false},
+		{Formats(FilePath + LineNumber), LineNumber, true},
+		{Formats(FilePath + LineNumber), FilePath, true},
+		{Formats(FilePath + LineNumber), None, false},
+	}
+
+	for i, s := range tests {
+		if ok, _ := s.value.Has(s.target); ok != s.result {
+			t.Errorf("test for %d is failed, "+
+				"expected %t but %t", i, s.result, ok)
+		}
+	}
+}
+
+// TestFormatsSet tests Formats.Set method.
 func TestFormatsSet(t *testing.T) {
 	type test struct {
-		value  []Formats
+		value  []Format
 		result Formats
 	}
 
 	var tests = []test{
-		{[]Formats{FilePath}, FilePath},
-		{[]Formats{FilePath, FuncName}, FilePath + FuncName},
-		{[]Formats{FuncName, LineNumber}, FuncName + LineNumber},
-		{[]Formats{FuncName, LineNumber, FuncName}, FuncName + LineNumber},
+		{[]Format{FilePath}, Formats(FilePath)},
+		{[]Format{FilePath, FuncName}, Formats(FilePath + FuncName)},
+		{[]Format{FuncName, LineNumber}, Formats(FuncName + LineNumber)},
+		{
+			[]Format{FuncName, LineNumber, FuncName},
+			Formats(FuncName + LineNumber),
+		},
 	}
 
 	for i, s := range tests {
@@ -87,20 +117,20 @@ func TestFormatsSet(t *testing.T) {
 	}
 }
 
-// TestFormatsSetError tests Set method with invalid flag values.
+// TestFormatsSetError tests Formats.Set method with invalid flag values.
 func TestFormatsSetError(t *testing.T) {
 	type test struct {
-		value  []Formats
+		value  []Format
 		result bool
 	}
 
 	var tests = []test{
-		{[]Formats{FilePath}, true},
-		{[]Formats{FilePath, FuncName}, true},
-		{[]Formats{FuncName, LineNumber}, true},
-		{[]Formats{FuncName, LineNumber, FuncName}, true},
-		{[]Formats{maxFormatsValue + 1}, false},
-		{[]Formats{FuncName, maxFormatsValue + 1}, false},
+		{[]Format{FilePath}, true},
+		{[]Format{FilePath, FuncName}, true},
+		{[]Format{FuncName, LineNumber}, true},
+		{[]Format{FuncName, LineNumber, FuncName}, true},
+		{[]Format{Format(maxFormatsValue) + 1}, false},
+		{[]Format{FuncName, None}, false},
 	}
 
 	for i, s := range tests {
@@ -116,36 +146,36 @@ func TestFormatsSetError(t *testing.T) {
 // TestFormatsAdd tests Add method.
 func TestFormatsAdd(t *testing.T) {
 	type test struct {
-		def    []Formats
-		value  []Formats
+		def    []Format
+		value  []Format
 		result Formats
 	}
 
 	var tests = []test{
 		{
-			[]Formats{FilePath},
-			[]Formats{FilePath},
-			FilePath,
+			[]Format{FilePath},
+			[]Format{FilePath},
+			Formats(FilePath),
 		},
 		{
-			[]Formats{FuncName},
-			[]Formats{FilePath, FuncName},
-			FilePath + FuncName,
+			[]Format{FuncName},
+			[]Format{FilePath, FuncName},
+			Formats(FilePath + FuncName),
 		},
 		{
-			[]Formats{FilePath, FuncName},
-			[]Formats{FuncName, LineNumber},
-			FilePath + FuncName + LineNumber,
+			[]Format{FilePath, FuncName},
+			[]Format{FuncName, LineNumber},
+			Formats(FilePath + FuncName + LineNumber),
 		},
 		{
-			[]Formats{LineNumber, FilePath},
-			[]Formats{FuncName, LineNumber, FuncName},
-			FilePath + FuncName + LineNumber,
+			[]Format{LineNumber, FilePath},
+			[]Format{FuncName, LineNumber, FuncName},
+			Formats(FilePath + FuncName + LineNumber),
 		},
 		{
-			[]Formats{LineNumber, FilePath},
-			[]Formats{FuncName, LineNumber, FuncName, None},
-			FilePath + FuncName + LineNumber,
+			[]Format{LineNumber, FilePath},
+			[]Format{FuncName, LineNumber, FilePath},
+			Formats(FilePath + FuncName + LineNumber),
 		},
 	}
 
@@ -163,17 +193,18 @@ func TestFormatsAdd(t *testing.T) {
 // TestFormatsAddError tests Add method with invalid flag values.
 func TestFormatsAddError(t *testing.T) {
 	type test struct {
-		value  []Formats
+		value  []Format
 		result bool
 	}
 
 	var tests = []test{
-		{[]Formats{FilePath}, true},
-		{[]Formats{FilePath, FuncName}, true},
-		{[]Formats{FuncName, LineNumber, FuncName}, true},
-		{[]Formats{FuncName, LineNumber, FuncName, FuncName}, true},
-		{[]Formats{FuncName, maxFormatsValue + 1, FuncName}, false},
-		{[]Formats{None}, true},
+		{[]Format{FilePath}, true},
+		{[]Format{FilePath, FuncName}, true},
+		{[]Format{FuncName, LineNumber, FuncName}, true},
+		{[]Format{FuncName, LineNumber, FuncName, FuncName}, true},
+		{[]Format{FuncName, Format(maxFormatsValue) + 1, FuncName}, false},
+		{[]Format{FuncName, None, FuncName}, false},
+		{[]Format{None}, false},
 	}
 
 	for i, s := range tests {
@@ -189,41 +220,51 @@ func TestFormatsAddError(t *testing.T) {
 // TestFormatsDelete tests Delete method.
 func TestFormatsDelete(t *testing.T) {
 	type test struct {
-		def    []Formats
-		value  []Formats
+		def    []Format
+		value  []Format
 		result Formats
 	}
 
 	var tests = []test{
 		{
-			[]Formats{FilePath},
-			[]Formats{FilePath},
-			None,
+			[]Format{FilePath},
+			[]Format{FilePath},
+			Formats(None),
 		},
 		{
-			[]Formats{FilePath, FuncName},
-			[]Formats{FuncName},
-			FilePath,
+			[]Format{FilePath, FuncName},
+			[]Format{FuncName},
+			Formats(FilePath),
 		},
 		{
-			[]Formats{FilePath, FuncName},
-			[]Formats{FuncName, LineNumber},
-			FilePath,
+			[]Format{FilePath, FuncName},
+			[]Format{FuncName, LineNumber},
+			Formats(FilePath),
 		},
 		{
-			[]Formats{LineNumber, FilePath},
-			[]Formats{FuncName, LineNumber, FuncName},
-			FilePath,
+			[]Format{LineNumber, FilePath},
+			[]Format{FuncName, LineNumber, FuncName},
+			Formats(FilePath),
 		},
 		{
-			[]Formats{FuncName, LineNumber},
-			[]Formats{LineNumber, FilePath, LineNumber},
-			FuncName,
+			[]Format{FuncName, LineNumber},
+			[]Format{LineNumber, FilePath, LineNumber},
+			Formats(FuncName),
 		},
 		{
-			[]Formats{LineNumber, FilePath},
-			[]Formats{FuncName, LineNumber, FilePath},
-			None,
+			[]Format{LineNumber, FilePath},
+			[]Format{FuncName, LineNumber, FilePath},
+			Formats(None),
+		},
+		{
+			[]Format{FuncName, LineNumber, FilePath},
+			[]Format{},
+			Formats(FuncName + LineNumber + FilePath),
+		},
+		{
+			[]Format{FuncName, LineNumber, FilePath},
+			[]Format{FuncName},
+			Formats(LineNumber + FilePath),
 		},
 	}
 
@@ -241,17 +282,17 @@ func TestFormatsDelete(t *testing.T) {
 // TestFormatsDeleteError tests Delete method with invalid flag values.
 func TestFormatsDeleteError(t *testing.T) {
 	type test struct {
-		value  []Formats
+		value  []Format
 		result bool
 	}
 
 	var tests = []test{
-		{[]Formats{FilePath}, true},
-		{[]Formats{FilePath, FuncName}, true},
-		{[]Formats{FuncName, LineNumber, FuncName}, true},
-		{[]Formats{FuncName, LineNumber, FuncName, FuncName}, true},
-		{[]Formats{FuncName, maxFormatsValue + 1, FuncName}, false},
-		{[]Formats{None}, true},
+		{[]Format{FilePath}, true},
+		{[]Format{FilePath, FuncName}, true},
+		{[]Format{FuncName, LineNumber, FuncName}, true},
+		{[]Format{FuncName, LineNumber, FuncName, FuncName}, true},
+		{[]Format{FuncName, Format(maxFormatsValue + 1), FuncName}, false},
+		{[]Format{None}, false},
 	}
 
 	for i, s := range tests {
@@ -267,35 +308,35 @@ func TestFormatsDeleteError(t *testing.T) {
 // TestFormatsAll tests All method.
 func TestFormatsAll(t *testing.T) {
 	type test struct {
-		def    []Formats
-		value  []Formats
+		def    []Format
+		value  []Format
 		result bool
 	}
 
 	var tests = []test{
 		{
-			[]Formats{FilePath},
-			[]Formats{FilePath},
+			[]Format{FilePath},
+			[]Format{FilePath},
 			true,
 		},
 		{
-			[]Formats{FilePath, FuncName},
-			[]Formats{FuncName},
+			[]Format{FilePath, FuncName},
+			[]Format{FuncName},
 			true,
 		},
 		{
-			[]Formats{FilePath, FuncName},
-			[]Formats{LineNumber},
+			[]Format{FilePath, FuncName},
+			[]Format{LineNumber},
 			false,
 		},
 		{
-			[]Formats{FuncName, LineNumber, FuncName},
-			[]Formats{LineNumber, FilePath},
+			[]Format{FuncName, LineNumber, FuncName},
+			[]Format{LineNumber, FilePath},
 			false,
 		},
 		{
-			[]Formats{FuncName, LineNumber, FuncName, None},
-			[]Formats{LineNumber, FilePath},
+			[]Format{FuncName, LineNumber, FuncName, None},
+			[]Format{LineNumber, FilePath},
 			false,
 		},
 	}
@@ -313,40 +354,40 @@ func TestFormatsAll(t *testing.T) {
 // TestFormatsAny tests Any method.
 func TestFormatsAny(t *testing.T) {
 	type test struct {
-		def    []Formats
-		value  []Formats
+		def    []Format
+		value  []Format
 		result bool
 	}
 
 	var tests = []test{
 		{
-			[]Formats{FilePath},
-			[]Formats{FilePath},
+			[]Format{FilePath},
+			[]Format{FilePath},
 			true,
 		},
 		{
-			[]Formats{FilePath, FuncName},
-			[]Formats{FuncName},
+			[]Format{FilePath, FuncName},
+			[]Format{FuncName},
 			true,
 		},
 		{
-			[]Formats{FilePath, FuncName},
-			[]Formats{LineNumber},
+			[]Format{FilePath, FuncName},
+			[]Format{LineNumber},
 			false,
 		},
 		{
-			[]Formats{FuncName, LineNumber, FuncName},
-			[]Formats{LineNumber, FilePath},
+			[]Format{FuncName, LineNumber, FuncName},
+			[]Format{LineNumber, FilePath},
 			true,
 		},
 		{
-			[]Formats{FuncName, LineNumber, FuncName, None},
-			[]Formats{LineNumber, FilePath},
+			[]Format{FuncName, LineNumber, FuncName},
+			[]Format{FilePath, FilePath, LineNumber, FilePath},
 			true,
 		},
 		{
-			[]Formats{FilePath, FuncName},
-			[]Formats{LineNumber, FilePath},
+			[]Format{FilePath, FuncName},
+			[]Format{LineNumber, FilePath},
 			true,
 		},
 	}
@@ -355,6 +396,86 @@ func TestFormatsAny(t *testing.T) {
 		var f Formats
 		f.Set(s.def...)
 		if ok, _ := f.Any(s.value...); ok != s.result {
+			t.Errorf("test for %d is failed, "+
+				"expected %t but %t", i, s.result, ok)
+		}
+	}
+}
+
+// TestFormatsFilePath tests Formats.FilePath method.
+func TestFormatsFilePath(t *testing.T) {
+	type test struct {
+		value  Formats
+		result bool
+	}
+
+	var tests = []test{
+		{Formats(FilePath), true},
+		{Formats(FuncName), false},
+		{Formats(LineNumber), false},
+		{Formats(FilePath + FuncName), true},
+		{Formats(FuncName + LineNumber), false},
+		{Formats(maxFormatsValue + 1), false},
+		{None, false},
+		{0, false},
+	}
+
+	for i, s := range tests {
+		if ok, _ := s.value.FilePath(); ok != s.result {
+			t.Errorf("test for %d is failed, "+
+				"expected %t but %t", i, s.result, ok)
+		}
+	}
+}
+
+// TestFormatsFuncName tests Formats.FuncName method.
+func TestFormatsFuncName(t *testing.T) {
+	type test struct {
+		value  Formats
+		result bool
+	}
+
+	var tests = []test{
+		{Formats(FilePath), false},
+		{Formats(FuncName), true},
+		{Formats(LineNumber), false},
+		{Formats(FilePath + FuncName), true},
+		{Formats(FuncName + LineNumber), true},
+		{Formats(FilePath + LineNumber), false},
+		{Formats(maxFormatsValue + 1), false},
+		{None, false},
+		{0, false},
+	}
+
+	for i, s := range tests {
+		if ok, _ := s.value.FuncName(); ok != s.result {
+			t.Errorf("test for %d is failed, "+
+				"expected %t but %t", i, s.result, ok)
+		}
+	}
+}
+
+// TestFormatsLineNumber tests Formats.LineNumber method.
+func TestFormatsLineNumber(t *testing.T) {
+	type test struct {
+		value  Formats
+		result bool
+	}
+
+	var tests = []test{
+		{Formats(FilePath), false},
+		{Formats(FuncName), false},
+		{Formats(LineNumber), true},
+		{Formats(FilePath + FuncName), false},
+		{Formats(FuncName + LineNumber), true},
+		{Formats(LineNumber + FilePath), true},
+		{Formats(maxFormatsValue + 1), false},
+		{None, false},
+		{0, false},
+	}
+
+	for i, s := range tests {
+		if ok, _ := s.value.LineNumber(); ok != s.result {
 			t.Errorf("test for %d is failed, "+
 				"expected %t but %t", i, s.result, ok)
 		}

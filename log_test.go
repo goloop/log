@@ -1,5 +1,179 @@
 package log
 
+import (
+	"bytes"
+	"fmt"
+	"strings"
+	"testing"
+)
+
+const (
+	testSkip     = 3
+	testSkipSeek = 1
+)
+
+// TestEcho tests Log.echo method.
+func TestEcho(t *testing.T) {
+	type test struct {
+		level   Level
+		levels  []Level
+		formats []Format
+		data    []interface{}
+	}
+
+	var tests = []test{
+		{
+			Error,
+			[]Level{Info, Debug, Trace},
+			[]Format{FilePath},
+			[]interface{}{"1", "2", "3"},
+		},
+		{
+			Info,
+			[]Level{Info, Debug, Trace},
+			[]Format{FilePath, FuncName, LineNumber},
+			[]interface{}{"1", "2", "3"},
+		},
+		{
+			Debug,
+			[]Level{Info, Debug, Trace},
+			[]Format{FuncName},
+			[]interface{}{"1", "2", "3"},
+		},
+	}
+
+	for i, s := range tests {
+		var buf = new(bytes.Buffer)
+		l, _ := New(s.levels...)
+		l.skip += testSkipSeek
+		l.Formats.Set(s.formats...)
+		l.echo(skip, s.level, buf, s.data...)
+
+		exp := ""
+		res := buf.String()
+		ss := getStackSlice(testSkip)
+
+		if ok, _ := l.Levels.All(s.level); ok {
+			res = res[19:]
+			exp = getPrefix(s.level, l.Formats, ss) + fmt.Sprint(s.data...)
+		}
+
+		if !strings.HasSuffix(res, exp) {
+			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
+		}
+	}
+}
+
+// TestEchof tests Log.echof method.
+func TestEchof(t *testing.T) {
+	type test struct {
+		level   Level
+		levels  []Level
+		formats []Format
+		data    []interface{}
+		layout  string
+	}
+
+	var tests = []test{
+		{
+			Error,
+			[]Level{Info, Debug, Trace},
+			[]Format{FilePath},
+			[]interface{}{"1", "2", "3"},
+			"%s + %s - %s",
+		},
+		{
+			Info,
+			[]Level{Info, Debug, Trace},
+			[]Format{FilePath, FuncName, LineNumber},
+			[]interface{}{"1", "2", "3"},
+			"%s / %s + %s",
+		},
+		{
+			Debug,
+			[]Level{Info, Debug, Trace},
+			[]Format{FuncName},
+			[]interface{}{"1", "2", "3"},
+			"%s * %s + %s",
+		},
+	}
+
+	for i, s := range tests {
+		var buf = new(bytes.Buffer)
+		l, _ := New(s.levels...)
+		l.skip += testSkipSeek
+		l.Formats.Set(s.formats...)
+		l.echof(skip, s.level, buf, s.layout, s.data...)
+
+		exp := ""
+		res := buf.String()
+		ss := getStackSlice(testSkip)
+
+		if ok, _ := l.Levels.All(s.level); ok {
+			res = res[19:]
+			exp = getPrefix(s.level, l.Formats, ss) +
+				fmt.Sprintf(s.layout, s.data...)
+		}
+
+		if !strings.HasSuffix(res, exp) {
+			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
+		}
+	}
+}
+
+// TestEcholn tests Log.echoln method.
+func TestEcholn(t *testing.T) {
+	type test struct {
+		level   Level
+		levels  []Level
+		formats []Format
+		data    []interface{}
+	}
+
+	var tests = []test{
+		{
+			Error,
+			[]Level{Info, Debug, Trace},
+			[]Format{FilePath},
+			[]interface{}{"1", "2", "3"},
+		},
+		{
+			Info,
+			[]Level{Info, Debug, Trace},
+			[]Format{FilePath, FuncName, LineNumber},
+			[]interface{}{"1", "2", "3"},
+		},
+		{
+			Debug,
+			[]Level{Info, Debug, Trace},
+			[]Format{FuncName},
+			[]interface{}{"1", "2", "3"},
+		},
+	}
+
+	for i, s := range tests {
+		var buf = new(bytes.Buffer)
+		l, _ := New(s.levels...)
+		l.skip += testSkipSeek
+		l.Formats.Set(s.formats...)
+		l.echoln(skip, s.level, buf, s.data...)
+
+		exp := ""
+		res := buf.String()
+		ss := getStackSlice(testSkip)
+
+		if ok, _ := l.Levels.All(s.level); ok {
+			res = res[19:]
+			exp = getPrefix(s.level, l.Formats, ss) +
+				fmt.Sprintln(s.data...)
+		}
+
+		if !strings.HasSuffix(res, exp) {
+			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
+		}
+	}
+}
+
 /*
 import (
 	"bytes"

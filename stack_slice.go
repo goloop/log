@@ -5,9 +5,6 @@ import (
 	"strings"
 )
 
-// The skip default stack offset values.
-const skip = 4
-
 // StackSlice contains the top-level trace information
 // where the logging method was called.
 type StackSlice struct {
