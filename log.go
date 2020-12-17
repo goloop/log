@@ -14,28 +14,27 @@ const (
 
 	// None means nothing.
 	None = 0
-
-	// TimestampFormt is default date and time format for a timestamp.
-	TimestampFormat = "01.02.2006 15:04:05"
 )
 
 // New returns new Log object. Accepts zero or more log-level flags
 // as arguments. If logging levels are not specified, all possible
 // log-levels will be activated.
-func New(flags ...Level) (*Log, error) {
+func New(flags ...LevelFlag) (*Log, error) {
 	var log = Log{
-		Writer:          os.Stdout,
-		TimestampFormat: TimestampFormat,
-		Formats:         Formats(None),
-		Levels:          Levels(None),
-		FatalStatusCode: 1,
-		skip:            skip,
+		skip:   skip,
+		Writer: os.Stdout,
+		Config: &Config{
+			TimestampFormat: TimestampFormat,
+			Formats:         FormatConfig(None),
+			Levels:          LevelConfig(None),
+			FatalStatusCode: 1,
+		},
 	}
 
 	if len(flags) > 0 {
-		log.Levels.Set(flags...)
+		log.Config.Levels.Set(flags...)
 	} else {
-		log.Levels.Set(Panic, Fatal, Error, Warn, Info, Debug, Trace)
+		log.Config.Levels.Set(Panic, Fatal, Error, Warn, Info, Debug, Trace)
 	}
 
 	return &log, nil
@@ -43,43 +42,29 @@ func New(flags ...Level) (*Log, error) {
 
 // Log is the logger object.
 type Log struct {
+	// The skip is default stack offset.
+	skip int
+
 	// Writer is the message receiver object (os.Stdout by default).
 	Writer io.Writer
 
-	// TimestampFormat defines the time and date format for the
-	// timestamp in the log message.
-	TimestampFormat string
-
-	// Formats is the flag-holder where flags responsible for
-	// formatting the log message prefix.
-	Formats Formats
-
-	// Levels is the flag-holder where flags responsible for
-	// levels of the logging: Panic, Fatal, Error, Warn, Info etc.
-	Levels Levels
-
-	// FatalStatusCode is an exit code when calling the Fatal method.
-	// Default - 1. If the code is <= 0, the forced exit will not occur.
-	FatalStatusCode int
-
-	// The skip is default stack offset.
-	skip int
+	Config *Config
 }
 
 // The echo method creates a message of the fmt.Fprint format.
 // It is used as a base for all levels of logging in the fmt.Fprint format.
-func (l *Log) echo(skip int, level Level, w io.Writer,
+func (l *Log) echo(skip int, level LevelFlag, w io.Writer,
 	a ...interface{}) (n int, err error) {
 	var ss = getStackSlice(skip)
 
 	// If the level is not supported.
-	if v, err := l.Levels.Has(level); !v || err != nil {
+	if v, err := l.Config.Levels.Has(level); !v || err != nil {
 		return 0, err
 	}
 
 	// Generate prefix.
-	timestamp := time.Now().Format(l.TimestampFormat)
-	prefix := timestamp + getPrefix(level, l.Formats, ss)
+	timestamp := time.Now().Format(l.Config.TimestampFormat)
+	prefix := timestamp + getPrefix(level, l.Config.Formats, ss)
 	a = append([]interface{}{prefix}, a...)
 
 	return fmt.Fprint(w, a...)
@@ -87,37 +72,37 @@ func (l *Log) echo(skip int, level Level, w io.Writer,
 
 // The echof method creates a message of the fmt.Fprintf format.
 // It is used as a base for all levels of logging in the fmt.Fprintf format.
-func (l *Log) echof(skip int, level Level, w io.Writer, format string,
+func (l *Log) echof(skip int, level LevelFlag, w io.Writer, format string,
 	a ...interface{}) (n int, err error) {
 	var ss = getStackSlice(skip)
 
 	// If the level is not supported.
-	if v, err := l.Levels.Has(level); !v || err != nil {
+	if v, err := l.Config.Levels.Has(level); !v || err != nil {
 		return 0, err
 	}
 
 	// Generate log prefix.
-	timestamp := time.Now().Format(l.TimestampFormat)
-	prefix := timestamp + getPrefix(level, l.Formats, ss) + format
+	timestamp := time.Now().Format(l.Config.TimestampFormat)
+	prefix := timestamp + getPrefix(level, l.Config.Formats, ss) + format
 
 	return fmt.Fprintf(w, prefix, a...)
 }
 
 // The echoln method creates a message of the fmt.Fprintln format.
 // It is used as a base for all levels of logging in the fmt.Fprintln format.
-func (l *Log) echoln(skip int, level Level, w io.Writer,
+func (l *Log) echoln(skip int, level LevelFlag, w io.Writer,
 	a ...interface{}) (n int, err error) {
 	var ss = getStackSlice(skip)
 
 	// If the level is not supported.
-	if v, err := l.Levels.Has(level); !v || err != nil {
+	if v, err := l.Config.Levels.Has(level); !v || err != nil {
 		return 0, err
 	}
 
 	// Generate log prefix.
-	timestamp := time.Now().Format(l.TimestampFormat)
-	prefix := strings.TrimSpace(timestamp + getPrefix(level, l.Formats, ss))
-	//prefix = prefix[:len(prefix)-1] // remove trailing space
+	timestamp := time.Now().Format(l.Config.TimestampFormat)
+	prefix := strings.TrimSpace(timestamp +
+		getPrefix(level, l.Config.Formats, ss))
 	a = append([]interface{}{prefix}, a...)
 
 	return fmt.Fprintln(w, a...)
@@ -125,16 +110,16 @@ func (l *Log) echoln(skip int, level Level, w io.Writer,
 
 // Copy returns copy of the log object.
 func (l *Log) Copy() *Log {
-	var log = Log{
-		Writer:          l.Writer,
-		TimestampFormat: l.TimestampFormat,
-		Levels:          l.Levels,
-		Formats:         l.Formats,
-		FatalStatusCode: l.FatalStatusCode,
-		skip:            l.skip,
+	return &Log{
+		Writer: l.Writer,
+		skip:   l.skip,
+		Config: &Config{
+			TimestampFormat: l.Config.TimestampFormat,
+			Levels:          l.Config.Levels,
+			Formats:         l.Config.Formats,
+			FatalStatusCode: l.Config.FatalStatusCode,
+		},
 	}
-
-	return &log
 }
 
 /*
@@ -184,7 +169,7 @@ type Log struct {
 // Takes zero or more log levels as arguments. If logging levels are not
 // specified, all possible logging levels will be activated, otherwise
 // only the specified logging levels will be activated.
-func New(levels ...Level) (*Log, error) {
+func New(levels ...LevelFlag) (*Log, error) {
 	var log = Log{
 		Writer:          os.Stdout,
 		TimestampFormat: TimestampFormat,
@@ -193,14 +178,14 @@ func New(levels ...Level) (*Log, error) {
 		ShowFileLine:    false,
 		FatalStatusCode: 1,
 
-		levelControl: Levels{},
+		levelControl:.Config.Levels{},
 		skip:         SKIP,
 	}
 
 	if len(levels) > 0 {
-		log.Levels.Set(levels...)
+		log.Config.Levels.Set(levels...)
 	} else {
-		log.Levels.Set(FATAL, ERROR, WARN, INFO, DEBUG, TRACE)
+		log.Config.Levels.Set(FATAL, ERROR, WARN, INFO, DEBUG, TRACE)
 	}
 
 	return &log, nil
@@ -208,12 +193,12 @@ func New(levels ...Level) (*Log, error) {
 
 // The echo method creates a message of the fmt.Fprint format.
 // It is used as a base for all levels of logging in the fmt.Fprint format.
-func (l *Log) echo(skip int, w io.Writer, level Level,
+func (l *Log) echo(skip int, w io.Writer, level LevelFlag,
 	a ...interface{}) (n int, err error) {
 	var trace = getTrace(skip)
 
 	// If the level is not supported.
-	if v := l.Levels[level]; !v {
+	if v := l.Config.Levels[level]; !v {
 		return 0, nil
 	}
 
@@ -227,12 +212,12 @@ func (l *Log) echo(skip int, w io.Writer, level Level,
 
 // The echof method creates a message of the fmt.Fprintf format.
 // It is used as a base for all levels of logging in the fmt.Fprintf format.
-func (l *Log) echof(skip int, w io.Writer, level Level, format string,
+func (l *Log) echof(skip int, w io.Writer, level LevelFlag, format string,
 	a ...interface{}) (n int, err error) {
 	var trace = getTrace(skip)
 
 	// If the level is not supported.
-	if v := l.Levels[level]; !v {
+	if v := l.Config.Levels[level]; !v {
 		return 0, nil
 	}
 
@@ -245,12 +230,12 @@ func (l *Log) echof(skip int, w io.Writer, level Level, format string,
 
 // The echoln method creates a message of the fmt.Fprintln format.
 // It is used as a base for all levels of logging in the fmt.Fprintln format.
-func (l *Log) echoln(skip int, w io.Writer, level Level,
+func (l *Log) echoln(skip int, w io.Writer, level LevelFlag,
 	a ...interface{}) (n int, err error) {
 	var trace = getTrace(skip)
 
 	// If the level is not supported.
-	if v := l.Levels[level]; !v {
+	if v := l.Config.Levels[level]; !v {
 		return 0, nil
 	}
 
@@ -268,7 +253,7 @@ func (l *Log) Copy() *Log {
 	var log = Log{
 		Writer:          l.Writer,
 		TimestampFormat: l.TimestampFormat,
-		Levels:          l.Levels,
+	.Config.Levels:          l.Config.Levels,
 		ShowFilePath:    l.ShowFilePath,
 		ShowFuncName:    l.ShowFuncName,
 		ShowFileLine:    l.ShowFileLine,
@@ -293,7 +278,7 @@ func (l *Log) Display(showFilePath, showFuncName, showFileLine bool) {
 // with status - 1.
 func (l *Log) Ffatal(w io.Writer, a ...interface{}) {
 	l.echo(l.skip, w, FATAL, a...)
-	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
+	if l.Config.Levels.All(FATAL) && l.FatalStatusCode > 0 {
 		os.Exit(l.FatalStatusCode)
 	}
 }
@@ -304,7 +289,7 @@ func (l *Log) Ffatal(w io.Writer, a ...interface{}) {
 // program with status - 1.
 func (l *Log) Ffatalf(w io.Writer, format string, a ...interface{}) {
 	l.echof(l.skip, w, FATAL, format, a...)
-	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
+	if l.Config.Levels.All(FATAL) && l.FatalStatusCode > 0 {
 		os.Exit(l.FatalStatusCode)
 	}
 }
@@ -315,7 +300,7 @@ func (l *Log) Ffatalf(w io.Writer, format string, a ...interface{}) {
 // program with status - 1.
 func (l *Log) Ffatalln(w io.Writer, a ...interface{}) {
 	l.echoln(l.skip, w, FATAL, a...)
-	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
+	if l.Config.Levels.All(FATAL) && l.FatalStatusCode > 0 {
 		os.Exit(l.FatalStatusCode)
 	}
 }
@@ -326,7 +311,7 @@ func (l *Log) Ffatalln(w io.Writer, a ...interface{}) {
 // program with status - 1.
 func (l *Log) Fatal(a ...interface{}) {
 	l.echo(l.skip, l.Writer, FATAL, a...)
-	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
+	if l.Config.Levels.All(FATAL) && l.FatalStatusCode > 0 {
 		os.Exit(l.FatalStatusCode)
 	}
 }
@@ -336,7 +321,7 @@ func (l *Log) Fatal(a ...interface{}) {
 // the program with status - 1.
 func (l *Log) Fatalf(format string, a ...interface{}) {
 	l.echof(l.skip, l.Writer, FATAL, format, a...)
-	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
+	if l.Config.Levels.All(FATAL) && l.FatalStatusCode > 0 {
 		os.Exit(l.FatalStatusCode)
 	}
 }
@@ -347,7 +332,7 @@ func (l *Log) Fatalf(format string, a ...interface{}) {
 // the program with status - 1.
 func (l *Log) Fatalln(a ...interface{}) {
 	l.echoln(l.skip, l.Writer, FATAL, a...)
-	if l.Levels.All(FATAL) && l.FatalStatusCode > 0 {
+	if l.Config.Levels.All(FATAL) && l.FatalStatusCode > 0 {
 		os.Exit(l.FatalStatusCode)
 	}
 }

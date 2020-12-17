@@ -5,7 +5,7 @@ import (
 )
 
 // The getPrefix creates a log-message prefix without timestamp.
-func getPrefix(level Level, formats Formats, ss *StackSlice) string {
+func getPrefix(level LevelFlag, formats FormatConfig, ss *StackSlice) string {
 	var label, path, name, line string
 
 	// Get level name.
