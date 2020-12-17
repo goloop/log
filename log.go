@@ -1,36 +1,41 @@
 package log
 
 import (
+	"fmt"
 	"io"
 	"os"
+	"strings"
+	"time"
 )
 
 const (
-	None            = 0
+	// The skip default stack offset values.
+	skip = 4
+
+	// None means nothing.
+	None = 0
+
+	// TimestampFormt is default date and time format for a timestamp.
 	TimestampFormat = "01.02.2006 15:04:05"
 )
 
-// New returns new Log object.
-// Takes zero or more log levels as arguments. If logging levels are not
-// specified, all possible logging levels will be activated, otherwise
-// only the specified logging levels will be activated.
-func New(levels ...Levels) (*Log, error) {
+// New returns new Log object. Accepts zero or more log-level flags
+// as arguments. If logging levels are not specified, all possible
+// log-levels will be activated.
+func New(flags ...Level) (*Log, error) {
 	var log = Log{
 		Writer:          os.Stdout,
 		TimestampFormat: TimestampFormat,
-		ShowFilePath:    false,
-		ShowFuncName:    false,
-		ShowFileLine:    false,
+		Formats:         Formats(None),
+		Levels:          Levels(None),
 		FatalStatusCode: 1,
-
-		levelControl: Levels{},
-		skip:         SKIP,
+		skip:            skip,
 	}
 
-	if len(levels) > 0 {
-		log.Levels.Set(levels...)
+	if len(flags) > 0 {
+		log.Levels.Set(flags...)
 	} else {
-		log.Levels.Set(FATAL, ERROR, WARN, INFO, DEBUG, TRACE)
+		log.Levels.Set(Panic, Fatal, Error, Warn, Info, Debug, Trace)
 	}
 
 	return &log, nil
@@ -53,8 +58,83 @@ type Log struct {
 	// levels of the logging: Panic, Fatal, Error, Warn, Info etc.
 	Levels Levels
 
+	// FatalStatusCode is an exit code when calling the Fatal method.
+	// Default - 1. If the code is <= 0, the forced exit will not occur.
+	FatalStatusCode int
+
 	// The skip is default stack offset.
 	skip int
+}
+
+// The echo method creates a message of the fmt.Fprint format.
+// It is used as a base for all levels of logging in the fmt.Fprint format.
+func (l *Log) echo(skip int, level Level, w io.Writer,
+	a ...interface{}) (n int, err error) {
+	var ss = getStackSlice(skip)
+
+	// If the level is not supported.
+	if v, err := l.Levels.Has(level); !v || err != nil {
+		return 0, err
+	}
+
+	// Generate prefix.
+	timestamp := time.Now().Format(l.TimestampFormat)
+	prefix := timestamp + getPrefix(level, l.Formats, ss)
+	a = append([]interface{}{prefix}, a...)
+
+	return fmt.Fprint(w, a...)
+}
+
+// The echof method creates a message of the fmt.Fprintf format.
+// It is used as a base for all levels of logging in the fmt.Fprintf format.
+func (l *Log) echof(skip int, level Level, w io.Writer, format string,
+	a ...interface{}) (n int, err error) {
+	var ss = getStackSlice(skip)
+
+	// If the level is not supported.
+	if v, err := l.Levels.Has(level); !v || err != nil {
+		return 0, err
+	}
+
+	// Generate log prefix.
+	timestamp := time.Now().Format(l.TimestampFormat)
+	prefix := timestamp + getPrefix(level, l.Formats, ss) + format
+
+	return fmt.Fprintf(w, prefix, a...)
+}
+
+// The echoln method creates a message of the fmt.Fprintln format.
+// It is used as a base for all levels of logging in the fmt.Fprintln format.
+func (l *Log) echoln(skip int, level Level, w io.Writer,
+	a ...interface{}) (n int, err error) {
+	var ss = getStackSlice(skip)
+
+	// If the level is not supported.
+	if v, err := l.Levels.Has(level); !v || err != nil {
+		return 0, err
+	}
+
+	// Generate log prefix.
+	timestamp := time.Now().Format(l.TimestampFormat)
+	prefix := strings.TrimSpace(timestamp + getPrefix(level, l.Formats, ss))
+	//prefix = prefix[:len(prefix)-1] // remove trailing space
+	a = append([]interface{}{prefix}, a...)
+
+	return fmt.Fprintln(w, a...)
+}
+
+// Copy returns copy of the log object.
+func (l *Log) Copy() *Log {
+	var log = Log{
+		Writer:          l.Writer,
+		TimestampFormat: l.TimestampFormat,
+		Levels:          l.Levels,
+		Formats:         l.Formats,
+		FatalStatusCode: l.FatalStatusCode,
+		skip:            l.skip,
+	}
+
+	return &log
 }
 
 /*
