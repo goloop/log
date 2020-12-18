@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"strings"
 )
 
 // The getPrefix creates a log-message prefix without timestamp.
@@ -30,5 +31,6 @@ func getPrefix(level LevelFlag, config *Config, ss *StackSlice) string {
 	}
 
 	// Generate prefix.
-	return config.SpaceBetweenCells + label + path + name + line
+	r := config.SpaceBetweenCells + label + path + name + line
+	return strings.TrimSuffix(r, config.SpaceBetweenCells) + " "
 }
