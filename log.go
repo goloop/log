@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -102,10 +101,9 @@ func (l *Log) echoln(skip int, level LevelFlag, w io.Writer,
 
 	// Generate log prefix.
 	timestamp := time.Now().Format(l.Config.TimestampFormat)
-	prefix := strings.TrimSpace(timestamp + getPrefix(level, l.Config, ss))
-	a = append([]interface{}{prefix}, a...)
+	prefix := timestamp + getPrefix(level, l.Config, ss)
 
-	return fmt.Fprintln(w, a...)
+	return fmt.Fprint(w, prefix+fmt.Sprintln(a...))
 }
 
 // Copy returns copy of the log object.
