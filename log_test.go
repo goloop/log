@@ -12,6 +12,42 @@ const (
 	testSkipSeek = 1
 )
 
+// TestNew tests Log.New method.
+func TestNew(t *testing.T) {
+	var (
+		log *Log
+		err error
+	)
+
+	// Create log with custom leveles.
+	log, err = New(Info, Debug)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if ok, _ := log.Config.Levels.All(Info, Debug); !ok {
+		t.Error("the Info and Debug levels must be active")
+	}
+
+	if ok, _ := log.Config.Levels.All(Info, Error); ok {
+		t.Error("the Error level shouldn't be active")
+	}
+
+	// Create log with defaults leveles.
+	log, err = New()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if ok, _ := log.Config.Levels.All(Info, Debug); !ok {
+		t.Error("the Info and Debug levels must be active")
+	}
+
+	if ok, _ := log.Config.Levels.All(Panic, Fatal, Error, Warn); !ok {
+		t.Error("all log levels must be set")
+	}
+}
+
 // TestCopy tests Log.Copy method.
 func TestCopy(t *testing.T) {
 	var log, err = New(Info, Debug)

@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 1.1.4*
+*Version: 1.1.5*
 
 
 # log
@@ -57,26 +57,28 @@ To install this module use `go get` as:
 
 To use this module import it as:
 
-    package main
+        package main
 
-    import (
-        "github.com/goloop/log"
-    )
+        import (
+            "github.com/goloop/log"
+        )
 
-    type App struct {
-        Log *log.Log
-    }
+        type App struct {
+            Log *log.Log
+        }
 
-    func main() {
-        var app = &App{}
-        app.Log, _ = log.New()
+        func main() {
+            var app = &App{}
+            app.Log, _ = log.New()
 
-        app.Log.Config.Levels.Delete(log.Trace)
+    		app.Log.Config.Levels.Delete(log.Trace)
+    		app.Log.Config.Formats.Set(log.FuncName, log.LineNumber)
+    		app.Log.Config.Preifx.LevelFormat = "[%s]"
 
-        app.Log.Debugln("This information will be shown on the screen")
-        app.Log.Tracef("%s\n%s\n", "Trace level was deactivated,",
-            "this message willn't be displayed!")
-    }
+            app.Log.Debugln("This information will be shown on the screen")
+            app.Log.Tracef("%s\n%s\n", "Trace level was deactivated,",
+                "this message willn't be displayed!")
+        }
 
 
 ## Usage
