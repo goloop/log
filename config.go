@@ -16,7 +16,7 @@ const (
 
 	// LevelFormat is default value of the format string
 	// of the log level substring.
-	LevelFormat = "" // "[%s]"
+	LevelFormat = "%s"
 )
 
 // PrefixConfig is config type for the log message prefix.

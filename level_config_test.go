@@ -41,7 +41,7 @@ func TestLevelConfigIsValid(t *testing.T) {
 		{LevelConfig(Error), true},
 		{LevelConfig(Panic + Panic), true},
 		{LevelConfig(Panic + Panic + Error), true},
-		{LevelConfig(maxLevelConfig + 1), false},
+		{maxLevelConfig + 1, false},
 		{None, true},
 		{0, true},
 	}
@@ -416,7 +416,7 @@ func TestLevelConfigPanic(t *testing.T) {
 		{LevelConfig(Error), false},
 		{LevelConfig(Panic + Fatal), true},
 		{LevelConfig(Fatal + Error), false},
-		{LevelConfig(maxLevelConfig + 1), false},
+		{maxLevelConfig + 1, false},
 		{None, false},
 		{0, false},
 	}
@@ -443,7 +443,7 @@ func TestLevelConfigFatal(t *testing.T) {
 		{LevelConfig(Panic + Fatal), true},
 		{LevelConfig(Fatal + Error), true},
 		{LevelConfig(Panic + Error), false},
-		{LevelConfig(maxLevelConfig + 1), false},
+		{maxLevelConfig + 1, false},
 		{None, false},
 		{0, false},
 	}
@@ -470,7 +470,7 @@ func TestLevelConfigError(t *testing.T) {
 		{LevelConfig(Panic + Fatal), false},
 		{LevelConfig(Fatal + Error), true},
 		{LevelConfig(Error + Panic), true},
-		{LevelConfig(maxLevelConfig + 1), false},
+		{maxLevelConfig + 1, false},
 		{None, false},
 		{0, false},
 	}
@@ -497,7 +497,7 @@ func TestLevelConfigInfo(t *testing.T) {
 		{LevelConfig(Panic + Fatal + Debug), false},
 		{LevelConfig(Fatal + Error + Info), true},
 		{LevelConfig(Error + Info + Panic), true},
-		{LevelConfig(maxLevelConfig + 1), false},
+		{maxLevelConfig + 1, false},
 		{None, false},
 		{0, false},
 	}
@@ -524,7 +524,7 @@ func TestLevelConfigDebug(t *testing.T) {
 		{LevelConfig(Panic + Fatal + Debug), true},
 		{LevelConfig(Fatal + Error + Info), false},
 		{LevelConfig(Error + Info + Panic + Debug), true},
-		{LevelConfig(maxLevelConfig + 1), false},
+		{maxLevelConfig + 1, false},
 		{None, false},
 		{0, false},
 	}
@@ -551,7 +551,7 @@ func TestLevelConfigTrace(t *testing.T) {
 		{LevelConfig(Trace + Fatal + Debug), true},
 		{LevelConfig(Fatal + Error + Info), false},
 		{LevelConfig(Error + Trace + Panic + Debug), true},
-		{LevelConfig(maxLevelConfig + 1), false},
+		{maxLevelConfig + 1, false},
 		{None, false},
 		{0, false},
 	}

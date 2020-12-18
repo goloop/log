@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 1.1.3*
+*Version: 1.1.4*
 
 
 # log
@@ -96,7 +96,7 @@ To use this module import it as:
 
     	// LevelFormat is default value of the format string
     	// of the log level substring.
-    	LevelFormat = "" // "[%s]"
+    	LevelFormat = "%s"
     )
 
 TimestampFormt is default date and time format for a timestamp.
@@ -117,7 +117,7 @@ TimestampFormt is default date and time format for a timestamp.
     	Trace: "TRACE",
     }
 
-The LevelFlagNames associates human-readable headings with log levels.
+LevelNames associates human-readable headings with log levels.
 
 #### type Config
 
@@ -415,7 +415,7 @@ Log is the logger object.
 
 #### func  New
 
-    func New(flags ...LevelFlag) (*Log, error)
+    func New(flags ...LevelFlag) (log *Log, err error)
 
 New returns new Log object. Accepts zero or more log-level flags as arguments.
 If logging levels are not specified, all possible log-levels will be activated.

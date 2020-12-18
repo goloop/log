@@ -18,8 +18,8 @@ const (
 // New returns new Log object. Accepts zero or more log-level flags
 // as arguments. If logging levels are not specified, all possible
 // log-levels will be activated.
-func New(flags ...LevelFlag) (*Log, error) {
-	var log = Log{
+func New(flags ...LevelFlag) (log *Log, err error) {
+	log = &Log{
 		skip:   skip,
 		Writer: os.Stdout,
 		Config: &Config{
@@ -35,12 +35,13 @@ func New(flags ...LevelFlag) (*Log, error) {
 	}
 
 	if len(flags) > 0 {
-		log.Config.Levels.Set(flags...)
+		_, err = log.Config.Levels.Set(flags...)
 	} else {
-		log.Config.Levels.Set(Panic, Fatal, Error, Warn, Info, Debug, Trace)
+		_, err = log.Config.Levels.Set(Panic, Fatal, Error,
+			Warn, Info, Debug, Trace)
 	}
 
-	return &log, nil
+	return log, err
 }
 
 // Log is the logger object.
