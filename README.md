@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 1.1.0*
+*Version: 1.1.1*
 
 
 # log
@@ -82,16 +82,26 @@ To use this module import it as:
 ## Usage
 
     const (
-    	FatalStatusCode   = 1
-    	TimestampFormat   = "01.02.2006 15:04:05"
+    	// FatalStatusCode is default value of the an exit code when
+    	// calling the Fatal method.
+    	FatalStatusCode = 1
+
+    	// TimestampFormat default value of the time and date format
+    	// for the timestamp in the log message.
+    	TimestampFormat = "01.02.2006 15:04:05"
+
+    	// SpaceBetweenCells is default value of the string that is set
+    	// between elements of information blocks in the logging prefix.
     	SpaceBetweenCells = " "
-    	LevelFormat       = "" // "[%s]"
+
+    	// LevelFormat is default value of the format string
+    	// of the log level substring.
+    	LevelFormat = "" // "[%s]"
     )
 
 TimestampFormt is default date and time format for a timestamp.
 
     const (
-
     	// None means nothing.
     	None = 0
     )
