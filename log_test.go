@@ -175,49 +175,52 @@ func TestEcholn(t *testing.T) {
 	}
 }
 
-/*
-import (
-	"bytes"
-	"fmt"
-	"strings"
-	"testing"
-)
-
-// TestEcho tests echo method.
-func TestEcho(t *testing.T) {
+// TestFpanic tests Fpanic method.
+func TestFpanic(t *testing.T) {
 	type test struct {
-		level LevelFlag
-		data  []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{DEBUG, []interface{}{"1 ", "2"}, true, true, true},
-		{ERROR, []interface{}{"1 ", "2"}, true, false, false},
-		{FATAL, []interface{}{"1 ", "2"}, false, false, true},
-		{INFO, []interface{}{"1 ", "2"}, false, false, false},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Panic, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Panic, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New(DEBUG, ERROR, FATAL)
-	l.skip = 5
+	// Ignore panic for tests.
+	defer func() { recover() }()
+
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
-		l.echo(4, buf, s.level, s.data...)
 
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
+		l.Fpanic(buf, s.data...)
+
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, s.level, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(s.level) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Panic); ok {
+			res = res[19:]
+			exp = getPrefix(Panic, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -226,43 +229,56 @@ func TestEcho(t *testing.T) {
 	}
 }
 
-// TestEchof tests echof method.
-func TestEchof(t *testing.T) {
+// TestFpanicf tests Fpanicf method.
+func TestFpanicf(t *testing.T) {
 	type test struct {
-		level  LevelFlag
-		format string
-		data   []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
 	}
 
 	var tests = []test{
-		{DEBUG, "%s-%s", []interface{}{"1", "2"}, true, true, true},
-		{ERROR, "%s:%s", []interface{}{"1", "2"}, true, false, false},
-		{FATAL, "%s=%s", []interface{}{"1", "2"}, false, false, true},
-		{INFO, "%s=%s", []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Panic, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Panic, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New(DEBUG, ERROR, FATAL)
-	l.skip = 5
+	// Ignore panic for tests.
+	defer func() { recover() }()
+
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
-		l.echof(4, buf, s.level, s.format, s.data...)
 
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
+		l.Fpanicf(buf, s.format, s.data...)
+
+		exp := ""
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, s.level,
-			s.showFilePath, s.showFuncName, s.showFileLine)
-		exp := fmt.Sprintf(prefix, s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(s.level) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Panic); ok {
+			res = res[19:]
+			exp = getPrefix(Panic, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -271,40 +287,221 @@ func TestEchof(t *testing.T) {
 	}
 }
 
-// TestEcholn tests echoln method.
-func TestEcholn(t *testing.T) {
+// TestFpanicln tests Fpanicln method.
+func TestFpanicln(t *testing.T) {
 	type test struct {
-		level LevelFlag
-		data  []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{DEBUG, []interface{}{"1", "2"}, true, true, true},
-		{ERROR, []interface{}{"1", "2"}, true, false, false},
-		{FATAL, []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Panic, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Panic, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
+	// Ignore panic for tests.
+	defer func() { recover() }()
+
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
-		l.echoln(4, buf, s.level, s.data...)
 
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
+		l.Fpanicln(buf, s.data...)
+
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, s.level, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(s.level) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Panic); ok {
+			res = res[19:]
+			exp = getPrefix(Panic, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
+		}
+
+		if !strings.HasSuffix(res, exp) {
+			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
+		}
+	}
+}
+
+// TestPanic tests Panic method.
+func TestPanic(t *testing.T) {
+	type test struct {
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+	}
+
+	var tests = []test{
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Panic, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Panic, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+	}
+
+	// Ignore panic for tests.
+	defer func() { recover() }()
+
+	for i, s := range tests {
+		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
+		l.Writer = buf
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
+		l.Panic(s.data...)
+
+		exp := ""
+		res := buf.String()
+		ss := getStackSlice(testSkip)
+
+		if ok, _ := l.Config.Levels.Has(Panic); ok {
+			res = res[19:]
+			exp = getPrefix(Panic, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
+		}
+
+		if !strings.HasSuffix(res, exp) {
+			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
+		}
+	}
+}
+
+// TestPanicf tests Panicf method.
+func TestPanicf(t *testing.T) {
+	type test struct {
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
+	}
+
+	var tests = []test{
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Panic, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Panic, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+	}
+
+	// Ignore panic for tests.
+	defer func() { recover() }()
+
+	for i, s := range tests {
+		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
+		l.Writer = buf
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
+		l.Panicf(s.format, s.data...)
+
+		exp := ""
+		res := buf.String()
+		ss := getStackSlice(testSkip)
+
+		if ok, _ := l.Config.Levels.Has(Panic); ok {
+			res = res[19:]
+			exp = getPrefix(Panic, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
+		}
+
+		if !strings.HasSuffix(res, exp) {
+			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
+		}
+	}
+}
+
+// TestPanicln tests Panicln method.
+func TestPanicln(t *testing.T) {
+	type test struct {
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+	}
+
+	var tests = []test{
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Panic, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Panic, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+	}
+
+	// Ignore panic for tests.
+	defer func() { recover() }()
+
+	for i, s := range tests {
+		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
+		l.Writer = buf
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
+		l.Panicln(s.data...)
+
+		exp := ""
+		res := buf.String()
+		ss := getStackSlice(testSkip)
+
+		if ok, _ := l.Config.Levels.Has(Panic); ok {
+			res = res[19:]
+			exp = getPrefix(Panic, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -316,37 +513,47 @@ func TestEcholn(t *testing.T) {
 // TestFfatal tests Ffatal method.
 func TestFfatal(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1 ", "2"}, true, true, true},
-		{[]interface{}{"1 ", "2"}, true, false, false},
-		{[]interface{}{"1 ", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Fatal, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Fatal, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
-		l.FatalStatusCode = 0
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.Config.FatalStatusCode = 0 // ignore force exit for tests
+		l.skip = 5
+
 		l.Ffatal(buf, s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, FATAL, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(FATAL) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Fatal); ok {
+			res = res[19:]
+			exp = getPrefix(Fatal, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -358,39 +565,51 @@ func TestFfatal(t *testing.T) {
 // TestFfatalf tests Ffatalf method.
 func TestFfatalf(t *testing.T) {
 	type test struct {
-		format string
-		data   []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
 	}
 
 	var tests = []test{
-		{"%s-%s", []interface{}{"1", "2"}, true, true, true},
-		{"%s %s", []interface{}{"1", "2"}, true, false, false},
-		{"%s+%s", []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Fatal, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Fatal, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.FatalStatusCode = 0
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.Config.FatalStatusCode = 0 // ignore force exit for tests
+		l.skip = 5
+
 		l.Ffatalf(buf, s.format, s.data...)
 
+		exp := ""
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, FATAL,
-			s.showFilePath, s.showFuncName, s.showFileLine)
-		exp := fmt.Sprintf(prefix, s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(FATAL) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Fatal); ok {
+			res = res[19:]
+			exp = getPrefix(Fatal, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -402,37 +621,47 @@ func TestFfatalf(t *testing.T) {
 // TestFfatalln tests Ffatalln method.
 func TestFfatalln(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1", "2"}, true, true, true},
-		{[]interface{}{"1", "2"}, true, false, false},
-		{[]interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Fatal, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Fatal, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.FatalStatusCode = 0
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.Config.FatalStatusCode = 0 // ignore force exit for tests
+		l.skip = 5
+
 		l.Ffatalln(buf, s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, FATAL, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(FATAL) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Fatal); ok {
+			res = res[19:]
+			exp = getPrefix(Fatal, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -444,38 +673,48 @@ func TestFfatalln(t *testing.T) {
 // TestFatal tests Fatal method.
 func TestFatal(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1 ", "2"}, true, true, true},
-		{[]interface{}{"1 ", "2"}, true, false, false},
-		{[]interface{}{"1 ", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Fatal, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Fatal, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.FatalStatusCode = 0
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.Config.FatalStatusCode = 0 // ignore force exit for tests
+		l.skip = 5
+
 		l.Fatal(s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, FATAL, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(FATAL) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Fatal); ok {
+			res = res[19:]
+			exp = getPrefix(Fatal, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -487,40 +726,52 @@ func TestFatal(t *testing.T) {
 // TestFatalf tests Fatalf method.
 func TestFatalf(t *testing.T) {
 	type test struct {
-		format string
-		data   []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
 	}
 
 	var tests = []test{
-		{"%s-%s", []interface{}{"1", "2"}, true, true, true},
-		{"%s %s", []interface{}{"1", "2"}, true, false, false},
-		{"%s+%s", []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Fatal, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Fatal, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.FatalStatusCode = 0
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.Config.FatalStatusCode = 0 // ignore force exit for tests
+		l.skip = 5
+
 		l.Fatalf(s.format, s.data...)
 
+		exp := ""
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, FATAL,
-			s.showFilePath, s.showFuncName, s.showFileLine)
-		exp := fmt.Sprintf(prefix, s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(FATAL) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Fatal); ok {
+			res = res[19:]
+			exp = getPrefix(Fatal, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -532,38 +783,48 @@ func TestFatalf(t *testing.T) {
 // TestFatalln tests Fatalln method.
 func TestFatalln(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1", "2"}, true, true, true},
-		{[]interface{}{"1", "2"}, true, false, false},
-		{[]interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Fatal, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Fatal, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.FatalStatusCode = 0
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.Config.FatalStatusCode = 0 // ignore force exit for tests
+		l.skip = 5
+
 		l.Fatalln(s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, FATAL, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(FATAL) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Fatal); ok {
+			res = res[19:]
+			exp = getPrefix(Fatal, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -575,36 +836,46 @@ func TestFatalln(t *testing.T) {
 // TestFerror tests Ferror method.
 func TestFerror(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1 ", "2"}, true, true, true},
-		{[]interface{}{"1 ", "2"}, true, false, false},
-		{[]interface{}{"1 ", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Error, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Ferror(buf, s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, ERROR, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(ERROR) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Error); ok {
+			res = res[19:]
+			exp = getPrefix(Error, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -616,38 +887,50 @@ func TestFerror(t *testing.T) {
 // TestFerrorf tests Ferrorf method.
 func TestFerrorf(t *testing.T) {
 	type test struct {
-		format string
-		data   []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
 	}
 
 	var tests = []test{
-		{"%s-%s", []interface{}{"1", "2"}, true, true, true},
-		{"%s %s", []interface{}{"1", "2"}, true, false, false},
-		{"%s+%s", []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Error, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Ferrorf(buf, s.format, s.data...)
 
+		exp := ""
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, ERROR,
-			s.showFilePath, s.showFuncName, s.showFileLine)
-		exp := fmt.Sprintf(prefix, s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(ERROR) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Error); ok {
+			res = res[19:]
+			exp = getPrefix(Error, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -659,36 +942,46 @@ func TestFerrorf(t *testing.T) {
 // TestFerrorln tests Ferrorln method.
 func TestFerrorln(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1", "2"}, true, true, true},
-		{[]interface{}{"1", "2"}, true, false, false},
-		{[]interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Error, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Ferrorln(buf, s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, ERROR, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(ERROR) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Error); ok {
+			res = res[19:]
+			exp = getPrefix(Error, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -700,37 +993,47 @@ func TestFerrorln(t *testing.T) {
 // TestError tests Error method.
 func TestError(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1 ", "2"}, true, true, true},
-		{[]interface{}{"1 ", "2"}, true, false, false},
-		{[]interface{}{"1 ", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Error, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Error(s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, ERROR, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(ERROR) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Error); ok {
+			res = res[19:]
+			exp = getPrefix(Error, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -742,39 +1045,51 @@ func TestError(t *testing.T) {
 // TestErrorf tests Errorf method.
 func TestErrorf(t *testing.T) {
 	type test struct {
-		format string
-		data   []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
 	}
 
 	var tests = []test{
-		{"%s-%s", []interface{}{"1", "2"}, true, true, true},
-		{"%s %s", []interface{}{"1", "2"}, true, false, false},
-		{"%s+%s", []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Error, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Errorf(s.format, s.data...)
 
+		exp := ""
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, ERROR,
-			s.showFilePath, s.showFuncName, s.showFileLine)
-		exp := fmt.Sprintf(prefix, s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(ERROR) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Error); ok {
+			res = res[19:]
+			exp = getPrefix(Error, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -786,37 +1101,47 @@ func TestErrorf(t *testing.T) {
 // TestErrorln tests Errorln method.
 func TestErrorln(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1", "2"}, true, true, true},
-		{[]interface{}{"1", "2"}, true, false, false},
-		{[]interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Error, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Errorln(s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, ERROR, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(ERROR) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Error); ok {
+			res = res[19:]
+			exp = getPrefix(Error, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -828,36 +1153,46 @@ func TestErrorln(t *testing.T) {
 // TestFwarn tests Fwarn method.
 func TestFwarn(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1 ", "2"}, true, true, true},
-		{[]interface{}{"1 ", "2"}, true, false, false},
-		{[]interface{}{"1 ", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Warn, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Warn, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Fwarn(buf, s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, WARN, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(WARN) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Warn); ok {
+			res = res[19:]
+			exp = getPrefix(Warn, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -869,38 +1204,50 @@ func TestFwarn(t *testing.T) {
 // TestFwarnf tests Fwarnf method.
 func TestFwarnf(t *testing.T) {
 	type test struct {
-		format string
-		data   []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
 	}
 
 	var tests = []test{
-		{"%s-%s", []interface{}{"1", "2"}, true, true, true},
-		{"%s %s", []interface{}{"1", "2"}, true, false, false},
-		{"%s+%s", []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Warn, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Warn, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Fwarnf(buf, s.format, s.data...)
 
+		exp := ""
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, WARN,
-			s.showFilePath, s.showFuncName, s.showFileLine)
-		exp := fmt.Sprintf(prefix, s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(WARN) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Warn); ok {
+			res = res[19:]
+			exp = getPrefix(Warn, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -912,36 +1259,46 @@ func TestFwarnf(t *testing.T) {
 // TestFwarnln tests Fwarnln method.
 func TestFwarnln(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1", "2"}, true, true, true},
-		{[]interface{}{"1", "2"}, true, false, false},
-		{[]interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Warn, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Warn, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Fwarnln(buf, s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, WARN, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(WARN) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Warn); ok {
+			res = res[19:]
+			exp = getPrefix(Warn, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -953,37 +1310,47 @@ func TestFwarnln(t *testing.T) {
 // TestWarn tests Warn method.
 func TestWarn(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1 ", "2"}, true, true, true},
-		{[]interface{}{"1 ", "2"}, true, false, false},
-		{[]interface{}{"1 ", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Warn, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Warn, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Warn(s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, WARN, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(WARN) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Warn); ok {
+			res = res[19:]
+			exp = getPrefix(Warn, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -995,39 +1362,51 @@ func TestWarn(t *testing.T) {
 // TestWarnf tests Warnf method.
 func TestWarnf(t *testing.T) {
 	type test struct {
-		format string
-		data   []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
 	}
 
 	var tests = []test{
-		{"%s-%s", []interface{}{"1", "2"}, true, true, true},
-		{"%s %s", []interface{}{"1", "2"}, true, false, false},
-		{"%s+%s", []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Warn, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Warn, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Warnf(s.format, s.data...)
 
+		exp := ""
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, WARN,
-			s.showFilePath, s.showFuncName, s.showFileLine)
-		exp := fmt.Sprintf(prefix, s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(WARN) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Warn); ok {
+			res = res[19:]
+			exp = getPrefix(Warn, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1039,37 +1418,47 @@ func TestWarnf(t *testing.T) {
 // TestWarnln tests Warnln method.
 func TestWarnln(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1", "2"}, true, true, true},
-		{[]interface{}{"1", "2"}, true, false, false},
-		{[]interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Warn, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Warn, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Warnln(s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, WARN, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(WARN) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Warn); ok {
+			res = res[19:]
+			exp = getPrefix(Warn, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1081,36 +1470,46 @@ func TestWarnln(t *testing.T) {
 // TestFinfo tests Finfo method.
 func TestFinfo(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1 ", "2"}, true, true, true},
-		{[]interface{}{"1 ", "2"}, true, false, false},
-		{[]interface{}{"1 ", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Info, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Info, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Finfo(buf, s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, INFO, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(INFO) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Info); ok {
+			res = res[19:]
+			exp = getPrefix(Info, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1122,38 +1521,50 @@ func TestFinfo(t *testing.T) {
 // TestFinfof tests Finfof method.
 func TestFinfof(t *testing.T) {
 	type test struct {
-		format string
-		data   []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
 	}
 
 	var tests = []test{
-		{"%s-%s", []interface{}{"1", "2"}, true, true, true},
-		{"%s %s", []interface{}{"1", "2"}, true, false, false},
-		{"%s+%s", []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Info, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Info, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Finfof(buf, s.format, s.data...)
 
+		exp := ""
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, INFO,
-			s.showFilePath, s.showFuncName, s.showFileLine)
-		exp := fmt.Sprintf(prefix, s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(INFO) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Info); ok {
+			res = res[19:]
+			exp = getPrefix(Info, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1165,36 +1576,46 @@ func TestFinfof(t *testing.T) {
 // TestFinfoln tests Finfoln method.
 func TestFinfoln(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1", "2"}, true, true, true},
-		{[]interface{}{"1", "2"}, true, false, false},
-		{[]interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Info, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Info, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Finfoln(buf, s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, INFO, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(INFO) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Info); ok {
+			res = res[19:]
+			exp = getPrefix(Info, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1206,37 +1627,47 @@ func TestFinfoln(t *testing.T) {
 // TestInfo tests Info method.
 func TestInfo(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1 ", "2"}, true, true, true},
-		{[]interface{}{"1 ", "2"}, true, false, false},
-		{[]interface{}{"1 ", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Info, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Info, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Info(s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, INFO, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(INFO) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Info); ok {
+			res = res[19:]
+			exp = getPrefix(Info, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1248,39 +1679,51 @@ func TestInfo(t *testing.T) {
 // TestInfof tests Infof method.
 func TestInfof(t *testing.T) {
 	type test struct {
-		format string
-		data   []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
 	}
 
 	var tests = []test{
-		{"%s-%s", []interface{}{"1", "2"}, true, true, true},
-		{"%s %s", []interface{}{"1", "2"}, true, false, false},
-		{"%s+%s", []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Info, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Info, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Infof(s.format, s.data...)
 
+		exp := ""
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, INFO,
-			s.showFilePath, s.showFuncName, s.showFileLine)
-		exp := fmt.Sprintf(prefix, s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(INFO) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Info); ok {
+			res = res[19:]
+			exp = getPrefix(Info, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1292,37 +1735,47 @@ func TestInfof(t *testing.T) {
 // TestInfoln tests Infoln method.
 func TestInfoln(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1", "2"}, true, true, true},
-		{[]interface{}{"1", "2"}, true, false, false},
-		{[]interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Info, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Info, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Infoln(s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, INFO, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(INFO) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Info); ok {
+			res = res[19:]
+			exp = getPrefix(Info, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1334,36 +1787,46 @@ func TestInfoln(t *testing.T) {
 // TestFdebug tests Fdebug method.
 func TestFdebug(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1 ", "2"}, true, true, true},
-		{[]interface{}{"1 ", "2"}, true, false, false},
-		{[]interface{}{"1 ", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Debug, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Fdebug(buf, s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, DEBUG, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(DEBUG) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Debug); ok {
+			res = res[19:]
+			exp = getPrefix(Debug, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1375,38 +1838,50 @@ func TestFdebug(t *testing.T) {
 // TestFdebugf tests Fdebugf method.
 func TestFdebugf(t *testing.T) {
 	type test struct {
-		format string
-		data   []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
 	}
 
 	var tests = []test{
-		{"%s-%s", []interface{}{"1", "2"}, true, true, true},
-		{"%s %s", []interface{}{"1", "2"}, true, false, false},
-		{"%s+%s", []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Debug, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Fdebugf(buf, s.format, s.data...)
 
+		exp := ""
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, DEBUG,
-			s.showFilePath, s.showFuncName, s.showFileLine)
-		exp := fmt.Sprintf(prefix, s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(DEBUG) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Debug); ok {
+			res = res[19:]
+			exp = getPrefix(Debug, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1418,36 +1893,46 @@ func TestFdebugf(t *testing.T) {
 // TestFdebugln tests Fdebugln method.
 func TestFdebugln(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1", "2"}, true, true, true},
-		{[]interface{}{"1", "2"}, true, false, false},
-		{[]interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Debug, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Fdebugln(buf, s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, DEBUG, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(DEBUG) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Debug); ok {
+			res = res[19:]
+			exp = getPrefix(Debug, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1459,37 +1944,47 @@ func TestFdebugln(t *testing.T) {
 // TestDebug tests Debug method.
 func TestDebug(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1 ", "2"}, true, true, true},
-		{[]interface{}{"1 ", "2"}, true, false, false},
-		{[]interface{}{"1 ", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Debug, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Debug(s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, DEBUG, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(DEBUG) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Debug); ok {
+			res = res[19:]
+			exp = getPrefix(Debug, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1501,39 +1996,51 @@ func TestDebug(t *testing.T) {
 // TestDebugf tests Debugf method.
 func TestDebugf(t *testing.T) {
 	type test struct {
-		format string
-		data   []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
 	}
 
 	var tests = []test{
-		{"%s-%s", []interface{}{"1", "2"}, true, true, true},
-		{"%s %s", []interface{}{"1", "2"}, true, false, false},
-		{"%s+%s", []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Debug, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Debugf(s.format, s.data...)
 
+		exp := ""
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, DEBUG,
-			s.showFilePath, s.showFuncName, s.showFileLine)
-		exp := fmt.Sprintf(prefix, s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(DEBUG) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Debug); ok {
+			res = res[19:]
+			exp = getPrefix(Debug, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1545,37 +2052,47 @@ func TestDebugf(t *testing.T) {
 // TestDebugln tests Debugln method.
 func TestDebugln(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1", "2"}, true, true, true},
-		{[]interface{}{"1", "2"}, true, false, false},
-		{[]interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Debug, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Debugln(s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, DEBUG, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(DEBUG) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Debug); ok {
+			res = res[19:]
+			exp = getPrefix(Debug, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1587,36 +2104,46 @@ func TestDebugln(t *testing.T) {
 // TestFtrace tests Ftrace method.
 func TestFtrace(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1 ", "2"}, true, true, true},
-		{[]interface{}{"1 ", "2"}, true, false, false},
-		{[]interface{}{"1 ", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Trace, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Trace, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Ftrace(buf, s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, TRACE, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(TRACE) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Trace); ok {
+			res = res[19:]
+			exp = getPrefix(Trace, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1628,38 +2155,50 @@ func TestFtrace(t *testing.T) {
 // TestFtracef tests Ftracef method.
 func TestFtracef(t *testing.T) {
 	type test struct {
-		format string
-		data   []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
 	}
 
 	var tests = []test{
-		{"%s-%s", []interface{}{"1", "2"}, true, true, true},
-		{"%s %s", []interface{}{"1", "2"}, true, false, false},
-		{"%s+%s", []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Trace, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Trace, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Ftracef(buf, s.format, s.data...)
 
+		exp := ""
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, TRACE,
-			s.showFilePath, s.showFuncName, s.showFileLine)
-		exp := fmt.Sprintf(prefix, s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(TRACE) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Trace); ok {
+			res = res[19:]
+			exp = getPrefix(Trace, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1671,36 +2210,46 @@ func TestFtracef(t *testing.T) {
 // TestFtraceln tests Ftraceln method.
 func TestFtraceln(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1", "2"}, true, true, true},
-		{[]interface{}{"1", "2"}, true, false, false},
-		{[]interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Trace, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Trace, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+
+		l, _ := New(s.levels...)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Ftraceln(buf, s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, TRACE, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(TRACE) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Trace); ok {
+			res = res[19:]
+			exp = getPrefix(Trace, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1712,37 +2261,47 @@ func TestFtraceln(t *testing.T) {
 // TestTrace tests Trace method.
 func TestTrace(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1 ", "2"}, true, true, true},
-		{[]interface{}{"1 ", "2"}, true, false, false},
-		{[]interface{}{"1 ", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Trace, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Trace, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Trace(s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, TRACE, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprint(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(TRACE) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Trace); ok {
+			res = res[19:]
+			exp = getPrefix(Trace, l.Config.Formats, ss) +
+				fmt.Sprint(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1754,39 +2313,51 @@ func TestTrace(t *testing.T) {
 // TestTracef tests Tracef method.
 func TestTracef(t *testing.T) {
 	type test struct {
-		format string
-		data   []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
+		format  string
 	}
 
 	var tests = []test{
-		{"%s-%s", []interface{}{"1", "2"}, true, true, true},
-		{"%s %s", []interface{}{"1", "2"}, true, false, false},
-		{"%s+%s", []interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Trace, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Trace, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+			"%s %s",
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+			"%s %s",
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Tracef(s.format, s.data...)
 
+		exp := ""
 		res := buf.String()
-		prefix := getPrefix(trace, s.format, l.TimestampFormatFlag, TRACE,
-			s.showFilePath, s.showFuncName, s.showFileLine)
-		exp := fmt.Sprintf(prefix, s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(TRACE) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Trace); ok {
+			res = res[19:]
+			exp = getPrefix(Trace, l.Config.Formats, ss) +
+				fmt.Sprintf(s.format, s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1798,37 +2369,47 @@ func TestTracef(t *testing.T) {
 // TestTraceln tests Traceln method.
 func TestTraceln(t *testing.T) {
 	type test struct {
-		data []interface{}
-
-		showFilePath bool
-		showFuncName bool
-		showFileLine bool
+		data    []interface{}
+		levels  []LevelFlag
+		formats []FormatFlag
 	}
 
 	var tests = []test{
-		{[]interface{}{"1", "2"}, true, true, true},
-		{[]interface{}{"1", "2"}, true, false, false},
-		{[]interface{}{"1", "2"}, false, false, true},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Trace, Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Error, Trace, Debug},
+			[]FormatFlag{FilePath, LineNumber},
+		},
+		{
+			[]interface{}{"1", "2"},
+			[]LevelFlag{Debug},
+			[]FormatFlag{FilePath, FuncName, LineNumber},
+		},
 	}
 
-	trace := getTrace(3)
-	l, _ := New()
-	l.skip = 5
 	for i, s := range tests {
 		var buf = new(bytes.Buffer)
+
+		l, _ := New(s.levels...)
 		l.Writer = buf
-		l.Display(s.showFilePath, s.showFuncName, s.showFileLine)
+		l.Config.Formats.Set(s.formats...)
+		l.skip = 5
+
 		l.Traceln(s.data...)
 
+		exp := ""
 		res := buf.String()
-		exp := getPrefix(trace, "", l.TimestampFormatFlag, TRACE, s.showFilePath,
-			s.showFuncName, s.showFileLine) + fmt.Sprintln(s.data...)
+		ss := getStackSlice(testSkip)
 
-		if l.Config.Levels.All(TRACE) {
-			res = res[20:]
-			exp = exp[20:]
-		} else {
-			exp = "" // if level not supportde
+		if ok, _ := l.Config.Levels.Has(Trace); ok {
+			res = res[19:]
+			exp = getPrefix(Trace, l.Config.Formats, ss) +
+				fmt.Sprintln(s.data...)
 		}
 
 		if !strings.HasSuffix(res, exp) {
@@ -1836,4 +2417,3 @@ func TestTraceln(t *testing.T) {
 		}
 	}
 }
-*/
