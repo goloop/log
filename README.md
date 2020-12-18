@@ -76,110 +76,330 @@ To use this module import it as:
 
 ## Usage
 
-    const SKIP = 4
-
-SKIP default stack offset values.
-
-    const Timestamp = "01.02.2006 15:04:05"
-
-Timestamp is the format for displaying the time stamp in the log message.
-
-#### type Level
-
-    type Level string
-
-
-Level identifies the logging level.
-
     const (
-    	FATAL Level = "FATAL"
-    	ERROR Level = "ERROR"
-    	WARN  Level = "WARNING"
-    	INFO  Level = "INFO"
-    	DEBUG Level = "DEBUG"
-    	TRACE Level = "TRACE"
+
+    	// None means nothing.
+    	None = 0
     )
 
-Allowed log level constants.
 
-#### type Levels
+    const TimestampFormat = "01.02.2006 15:04:05"
 
-    type Levels map[Level]bool
+TimestampFormt is default date and time format for a timestamp.
 
+    var LevelNames = map[LevelFlag]string{
+    	Panic: "PANIC",
+    	Fatal: "FATAL",
+    	Error: "ERROR",
+    	Warn:  "WARNING",
+    	Info:  "INFO",
+    	Debug: "DEBUG",
+    	Trace: "TRACE",
+    }
 
-Levels contains active log levels.
+The LevelFlagNames associates human-readable headings with log levels.
 
-#### func (*Levels) Add
+#### type Config
 
-    func (l *Levels) Add(levels ...Level) []Level
+    type Config struct {
+    	// TimestampFormat defines the time and date format for the
+    	// timestamp in the log message.
+    	TimestampFormat string
 
-Add adds new levels to the list of active logging levels.
+    	// Formats is the flag-holder where flags responsible for
+    	// formatting the log message prefix.
+    	Formats FormatConfig
 
-#### func (*Levels) All
+    	// Levels is the flag-holder where flags responsible for
+    	// levels of the logging: Panic, Fatal, Error, Warn, Info etc.
+    	Levels LevelConfig
 
-    func (l *Levels) All(levels ...Level) bool
-
-All returns true if all logging levels are supported.
-
-#### func (*Levels) Any
-
-    func (l *Levels) Any(levels ...Level) bool
-
-Any returns true if any logging level is supported.
-
-#### func (*Levels) Delete
-
-    func (l *Levels) Delete(levels ...Level) []Level
-
-Delete removes the specified logging levels from the list of active logging
-levels.
-
-#### func (*Levels) Set
-
-    func (l *Levels) Set(levels ...Level) []Level
-
-Set sets active log levels.
-
-#### type Log
-
-    type Log struct {
-    	// Writer is the message receiver object (os.Stdout by default).
-    	Writer io.Writer
-
-    	// Timestamp is the format for displaying the
-    	// time stamp in the log message.
-    	Timestamp string
-
-    	// Levels map of available levels.
-    	Levels Levels
-
-    	// ShowFilePath if true appends the full path to the go-file,
-    	// the logging method was called.
-    	ShowFilePath bool
-
-    	// ShowFuncName if true, appends the function name where the
-    	// logging method was called.
-    	ShowFuncName bool
-
-    	// ShowFileLine if true appends the line number in the go-file
-    	// where the logging method was called.
-    	ShowFileLine bool
-
-    	// FatalStatusCode the exit code when calling the Fatal method.
+    	// FatalStatusCode is an exit code when calling the Fatal method.
     	// Default - 1. If the code is <= 0, the forced exit will not occur.
     	FatalStatusCode int
     }
 
 
-Log this is the logging object.
+Config is the type of logging configurations: message display parameters, log
+levels, etc.
+
+#### func (Config) FatalAllowed
+
+    func (c Config) FatalAllowed() bool
+
+FatalAllowed reutrns ture if the exit code for Fatal methot not equal zero.
+
+#### type FormatConfig
+
+    type FormatConfig FormatFlag
+
+
+FormatConfig type is designed to control the flags responsible for adding in the
+log message additional information as: file path, function name and line number.
+
+#### func (*FormatConfig) Add
+
+    func (f *FormatConfig) Add(flags ...FormatFlag) (FormatConfig, error)
+
+Add adds the specified flags ignores duplicates or flags that value already
+contains. Returns a new value if all is well or old value and an error if one or
+more invalid flags are specified.
+
+#### func (*FormatConfig) All
+
+    func (f *FormatConfig) All(flags ...FormatFlag) (bool, error)
+
+All returns true if all of the specified flags are set. Returns false and an
+error if one or more of the specified flags is invalid.
+
+#### func (*FormatConfig) Any
+
+    func (f *FormatConfig) Any(flags ...FormatFlag) (bool, error)
+
+Any returns true if at least one of the specified flags is set. Returns false
+and an error if one or more of the specified flags is invalid.
+
+#### func (*FormatConfig) Delete
+
+    func (f *FormatConfig) Delete(flags ...FormatFlag) (FormatConfig, error)
+
+Delete deletes the specified flags ignores duplicates or flags that were not
+set. Returns a new value if all is well or old value and an error if one or more
+invalid flags are specified.
+
+#### func (*FormatConfig) FilePath
+
+    func (f *FormatConfig) FilePath() (bool, error)
+
+FilePath returns true if value contains the FilePath flag. Returns false and an
+error if the value is invalid.
+
+#### func (*FormatConfig) FuncName
+
+    func (f *FormatConfig) FuncName() (bool, error)
+
+FuncName returns true if value contains the FuncName flag. Returns false and an
+error if the value is invalid.
+
+#### func (*FormatConfig) Has
+
+    func (f *FormatConfig) Has(flag FormatFlag) (bool, error)
+
+The Has method returns true if value contains the specified flag. Returns false
+and an error if the value is invalid or an invalid flag is specified.
+
+#### func (*FormatConfig) IsValid
+
+    func (f *FormatConfig) IsValid() bool
+
+IsValid returns true if value contains zero, one or an unique sum of valid
+FormatFlag flags. The zero value is a valid value.
+
+#### func (*FormatConfig) LineNumber
+
+    func (f *FormatConfig) LineNumber() (bool, error)
+
+LineNumber returns true if value contains the LineNumber flag. Returns false and
+an error if the value is invalid.
+
+#### func (*FormatConfig) Set
+
+    func (f *FormatConfig) Set(flags ...FormatFlag) (FormatConfig, error)
+
+Set sets the specified flags ignores duplicates. The flags that were set
+previously will be discarded. Returns a new value if all is well or old value
+and an error if one or more invalid flags are specified.
+
+#### type FormatFlag
+
+    type FormatFlag uint8
+
+
+FormatFlag is the type of single flags of the the FormatConfig.
+
+    const (
+    	// FilePath flag adding in the log message the path to
+    	// the go-file where the logging method was called.
+    	FilePath FormatFlag = 1 << iota
+
+    	// FuncName flag adding in the log message the function's name
+    	// where the logging method was called.
+    	FuncName
+
+    	// LineNumber flag adding in the log message the line number
+    	// of the go-file where the logging method was called.
+    	LineNumber
+    )
+
+
+#### func (*FormatFlag) IsValid
+
+    func (f *FormatFlag) IsValid() bool
+
+The IsValid returns true if value contains one of the available flags. The
+custom flags cannot be valid since they should not affect the formatting
+settings. The zero value is an invalid flag too.
+
+#### type LevelConfig
+
+    type LevelConfig LevelFlag
+
+
+LevelConfig type is designed to control the flags responsible for adding in the
+log message additional information as: file path, function name and line number.
+
+#### func (*LevelConfig) Add
+
+    func (l *LevelConfig) Add(flags ...LevelFlag) (LevelConfig, error)
+
+Add adds the specified flags ignores duplicates or flags that value already
+contains. Returns a new value if all is well or old value and an error if one or
+more invalid flags are specified.
+
+#### func (*LevelConfig) All
+
+    func (l *LevelConfig) All(flags ...LevelFlag) (bool, error)
+
+All returns true if all of the specified flags are set. Returns false and an
+error if one or more of the specified flags is invalid.
+
+#### func (*LevelConfig) Any
+
+    func (l *LevelConfig) Any(flags ...LevelFlag) (bool, error)
+
+Any returns true if at least one of the specified flags is set. Returns false
+and an error if one or more of the specified flags is invalid.
+
+#### func (*LevelConfig) Debug
+
+    func (l *LevelConfig) Debug() (bool, error)
+
+Debug returns true if value contains the Debug flag. Returns false and an error
+if the value is invalid.
+
+#### func (*LevelConfig) Delete
+
+    func (l *LevelConfig) Delete(flags ...LevelFlag) (LevelConfig, error)
+
+Delete deletes the specified flags ignores duplicates or flags that were not
+set. Returns a new value if all is well or old value and an error if one or more
+invalid flags are specified.
+
+#### func (*LevelConfig) Error
+
+    func (l *LevelConfig) Error() (bool, error)
+
+Error returns true if value contains the Error flag. Returns false and an error
+if the value is invalid.
+
+#### func (*LevelConfig) Fatal
+
+    func (l *LevelConfig) Fatal() (bool, error)
+
+Fatal returns true if value contains the Fatal flag. Returns false and an error
+if the value is invalid.
+
+#### func (*LevelConfig) Has
+
+    func (l *LevelConfig) Has(flag LevelFlag) (bool, error)
+
+The Has method returns true if value contains the specified flag. Returns false
+and an error if the value is invalid or an invalid flag is specified.
+
+#### func (*LevelConfig) Info
+
+    func (l *LevelConfig) Info() (bool, error)
+
+Info returns true if value contains the Info flag. Returns false and an error if
+the value is invalid.
+
+#### func (*LevelConfig) IsValid
+
+    func (l *LevelConfig) IsValid() bool
+
+IsValid returns true if value contains zero, one or an unique sum of valid
+LevelFlag flags. The zero value is a valid value.
+
+#### func (*LevelConfig) Panic
+
+    func (l *LevelConfig) Panic() (bool, error)
+
+Panic returns true if value contains the Panic flag. Returns false and an error
+if the value is invalid.
+
+#### func (*LevelConfig) Set
+
+    func (l *LevelConfig) Set(flags ...LevelFlag) (LevelConfig, error)
+
+Set sets the specified flags ignores duplicates. The flags that were set
+previously will be discarded. Returns a new value if all is well or old value
+and an error if one or more invalid flags are specified.
+
+#### func (*LevelConfig) Trace
+
+    func (l *LevelConfig) Trace() (bool, error)
+
+Trace returns true if value contains the Trace flag. Returns false and an error
+if the value is invalid.
+
+#### type LevelFlag
+
+    type LevelFlag uint8
+
+
+LevelFlag is the type of single flags of the the LevelConfig.
+
+    const (
+    	// Panic is the panic-type logging level.
+    	Panic LevelFlag = 1 << iota
+
+    	// Fatal is the fatal-type logging level.
+    	Fatal
+
+    	// Error is the error-type logging level.
+    	Error
+
+    	// Warn is the warning-type logging level.
+    	Warn
+
+    	// Info is the information-type logging level.
+    	Info
+
+    	// Debug is the debug-type logging level.
+    	Debug
+
+    	// Trace is the trace-type logging level.
+    	Trace
+    )
+
+
+#### func (*LevelFlag) IsValid
+
+    func (l *LevelFlag) IsValid() bool
+
+The IsValid returns true if value contains one of the available flags. The
+custom flags cannot be valid since they should not affect the formatting
+settings. The zero value is an invalid flag too.
+
+#### type Log
+
+    type Log struct {
+
+    	// Writer is the message receiver object (os.Stdout by default).
+    	Writer io.Writer
+
+    	Config *Config
+    }
+
+
+Log is the logger object.
 
 #### func  New
 
-    func New(levels ...Level) (*Log, error)
+    func New(flags ...LevelFlag) (*Log, error)
 
-New returns new Log object. Takes zero or more log levels as arguments. If
-logging levels are not specified, all possible logging levels will be activated,
-otherwise only the specified logging levels will be activated.
+New returns new Log object. Accepts zero or more log-level flags as arguments.
+If logging levels are not specified, all possible log-levels will be activated.
 
 #### func (*Log) Copy
 
@@ -191,7 +411,7 @@ Copy returns copy of the log object.
 
     func (l *Log) Debug(a ...interface{}) (n int, err error)
 
-Debug creates message with DEBUG level, using the default formats for its
+Debug creates message with Debug level, using the default formats for its
 operands and writes to log.Writer. Spaces are added between operands when
 neither is a string. It returns the number of bytes written and any write error
 encountered.
@@ -200,7 +420,7 @@ encountered.
 
     func (l *Log) Debugf(format string, a ...interface{}) (n int, err error)
 
-Debugf creates message with DEBUG level, according to a format specifier and
+Debugf creates message with Debug level, according to a format specifier and
 writes to log.Writer. It returns the number of bytes written and any write error
 encountered.
 
@@ -208,7 +428,7 @@ encountered.
 
     func (l *Log) Debugln(a ...interface{}) (n int, err error)
 
-Debugln creates message with DEBUG, level using the default formats for its
+Debugln creates message with Debug, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
 a newline is appended. It returns the number of bytes written and any write
 error encountered.
@@ -217,7 +437,7 @@ error encountered.
 
     func (l *Log) Error(a ...interface{}) (n int, err error)
 
-Error creates message with ERROR level, using the default formats for its
+Error creates message with Error level, using the default formats for its
 operands and writes to log.Writer. Spaces are added between operands when
 neither is a string. It returns the number of bytes written and any write error
 encountered.
@@ -226,7 +446,7 @@ encountered.
 
     func (l *Log) Errorf(format string, a ...interface{}) (n int, err error)
 
-Errorf creates message with ERROR level, according to a format specifier and
+Errorf creates message with Error level, according to a format specifier and
 writes to log.Writer. It returns the number of bytes written and any write error
 encountered.
 
@@ -234,39 +454,42 @@ encountered.
 
     func (l *Log) Errorln(a ...interface{}) (n int, err error)
 
-Errorln creates message with ERROR, level using the default formats for its
+Errorln creates message with Error, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
 a newline is appended. It returns the number of bytes written and any write
 error encountered.
 
 #### func (*Log) Fatal
 
-    func (l *Log) Fatal(a ...interface{})
+    func (l *Log) Fatal(a ...interface{}) (n int, err error)
 
-Fatal creates message with FATAL level, using the default formats for its
+Fatal creates message with Fatal level, using the default formats for its
 operands and writes to log.Writer. Spaces are added between operands when
-neither is a string. Performs forced exit from the program with status - 1.
+neither is a string. It returns the number of bytes written and any write error
+encountered.
 
 #### func (*Log) Fatalf
 
-    func (l *Log) Fatalf(format string, a ...interface{})
+    func (l *Log) Fatalf(format string, a ...interface{}) (n int, err error)
 
-Fatalf creates message with FATAL level, according to a format specifier and
-writes to log.Writer. Performs forced exit from the program with status - 1.
+Fatalf creates message with Fatal level, according to a format specifier and
+writes to log.Writer. It returns the number of bytes written and any write error
+encountered.
 
 #### func (*Log) Fatalln
 
-    func (l *Log) Fatalln(a ...interface{})
+    func (l *Log) Fatalln(a ...interface{}) (n int, err error)
 
-Fatalln creates message with FATAL, level using the default formats for its
+Fatalln creates message with Fatal, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
-a newline is appended. Performs forced exit from the program with status - 1.
+a newline is appended. It returns the number of bytes written and any write
+error encountered.
 
 #### func (*Log) Fdebug
 
     func (l *Log) Fdebug(w io.Writer, a ...interface{}) (n int, err error)
 
-Fdebug creates message with DEBUG level, using the default formats for its
+Fdebug creates message with Debug level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
 string. It returns the number of bytes written and any write error encountered.
 
@@ -275,7 +498,7 @@ string. It returns the number of bytes written and any write error encountered.
     func (l *Log) Fdebugf(w io.Writer, format string,
     	a ...interface{}) (n int, err error)
 
-Fdebugf creates message with DEBUG level, according to a format specifier and
+Fdebugf creates message with Debug level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
 encountered.
 
@@ -283,7 +506,7 @@ encountered.
 
     func (l *Log) Fdebugln(w io.Writer, a ...interface{}) (n int, err error)
 
-Fdebugln creates message with DEBUG level, using the default formats for its
+Fdebugln creates message with Debug level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
 is appended. It returns the number of bytes written and any write error
 encountered.
@@ -292,7 +515,7 @@ encountered.
 
     func (l *Log) Ferror(w io.Writer, a ...interface{}) (n int, err error)
 
-Ferror creates message with ERROR level, using the default formats for its
+Ferror creates message with Error level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
 string. It returns the number of bytes written and any write error encountered.
 
@@ -301,7 +524,7 @@ string. It returns the number of bytes written and any write error encountered.
     func (l *Log) Ferrorf(w io.Writer, format string,
     	a ...interface{}) (n int, err error)
 
-Ferrorf creates message with ERROR level, according to a format specifier and
+Ferrorf creates message with Error level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
 encountered.
 
@@ -309,40 +532,42 @@ encountered.
 
     func (l *Log) Ferrorln(w io.Writer, a ...interface{}) (n int, err error)
 
-Ferrorln creates message with ERROR level, using the default formats for its
+Ferrorln creates message with Error level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
 is appended. It returns the number of bytes written and any write error
 encountered.
 
 #### func (*Log) Ffatal
 
-    func (l *Log) Ffatal(w io.Writer, a ...interface{})
+    func (l *Log) Ffatal(w io.Writer, a ...interface{}) (n int, err error)
 
-Ffatal creates message with FATAL level, using the default formats for its
+Ffatal creates message with Fatal level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
-string. Performs forced exit from the program with status - 1.
+string. It returns the number of bytes written and any write error encountered.
 
 #### func (*Log) Ffatalf
 
-    func (l *Log) Ffatalf(w io.Writer, format string, a ...interface{})
+    func (l *Log) Ffatalf(w io.Writer, format string,
+    	a ...interface{}) (n int, err error)
 
-Ffatalf creates message with FATAL level, according to a format specifier and
+Ffatalf creates message with Fatal level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
-encountered. Performs forced exit from the program with status - 1.
+encountered.
 
 #### func (*Log) Ffatalln
 
-    func (l *Log) Ffatalln(w io.Writer, a ...interface{})
+    func (l *Log) Ffatalln(w io.Writer, a ...interface{}) (n int, err error)
 
-Ffatalln creates message with FATAL level, using the default formats for its
+Ffatalln creates message with Fatal level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
-is appended. Performs forced exit from the program with status - 1.
+is appended. It returns the number of bytes written and any write error
+encountered.
 
 #### func (*Log) Finfo
 
     func (l *Log) Finfo(w io.Writer, a ...interface{}) (n int, err error)
 
-Finfo creates message with INFO level, using the default formats for its
+Finfo creates message with Info level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
 string. It returns the number of bytes written and any write error encountered.
 
@@ -351,7 +576,7 @@ string. It returns the number of bytes written and any write error encountered.
     func (l *Log) Finfof(w io.Writer, format string,
     	a ...interface{}) (n int, err error)
 
-Finfof creates message with INFO level, according to a format specifier and
+Finfof creates message with Info level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
 encountered.
 
@@ -359,52 +584,68 @@ encountered.
 
     func (l *Log) Finfoln(w io.Writer, a ...interface{}) (n int, err error)
 
-Finfoln creates message with INFO level, using the default formats for its
+Finfoln creates message with Info level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
 is appended. It returns the number of bytes written and any write error
 encountered.
 
-#### func (*Log) Format
+#### func (*Log) Fpanic
 
-    func (l *Log) Format(showFilePath, showFuncName, showFileLine bool)
+    func (l *Log) Fpanic(w io.Writer, a ...interface{}) (n int, err error)
 
-Format sets the message prefix display configuration flags for display: file
-path, function name and file line.
+Fpanic creates message with Panic level, using the default formats for its
+operands and writes to w. Spaces are added between operands when neither is a
+string. It returns the number of bytes written and any write error encountered.
+
+#### func (*Log) Fpanicf
+
+    func (l *Log) Fpanicf(w io.Writer, format string,
+    	a ...interface{}) (n int, err error)
+
+Fpanicf creates message with Panic level, according to a format specifier and
+writes to w. It returns the number of bytes written and any write error
+encountered.
+
+#### func (*Log) Fpanicln
+
+    func (l *Log) Fpanicln(w io.Writer, a ...interface{}) (n int, err error)
+
+Fpanicln creates message with Panic level, using the default formats for its
+operands and writes to w. Spaces are always added between operands and a newline
+is appended. It returns the number of bytes written and any write error
+encountered.
 
 #### func (*Log) Ftrace
 
     func (l *Log) Ftrace(w io.Writer, a ...interface{}) (n int, err error)
 
-Ftrace creates message with TRACE level, using the default formats for its
+Ftrace creates message with Trace level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
 string. It returns the number of bytes written and any write error encountered.
-Always displays file path, function name and file line in the log message.
 
 #### func (*Log) Ftracef
 
     func (l *Log) Ftracef(w io.Writer, format string,
     	a ...interface{}) (n int, err error)
 
-Ftracef creates message with TRACE level, according to a format specifier and
+Ftracef creates message with Trace level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
-encountered. Always displays file path, function name and file line in the log
-message.
+encountered.
 
 #### func (*Log) Ftraceln
 
     func (l *Log) Ftraceln(w io.Writer, a ...interface{}) (n int, err error)
 
-Ftraceln creates message with TRACE level, using the default formats for its
+Ftraceln creates message with Trace level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
 is appended. It returns the number of bytes written and any write error
-encountered. Always displays file path, function name and file line in the log
-message.
+encountered.
 
 #### func (*Log) Fwarn
 
     func (l *Log) Fwarn(w io.Writer, a ...interface{}) (n int, err error)
 
-Fwarn creates message with WARN level, using the default formats for its
+Fwarn creates message with Warn level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
 string. It returns the number of bytes written and any write error encountered.
 
@@ -413,7 +654,7 @@ string. It returns the number of bytes written and any write error encountered.
     func (l *Log) Fwarnf(w io.Writer, format string,
     	a ...interface{}) (n int, err error)
 
-Fwarnf creates message with WARN level, according to a format specifier and
+Fwarnf creates message with Warn level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
 encountered.
 
@@ -421,7 +662,7 @@ encountered.
 
     func (l *Log) Fwarnln(w io.Writer, a ...interface{}) (n int, err error)
 
-Fwarnln creates message with WARN level, using the default formats for its
+Fwarnln creates message with Warn level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
 is appended. It returns the number of bytes written and any write error
 encountered.
@@ -430,7 +671,7 @@ encountered.
 
     func (l *Log) Info(a ...interface{}) (n int, err error)
 
-Info creates message with INFO level, using the default formats for its operands
+Info creates message with Info level, using the default formats for its operands
 and writes to log.Writer. Spaces are added between operands when neither is a
 string. It returns the number of bytes written and any write error encountered.
 
@@ -438,7 +679,7 @@ string. It returns the number of bytes written and any write error encountered.
 
     func (l *Log) Infof(format string, a ...interface{}) (n int, err error)
 
-Infof creates message with INFO level, according to a format specifier and
+Infof creates message with Info level, according to a format specifier and
 writes to log.Writer. It returns the number of bytes written and any write error
 encountered.
 
@@ -446,7 +687,33 @@ encountered.
 
     func (l *Log) Infoln(a ...interface{}) (n int, err error)
 
-Infoln creates message with INFO, level using the default formats for its
+Infoln creates message with Info, level using the default formats for its
+operands and writes to log.Writer. Spaces are always added between operands and
+a newline is appended. It returns the number of bytes written and any write
+error encountered.
+
+#### func (*Log) Panic
+
+    func (l *Log) Panic(a ...interface{}) (n int, err error)
+
+Panic creates message with Panic level, using the default formats for its
+operands and writes to log.Writer. Spaces are added between operands when
+neither is a string. It returns the number of bytes written and any write error
+encountered.
+
+#### func (*Log) Panicf
+
+    func (l *Log) Panicf(format string, a ...interface{}) (n int, err error)
+
+Panicf creates message with Panic level, according to a format specifier and
+writes to log.Writer. It returns the number of bytes written and any write error
+encountered.
+
+#### func (*Log) Panicln
+
+    func (l *Log) Panicln(a ...interface{}) (n int, err error)
+
+Panicln creates message with Panic, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
 a newline is appended. It returns the number of bytes written and any write
 error encountered.
@@ -455,36 +722,33 @@ error encountered.
 
     func (l *Log) Trace(a ...interface{}) (n int, err error)
 
-Trace creates message with TRACE level, using the default formats for its
+Trace creates message with Trace level, using the default formats for its
 operands and writes to log.Writer. Spaces are added between operands when
 neither is a string. It returns the number of bytes written and any write error
-encountered. Always displays file path, function name and file line in the log
-message.
+encountered.
 
 #### func (*Log) Tracef
 
     func (l *Log) Tracef(format string, a ...interface{}) (n int, err error)
 
-Tracef creates message with TRACE level, according to a format specifier and
+Tracef creates message with Trace level, according to a format specifier and
 writes to log.Writer. It returns the number of bytes written and any write error
-encountered. Always displays file path, function name and file line in the log
-message.
+encountered.
 
 #### func (*Log) Traceln
 
     func (l *Log) Traceln(a ...interface{}) (n int, err error)
 
-Traceln creates message with TRACE, level using the default formats for its
+Traceln creates message with Trace, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
 a newline is appended. It returns the number of bytes written and any write
-error encountered. Always displays file path, function name and file line in the
-log message.
+error encountered.
 
 #### func (*Log) Warn
 
     func (l *Log) Warn(a ...interface{}) (n int, err error)
 
-Warn creates message with WARN level, using the default formats for its operands
+Warn creates message with Warn level, using the default formats for its operands
 and writes to log.Writer. Spaces are added between operands when neither is a
 string. It returns the number of bytes written and any write error encountered.
 
@@ -492,7 +756,7 @@ string. It returns the number of bytes written and any write error encountered.
 
     func (l *Log) Warnf(format string, a ...interface{}) (n int, err error)
 
-Warnf creates message with WARN level, according to a format specifier and
+Warnf creates message with Warn level, according to a format specifier and
 writes to log.Writer. It returns the number of bytes written and any write error
 encountered.
 
@@ -500,19 +764,19 @@ encountered.
 
     func (l *Log) Warnln(a ...interface{}) (n int, err error)
 
-Warnln creates message with WARN, level using the default formats for its
+Warnln creates message with Warn, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
 a newline is appended. It returns the number of bytes written and any write
 error encountered.
 
-#### type Trace
+#### type StackSlice
 
-    type Trace struct {
+    type StackSlice struct {
     	FileLine int
     	FuncName string
     	FilePath string
     }
 
 
-Trace contains the top-level trace information where the logging method was
+StackSlice contains the top-level trace information where the logging method was
 called.

@@ -22,3 +22,8 @@ type Config struct {
 	// Default - 1. If the code is <= 0, the forced exit will not occur.
 	FatalStatusCode int
 }
+
+// FatalAllowed reutrns ture if the exit code for Fatal methot not equal zero.
+func (c Config) FatalAllowed() bool {
+	return c.FatalStatusCode > 0
+}
