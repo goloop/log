@@ -23,11 +23,14 @@ func New(flags ...LevelFlag) (*Log, error) {
 		skip:   skip,
 		Writer: os.Stdout,
 		Config: &Config{
-			TimestampFormat:   TimestampFormat,
-			Formats:           FormatConfig(None),
-			Levels:            LevelConfig(None),
-			FatalStatusCode:   1,
-			SpaceBetweenCells: " ",
+			Formats:         FormatConfig(None),
+			Levels:          LevelConfig(None),
+			FatalStatusCode: 1,
+			Prefix: &PrefixConfig{
+				TimestampFormat:   TimestampFormat,
+				SpaceBetweenCells: SpaceBetweenCells,
+				LevelFormat:       LevelFormat,
+			},
 		},
 	}
 
@@ -63,7 +66,7 @@ func (l *Log) echo(skip int, level LevelFlag, w io.Writer,
 	}
 
 	// Generate prefix.
-	timestamp := time.Now().Format(l.Config.TimestampFormat)
+	timestamp := time.Now().Format(l.Config.Prefix.TimestampFormat)
 	prefix := timestamp + getPrefix(level, l.Config, ss)
 	a = append([]interface{}{prefix}, a...)
 
@@ -82,7 +85,7 @@ func (l *Log) echof(skip int, level LevelFlag, w io.Writer, format string,
 	}
 
 	// Generate log prefix.
-	timestamp := time.Now().Format(l.Config.TimestampFormat)
+	timestamp := time.Now().Format(l.Config.Prefix.TimestampFormat)
 	prefix := timestamp + getPrefix(level, l.Config, ss) + format
 
 	return fmt.Fprintf(w, prefix, a...)
@@ -100,7 +103,7 @@ func (l *Log) echoln(skip int, level LevelFlag, w io.Writer,
 	}
 
 	// Generate log prefix.
-	timestamp := time.Now().Format(l.Config.TimestampFormat)
+	timestamp := time.Now().Format(l.Config.Prefix.TimestampFormat)
 	prefix := timestamp + getPrefix(level, l.Config, ss)
 
 	return fmt.Fprint(w, prefix+fmt.Sprintln(a...))
@@ -112,11 +115,14 @@ func (l *Log) Copy() *Log {
 		Writer: l.Writer,
 		skip:   l.skip,
 		Config: &Config{
-			TimestampFormat:   l.Config.TimestampFormat,
-			Levels:            l.Config.Levels,
-			Formats:           l.Config.Formats,
-			FatalStatusCode:   l.Config.FatalStatusCode,
-			SpaceBetweenCells: l.Config.SpaceBetweenCells,
+			Levels:          l.Config.Levels,
+			Formats:         l.Config.Formats,
+			FatalStatusCode: l.Config.FatalStatusCode,
+			Prefix: &PrefixConfig{
+				TimestampFormat:   l.Config.Prefix.TimestampFormat,
+				SpaceBetweenCells: l.Config.Prefix.SpaceBetweenCells,
+				LevelFormat:       l.Config.Prefix.LevelFormat,
+			},
 		},
 	}
 }
