@@ -12,6 +12,33 @@ const (
 	testSkipSeek = 1
 )
 
+// TestCopy tests Log.Copy method.
+func TestCopy(t *testing.T) {
+	var log, err = New(Info, Debug)
+	if err != nil {
+		t.Error(err)
+	}
+
+	log.Config.Levels.Add(Error)
+	log.Config.Formats.Set(FuncName, LineNumber)
+	log.Config.FatalStatusCode = 7
+
+	clone := log.Copy()
+	clone.Config.FatalStatusCode = 3
+
+	if log.Config.Levels != clone.Config.Levels {
+		t.Error("log levels don't match")
+	}
+
+	if log.Config.Formats != clone.Config.Formats {
+		t.Error("format styles don't match")
+	}
+
+	if log.Config.FatalStatusCode == clone.Config.FatalStatusCode {
+		t.Error("the FatalStatusCode must be different")
+	}
+}
+
 // TestEcho tests Log.echo method.
 func TestEcho(t *testing.T) {
 	type test struct {
