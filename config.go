@@ -8,7 +8,7 @@ const (
 
 	// TimestampFormat default value of the time and date format
 	// for the timestamp in the log message.
-	TimestampFormat = "01.02.2006 15:04:05"
+	TimestampFormat = "2006/02/01 15:04:05"
 
 	// SpaceBetweenCells is default value of the string that is set
 	// between elements of information blocks in the logging prefix.
