@@ -64,7 +64,9 @@ To use this module import it as:
         var app = &App{}
         app.Log, _ = log.New()
 
-        app.Log.Config.Levels.Delete(log.Trace)
+		app.Log.Config.Levels.Delete(log.Trace)
+		app.Log.Config.Formats.Set(log.FuncName, log.LineNumber)
+		app.Log.Config.Preifx.LevelFormat = "[%s]"
 
         app.Log.Debugln("This information will be shown on the screen")
         app.Log.Tracef("%s\n%s\n", "Trace level was deactivated,",
