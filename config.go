@@ -21,6 +21,10 @@ type Config struct {
 	// FatalStatusCode is an exit code when calling the Fatal method.
 	// Default - 1. If the code is <= 0, the forced exit will not occur.
 	FatalStatusCode int
+
+	// SpaceBetweenCells is string that is set between elements
+	// of information blocks in the logging prefix.
+	SpaceBetweenCells string
 }
 
 // FatalAllowed reutrns ture if the exit code for Fatal methot not equal zero.

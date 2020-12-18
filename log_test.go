@@ -82,7 +82,7 @@ func TestEcho(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.All(s.level); ok {
 			res = res[19:]
-			exp = getPrefix(s.level, l.Config.Formats, ss) +
+			exp = getPrefix(s.level, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -139,7 +139,7 @@ func TestEchof(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.All(s.level); ok {
 			res = res[19:]
-			exp = getPrefix(s.level, l.Config.Formats, ss) +
+			exp = getPrefix(s.level, l.Config, ss) +
 				fmt.Sprintf(s.layout, s.data...)
 		}
 
@@ -192,7 +192,7 @@ func TestEcholn(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.All(s.level); ok {
 			res = res[19:]
-			exp = getPrefix(s.level, l.Config.Formats, ss) +
+			exp = getPrefix(s.level, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -246,7 +246,7 @@ func TestFpanic(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Panic); ok {
 			res = res[19:]
-			exp = getPrefix(Panic, l.Config.Formats, ss) +
+			exp = getPrefix(Panic, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -304,7 +304,7 @@ func TestFpanicf(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Panic); ok {
 			res = res[19:]
-			exp = getPrefix(Panic, l.Config.Formats, ss) +
+			exp = getPrefix(Panic, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -358,7 +358,7 @@ func TestFpanicln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Panic); ok {
 			res = res[19:]
-			exp = getPrefix(Panic, l.Config.Formats, ss) +
+			exp = getPrefix(Panic, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -413,7 +413,7 @@ func TestPanic(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Panic); ok {
 			res = res[19:]
-			exp = getPrefix(Panic, l.Config.Formats, ss) +
+			exp = getPrefix(Panic, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -472,7 +472,7 @@ func TestPanicf(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Panic); ok {
 			res = res[19:]
-			exp = getPrefix(Panic, l.Config.Formats, ss) +
+			exp = getPrefix(Panic, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -527,7 +527,7 @@ func TestPanicln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Panic); ok {
 			res = res[19:]
-			exp = getPrefix(Panic, l.Config.Formats, ss) +
+			exp = getPrefix(Panic, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -579,7 +579,7 @@ func TestFfatal(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Fatal); ok {
 			res = res[19:]
-			exp = getPrefix(Fatal, l.Config.Formats, ss) +
+			exp = getPrefix(Fatal, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -635,7 +635,7 @@ func TestFfatalf(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Fatal); ok {
 			res = res[19:]
-			exp = getPrefix(Fatal, l.Config.Formats, ss) +
+			exp = getPrefix(Fatal, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -687,7 +687,7 @@ func TestFfatalln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Fatal); ok {
 			res = res[19:]
-			exp = getPrefix(Fatal, l.Config.Formats, ss) +
+			exp = getPrefix(Fatal, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -740,7 +740,7 @@ func TestFatal(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Fatal); ok {
 			res = res[19:]
-			exp = getPrefix(Fatal, l.Config.Formats, ss) +
+			exp = getPrefix(Fatal, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -797,7 +797,7 @@ func TestFatalf(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Fatal); ok {
 			res = res[19:]
-			exp = getPrefix(Fatal, l.Config.Formats, ss) +
+			exp = getPrefix(Fatal, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -850,7 +850,7 @@ func TestFatalln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Fatal); ok {
 			res = res[19:]
-			exp = getPrefix(Fatal, l.Config.Formats, ss) +
+			exp = getPrefix(Fatal, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -901,7 +901,7 @@ func TestFerror(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Error); ok {
 			res = res[19:]
-			exp = getPrefix(Error, l.Config.Formats, ss) +
+			exp = getPrefix(Error, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -956,7 +956,7 @@ func TestFerrorf(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Error); ok {
 			res = res[19:]
-			exp = getPrefix(Error, l.Config.Formats, ss) +
+			exp = getPrefix(Error, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -1007,7 +1007,7 @@ func TestFerrorln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Error); ok {
 			res = res[19:]
-			exp = getPrefix(Error, l.Config.Formats, ss) +
+			exp = getPrefix(Error, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -1059,7 +1059,7 @@ func TestError(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Error); ok {
 			res = res[19:]
-			exp = getPrefix(Error, l.Config.Formats, ss) +
+			exp = getPrefix(Error, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -1115,7 +1115,7 @@ func TestErrorf(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Error); ok {
 			res = res[19:]
-			exp = getPrefix(Error, l.Config.Formats, ss) +
+			exp = getPrefix(Error, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -1167,7 +1167,7 @@ func TestErrorln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Error); ok {
 			res = res[19:]
-			exp = getPrefix(Error, l.Config.Formats, ss) +
+			exp = getPrefix(Error, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -1218,7 +1218,7 @@ func TestFwarn(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Warn); ok {
 			res = res[19:]
-			exp = getPrefix(Warn, l.Config.Formats, ss) +
+			exp = getPrefix(Warn, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -1273,7 +1273,7 @@ func TestFwarnf(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Warn); ok {
 			res = res[19:]
-			exp = getPrefix(Warn, l.Config.Formats, ss) +
+			exp = getPrefix(Warn, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -1324,7 +1324,7 @@ func TestFwarnln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Warn); ok {
 			res = res[19:]
-			exp = getPrefix(Warn, l.Config.Formats, ss) +
+			exp = getPrefix(Warn, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -1376,7 +1376,7 @@ func TestWarn(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Warn); ok {
 			res = res[19:]
-			exp = getPrefix(Warn, l.Config.Formats, ss) +
+			exp = getPrefix(Warn, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -1432,7 +1432,7 @@ func TestWarnf(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Warn); ok {
 			res = res[19:]
-			exp = getPrefix(Warn, l.Config.Formats, ss) +
+			exp = getPrefix(Warn, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -1484,7 +1484,7 @@ func TestWarnln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Warn); ok {
 			res = res[19:]
-			exp = getPrefix(Warn, l.Config.Formats, ss) +
+			exp = getPrefix(Warn, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -1535,7 +1535,7 @@ func TestFinfo(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Info); ok {
 			res = res[19:]
-			exp = getPrefix(Info, l.Config.Formats, ss) +
+			exp = getPrefix(Info, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -1590,7 +1590,7 @@ func TestFinfof(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Info); ok {
 			res = res[19:]
-			exp = getPrefix(Info, l.Config.Formats, ss) +
+			exp = getPrefix(Info, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -1641,7 +1641,7 @@ func TestFinfoln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Info); ok {
 			res = res[19:]
-			exp = getPrefix(Info, l.Config.Formats, ss) +
+			exp = getPrefix(Info, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -1693,7 +1693,7 @@ func TestInfo(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Info); ok {
 			res = res[19:]
-			exp = getPrefix(Info, l.Config.Formats, ss) +
+			exp = getPrefix(Info, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -1749,7 +1749,7 @@ func TestInfof(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Info); ok {
 			res = res[19:]
-			exp = getPrefix(Info, l.Config.Formats, ss) +
+			exp = getPrefix(Info, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -1801,7 +1801,7 @@ func TestInfoln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Info); ok {
 			res = res[19:]
-			exp = getPrefix(Info, l.Config.Formats, ss) +
+			exp = getPrefix(Info, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -1852,7 +1852,7 @@ func TestFdebug(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Debug); ok {
 			res = res[19:]
-			exp = getPrefix(Debug, l.Config.Formats, ss) +
+			exp = getPrefix(Debug, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -1907,7 +1907,7 @@ func TestFdebugf(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Debug); ok {
 			res = res[19:]
-			exp = getPrefix(Debug, l.Config.Formats, ss) +
+			exp = getPrefix(Debug, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -1958,7 +1958,7 @@ func TestFdebugln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Debug); ok {
 			res = res[19:]
-			exp = getPrefix(Debug, l.Config.Formats, ss) +
+			exp = getPrefix(Debug, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -2010,7 +2010,7 @@ func TestDebug(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Debug); ok {
 			res = res[19:]
-			exp = getPrefix(Debug, l.Config.Formats, ss) +
+			exp = getPrefix(Debug, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -2066,7 +2066,7 @@ func TestDebugf(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Debug); ok {
 			res = res[19:]
-			exp = getPrefix(Debug, l.Config.Formats, ss) +
+			exp = getPrefix(Debug, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -2118,7 +2118,7 @@ func TestDebugln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Debug); ok {
 			res = res[19:]
-			exp = getPrefix(Debug, l.Config.Formats, ss) +
+			exp = getPrefix(Debug, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -2169,7 +2169,7 @@ func TestFtrace(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Trace); ok {
 			res = res[19:]
-			exp = getPrefix(Trace, l.Config.Formats, ss) +
+			exp = getPrefix(Trace, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -2224,7 +2224,7 @@ func TestFtracef(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Trace); ok {
 			res = res[19:]
-			exp = getPrefix(Trace, l.Config.Formats, ss) +
+			exp = getPrefix(Trace, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -2275,7 +2275,7 @@ func TestFtraceln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Trace); ok {
 			res = res[19:]
-			exp = getPrefix(Trace, l.Config.Formats, ss) +
+			exp = getPrefix(Trace, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 
@@ -2327,7 +2327,7 @@ func TestTrace(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Trace); ok {
 			res = res[19:]
-			exp = getPrefix(Trace, l.Config.Formats, ss) +
+			exp = getPrefix(Trace, l.Config, ss) +
 				fmt.Sprint(s.data...)
 		}
 
@@ -2383,7 +2383,7 @@ func TestTracef(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Trace); ok {
 			res = res[19:]
-			exp = getPrefix(Trace, l.Config.Formats, ss) +
+			exp = getPrefix(Trace, l.Config, ss) +
 				fmt.Sprintf(s.format, s.data...)
 		}
 
@@ -2435,7 +2435,7 @@ func TestTraceln(t *testing.T) {
 
 		if ok, _ := l.Config.Levels.Has(Trace); ok {
 			res = res[19:]
-			exp = getPrefix(Trace, l.Config.Formats, ss) +
+			exp = getPrefix(Trace, l.Config, ss) +
 				fmt.Sprintln(s.data...)
 		}
 

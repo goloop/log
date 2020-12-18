@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 1.0.0*
+*Version: 1.0.1*
 
 
 # log
@@ -71,7 +71,7 @@ To use this module import it as:
         var app = &App{}
         app.Log, _ = log.New()
 
-        app.Log.Config.Levels.Delete(log.TRACE)
+        app.Log.Config.Levels.Delete(log.Trace)
 
         app.Log.Debugln("This information will be shown on the screen")
         app.Log.Tracef("%s\n%s\n", "Trace level was deactivated,",
@@ -122,6 +122,10 @@ The LevelFlagNames associates human-readable headings with log levels.
     	// FatalStatusCode is an exit code when calling the Fatal method.
     	// Default - 1. If the code is <= 0, the forced exit will not occur.
     	FatalStatusCode int
+
+    	// SpaceBetweenCells is string that is set between elements
+    	// of information blocks in the logging prefix.
+    	SpaceBetweenCells string
     }
 
 
