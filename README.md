@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 1.0.3*
+*Version: 1.1.0*
 
 
 # log
@@ -82,15 +82,20 @@ To use this module import it as:
 ## Usage
 
     const (
+    	FatalStatusCode   = 1
+    	TimestampFormat   = "01.02.2006 15:04:05"
+    	SpaceBetweenCells = " "
+    	LevelFormat       = "" // "[%s]"
+    )
+
+TimestampFormt is default date and time format for a timestamp.
+
+    const (
 
     	// None means nothing.
     	None = 0
     )
 
-
-    const TimestampFormat = "01.02.2006 15:04:05"
-
-TimestampFormt is default date and time format for a timestamp.
 
     var LevelNames = map[LevelFlag]string{
     	Panic: "PANIC",
@@ -107,10 +112,6 @@ The LevelFlagNames associates human-readable headings with log levels.
 #### type Config
 
     type Config struct {
-    	// TimestampFormat defines the time and date format for the
-    	// timestamp in the log message.
-    	TimestampFormat string
-
     	// Formats is the flag-holder where flags responsible for
     	// formatting the log message prefix.
     	Formats FormatConfig
@@ -123,9 +124,8 @@ The LevelFlagNames associates human-readable headings with log levels.
     	// Default - 1. If the code is <= 0, the forced exit will not occur.
     	FatalStatusCode int
 
-    	// SpaceBetweenCells is string that is set between elements
-    	// of information blocks in the logging prefix.
-    	SpaceBetweenCells string
+    	// Prefix is prefix config of the log-message.
+    	Prefix *PrefixConfig
     }
 
 
@@ -777,6 +777,24 @@ Warnln creates message with Warn, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
 a newline is appended. It returns the number of bytes written and any write
 error encountered.
+
+#### type PrefixConfig
+
+    type PrefixConfig struct {
+    	// TimestampFormat defines the time and date format for the
+    	// timestamp in the log message.
+    	TimestampFormat string
+
+    	// SpaceBetweenCells is string that is set between elements
+    	// of information blocks in the logging prefix.
+    	SpaceBetweenCells string
+
+    	// LevelFormat is format string of the log level substring.
+    	LevelFormat string
+    }
+
+
+PrefixConfig is config type for the log message prefix.
 
 #### type StackSlice
 
