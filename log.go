@@ -24,10 +24,11 @@ func New(flags ...LevelFlag) (*Log, error) {
 		skip:   skip,
 		Writer: os.Stdout,
 		Config: &Config{
-			TimestampFormat: TimestampFormat,
-			Formats:         FormatConfig(None),
-			Levels:          LevelConfig(None),
-			FatalStatusCode: 1,
+			TimestampFormat:   TimestampFormat,
+			Formats:           FormatConfig(None),
+			Levels:            LevelConfig(None),
+			FatalStatusCode:   1,
+			SpaceBetweenCells: " ",
 		},
 	}
 
@@ -64,7 +65,7 @@ func (l *Log) echo(skip int, level LevelFlag, w io.Writer,
 
 	// Generate prefix.
 	timestamp := time.Now().Format(l.Config.TimestampFormat)
-	prefix := timestamp + getPrefix(level, l.Config.Formats, ss)
+	prefix := timestamp + getPrefix(level, l.Config, ss)
 	a = append([]interface{}{prefix}, a...)
 
 	return fmt.Fprint(w, a...)
@@ -83,7 +84,7 @@ func (l *Log) echof(skip int, level LevelFlag, w io.Writer, format string,
 
 	// Generate log prefix.
 	timestamp := time.Now().Format(l.Config.TimestampFormat)
-	prefix := timestamp + getPrefix(level, l.Config.Formats, ss) + format
+	prefix := timestamp + getPrefix(level, l.Config, ss) + format
 
 	return fmt.Fprintf(w, prefix, a...)
 }
@@ -101,8 +102,7 @@ func (l *Log) echoln(skip int, level LevelFlag, w io.Writer,
 
 	// Generate log prefix.
 	timestamp := time.Now().Format(l.Config.TimestampFormat)
-	prefix := strings.TrimSpace(timestamp +
-		getPrefix(level, l.Config.Formats, ss))
+	prefix := strings.TrimSpace(timestamp + getPrefix(level, l.Config, ss))
 	a = append([]interface{}{prefix}, a...)
 
 	return fmt.Fprintln(w, a...)
@@ -114,10 +114,11 @@ func (l *Log) Copy() *Log {
 		Writer: l.Writer,
 		skip:   l.skip,
 		Config: &Config{
-			TimestampFormat: l.Config.TimestampFormat,
-			Levels:          l.Config.Levels,
-			Formats:         l.Config.Formats,
-			FatalStatusCode: l.Config.FatalStatusCode,
+			TimestampFormat:   l.Config.TimestampFormat,
+			Levels:            l.Config.Levels,
+			Formats:           l.Config.Formats,
+			FatalStatusCode:   l.Config.FatalStatusCode,
+			SpaceBetweenCells: l.Config.SpaceBetweenCells,
 		},
 	}
 }

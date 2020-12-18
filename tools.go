@@ -5,30 +5,30 @@ import (
 )
 
 // The getPrefix creates a log-message prefix without timestamp.
-func getPrefix(level LevelFlag, formats FormatConfig, ss *StackSlice) string {
+func getPrefix(level LevelFlag, config *Config, ss *StackSlice) string {
 	var label, path, name, line string
 
 	// Get level name.
-	label = fmt.Sprintf("[%s] ", LevelNames[level])
+	label = fmt.Sprintf("[%s]%s", LevelNames[level], config.SpaceBetweenCells)
 
 	// Configure prefix format.
-	if ok, err := formats.FilePath(); ok && err == nil {
-		path = fmt.Sprintf("%s ", ss.FilePath)
+	if ok, err := config.Formats.FilePath(); ok && err == nil {
+		path = fmt.Sprintf("%s%s", ss.FilePath, config.SpaceBetweenCells)
 	}
 
-	if ok, err := formats.FuncName(); ok && err == nil {
+	if ok, err := config.Formats.FuncName(); ok && err == nil {
 		name = ss.FuncName
-		if ok, err := formats.LineNumber(); ok && err == nil {
+		if ok, err := config.Formats.LineNumber(); ok && err == nil {
 			name += ":"
 		} else {
-			name += " "
+			name += config.SpaceBetweenCells
 		}
 	}
 
-	if ok, err := formats.LineNumber(); ok && err == nil {
-		line = fmt.Sprintf("%d ", ss.FileLine)
+	if ok, err := config.Formats.LineNumber(); ok && err == nil {
+		line = fmt.Sprintf("%d%s", ss.FileLine, config.SpaceBetweenCells)
 	}
 
 	// Generate prefix.
-	return label + path + name + line
+	return config.SpaceBetweenCells + label + path + name + line
 }
