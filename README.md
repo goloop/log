@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 1.1.1*
+*Version: 1.1.2*
 
 
 # log
@@ -88,7 +88,7 @@ To use this module import it as:
 
     	// TimestampFormat default value of the time and date format
     	// for the timestamp in the log message.
-    	TimestampFormat = "01.02.2006 15:04:05"
+    	TimestampFormat = "2006/02/01 15:04:05"
 
     	// SpaceBetweenCells is default value of the string that is set
     	// between elements of information blocks in the logging prefix.
