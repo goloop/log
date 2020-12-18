@@ -8,11 +8,11 @@ import (
 )
 
 const (
-	// The skip default stack offset values.
-	skip = 4
-
 	// None means nothing.
 	None = 0
+
+	// The skip default stack offset values.
+	skip = 4
 )
 
 // New returns new Log object. Accepts zero or more log-level flags

@@ -2,10 +2,21 @@ package log
 
 // TimestampFormt is default date and time format for a timestamp.
 const (
-	FatalStatusCode   = 1
-	TimestampFormat   = "01.02.2006 15:04:05"
+	// FatalStatusCode is default value of the an exit code when
+	// calling the Fatal method.
+	FatalStatusCode = 1
+
+	// TimestampFormat default value of the time and date format
+	// for the timestamp in the log message.
+	TimestampFormat = "01.02.2006 15:04:05"
+
+	// SpaceBetweenCells is default value of the string that is set
+	// between elements of information blocks in the logging prefix.
 	SpaceBetweenCells = " "
-	LevelFormat       = "" // "[%s]"
+
+	// LevelFormat is default value of the format string
+	// of the log level substring.
+	LevelFormat = "" // "[%s]"
 )
 
 // PrefixConfig is config type for the log message prefix.
