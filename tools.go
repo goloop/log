@@ -9,11 +9,22 @@ func getPrefix(level LevelFlag, config *Config, ss *StackSlice) string {
 	var label, path, name, line string
 
 	// Get level name.
-	label = fmt.Sprintf("[%s]%s", LevelNames[level], config.SpaceBetweenCells)
+	label = LevelNames[level] + config.Prefix.SpaceBetweenCells
+	if len(config.Prefix.LevelFormat) != 0 {
+		label = fmt.Sprintf(
+			config.Prefix.LevelFormat+"%s",
+			LevelNames[level],
+			config.Prefix.SpaceBetweenCells,
+		)
+	}
 
 	// Configure prefix format.
 	if ok, err := config.Formats.FilePath(); ok && err == nil {
-		path = fmt.Sprintf("%s%s", ss.FilePath, config.SpaceBetweenCells)
+		path = fmt.Sprintf(
+			"%s%s",
+			ss.FilePath,
+			config.Prefix.SpaceBetweenCells,
+		)
 	}
 
 	if ok, err := config.Formats.FuncName(); ok && err == nil {
@@ -21,14 +32,18 @@ func getPrefix(level LevelFlag, config *Config, ss *StackSlice) string {
 		if ok, err := config.Formats.LineNumber(); ok && err == nil {
 			name += ":"
 		} else {
-			name += config.SpaceBetweenCells
+			name += config.Prefix.SpaceBetweenCells
 		}
 	}
 
 	if ok, err := config.Formats.LineNumber(); ok && err == nil {
-		line = fmt.Sprintf("%d%s", ss.FileLine, config.SpaceBetweenCells)
+		line = fmt.Sprintf(
+			"%d%s",
+			ss.FileLine,
+			config.Prefix.SpaceBetweenCells,
+		)
 	}
 
 	// Generate prefix.
-	return config.SpaceBetweenCells + label + path + name + line
+	return config.Prefix.SpaceBetweenCells + label + path + name + line
 }
