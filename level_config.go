@@ -33,7 +33,7 @@ const (
 	maxLevelConfig LevelConfig = (1 << iota) - 1
 )
 
-// The LevelFlagNames associates human-readable headings with log levels.
+// LevelNames associates human-readable headings with log levels.
 var LevelNames = map[LevelFlag]string{
 	Panic: "PANIC",
 	Fatal: "FATAL",

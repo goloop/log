@@ -41,7 +41,7 @@ func TestFormatConfigIsValid(t *testing.T) {
 		{FormatConfig(LineNumber), true},
 		{FormatConfig(FilePath + FilePath), true},
 		{FormatConfig(FilePath + FilePath + LineNumber), true},
-		{FormatConfig(maxFormatConfig + 1), false},
+		{maxFormatConfig + 1, false},
 		{None, true},
 		{0, true},
 	}
@@ -422,7 +422,7 @@ func TestFormatConfigFilePath(t *testing.T) {
 		{FormatConfig(LineNumber), false},
 		{FormatConfig(FilePath + FuncName), true},
 		{FormatConfig(FuncName + LineNumber), false},
-		{FormatConfig(maxFormatConfig + 1), false},
+		{maxFormatConfig + 1, false},
 		{None, false},
 		{0, false},
 	}
@@ -449,7 +449,7 @@ func TestFormatConfigFuncName(t *testing.T) {
 		{FormatConfig(FilePath + FuncName), true},
 		{FormatConfig(FuncName + LineNumber), true},
 		{FormatConfig(FilePath + LineNumber), false},
-		{FormatConfig(maxFormatConfig + 1), false},
+		{maxFormatConfig + 1, false},
 		{None, false},
 		{0, false},
 	}
@@ -476,7 +476,7 @@ func TestFormatConfigLineNumber(t *testing.T) {
 		{FormatConfig(FilePath + FuncName), false},
 		{FormatConfig(FuncName + LineNumber), true},
 		{FormatConfig(LineNumber + FilePath), true},
-		{FormatConfig(maxFormatConfig + 1), false},
+		{maxFormatConfig + 1, false},
 		{None, false},
 		{0, false},
 	}
