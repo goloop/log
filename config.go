@@ -19,20 +19,6 @@ const (
 	LevelFormat = "%s"
 )
 
-// PrefixConfig is config type for the log message prefix.
-type PrefixConfig struct {
-	// TimestampFormat defines the time and date format for the
-	// timestamp in the log message.
-	TimestampFormat string
-
-	// SpaceBetweenCells is string that is set between elements
-	// of information blocks in the logging prefix.
-	SpaceBetweenCells string
-
-	// LevelFormat is format string of the log level substring.
-	LevelFormat string
-}
-
 // Config is the type of logging configurations: message display
 // parameters, log levels, etc.
 type Config struct {
