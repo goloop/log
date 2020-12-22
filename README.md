@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 1.2.2*
+*Version: 1.2.3*
 
 
 # log
