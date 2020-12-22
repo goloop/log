@@ -29,7 +29,7 @@ func New(flags ...LevelFlag) (log *Log, err error) {
 			Prefix: &PrefixConfig{
 				TimestampFormat:   TimestampFormat,
 				SpaceBetweenCells: SpaceBetweenCells,
-				LevelFormat:       LevelFormat,
+				LevelFormat:       LevelFormatConfig{},
 			},
 		},
 	}

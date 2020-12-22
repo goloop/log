@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 1.1.5*
+*Version: 1.2.0*
 
 
 # log
@@ -401,6 +401,30 @@ LevelFlag is the type of single flags of the the LevelConfig.
 The IsValid returns true if value contains one of the available flags. The
 custom flags cannot be valid since they should not affect the formatting
 settings. The zero value is an invalid flag too.
+
+#### type LevelFormatConfig
+
+    type LevelFormatConfig map[LevelFlag]string
+
+
+
+#### func (*LevelFormatConfig) Color
+
+    func (lfc *LevelFormatConfig) Color(format string)
+
+Color sets different colors for the substring of the log level.
+
+#### func (*LevelFormatConfig) Default
+
+    func (lfc *LevelFormatConfig) Default()
+
+Default sets default options for log level formats.
+
+#### func (*LevelFormatConfig) Set
+
+    func (lfc *LevelFormatConfig) Set(format string)
+
+Set sets custom formats for log level substring..
 
 #### type Log
 
@@ -802,7 +826,16 @@ error encountered.
     	SpaceBetweenCells string
 
     	// LevelFormat is format string of the log level substring.
-    	LevelFormat string
+    	// The formatting string is specified for each level separately.
+    	// If no format string is specified for special level, the default
+    	// format will be used as LevelFormat.
+    	//
+    	// Examples:
+    	//   - Shows the Debug logging level with square brackets:
+    	//     Log.Config.Prefix.LevelFormat[log.Debug] = "[%s]";
+    	//   - Shows the Error logging level as red color:
+    	//     Log.Config.Prefix.LevelFormat[log.Error] = "\033[1;31m%s\033[0m";
+    	LevelFormat LevelFormatConfig
     }
 
 
