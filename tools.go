@@ -9,9 +9,13 @@ func getPrefix(level LevelFlag, config *Config, ss *StackSlice) string {
 	var label, path, name, line string
 
 	// Get level name.
-	if len(config.Prefix.LevelFormat) != 0 {
+	format, ok := config.Prefix.LevelFormat[level]
+	if !ok {
+		format = LevelFormat
+	}
+	if len(format) != 0 {
 		label = fmt.Sprintf(
-			config.Prefix.LevelFormat+"%s",
+			format+"%s",
 			LevelNames[level],
 			config.Prefix.SpaceBetweenCells,
 		)
