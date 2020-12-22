@@ -32,11 +32,22 @@ func TestLevelFormatConfigSet(t *testing.T) {
 func TestLevelFormatConfigColor(t *testing.T) {
 	var format = LevelFormatConfig{}
 
-	format.Color("")
+	format.Color()
 	for l, name := range LevelNames {
 		if _, ok := format[l]; !ok {
 			t.Errorf("test for %s level is failed, expected value", name)
 		}
 	}
+}
 
+// TestLevelFormatConfigColorf tests LevelFormatConfig.Colorf method.
+func TestLevelFormatConfigColorf(t *testing.T) {
+	var format = LevelFormatConfig{}
+
+	format.Colorf("[%s]")
+	for l, name := range LevelNames {
+		if _, ok := format[l]; !ok {
+			t.Errorf("test for %s level is failed, expected value", name)
+		}
+	}
 }

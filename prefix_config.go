@@ -16,7 +16,15 @@ func (lfc *LevelFormatConfig) Set(format string) {
 }
 
 // Color sets different colors for the substring of the log level.
-func (lfc *LevelFormatConfig) Color(format string) {
+// Don't use this style for logging to a file.
+func (lfc *LevelFormatConfig) Color() {
+	lfc.Colorf(LevelFormat)
+}
+
+// Colorf sets different colors for the substring of the log level
+// with support for setting custom formatting for the level substring.
+// Don't use this style for logging to a file.
+func (lfc *LevelFormatConfig) Colorf(format string) {
 	if len(format) == 0 {
 		format = LevelFormat
 	}
