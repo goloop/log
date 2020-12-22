@@ -1,5 +1,7 @@
 package log
 
+// LevelFormatConfig is a special type for control of
+// the formats in different log level
 type LevelFormatConfig map[LevelFlag]string
 
 // Default sets default options for log level formats.
@@ -16,20 +18,22 @@ func (lfc *LevelFormatConfig) Set(format string) {
 }
 
 // Color sets different colors for the substring of the log level.
-// Don't use this style for logging to a file.
+// Use this method only for write log messages to the *NIX console.
 func (lfc *LevelFormatConfig) Color() {
 	lfc.Colorf(LevelFormat)
 }
 
 // Colorf sets different colors for the substring of the log level
 // with support for setting custom formatting for the level substring.
-// Don't use this style for logging to a file.
+// Use this method only for write log messages to the *NIX console.
 func (lfc *LevelFormatConfig) Colorf(format string) {
+	*lfc = make(map[LevelFlag]string)
+
 	if len(format) == 0 {
 		format = LevelFormat
 	}
 
-	*lfc = make(map[LevelFlag]string)
+	// See more: https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
 	(*lfc)[Panic] = "\x1b[5m\033[1;31m" + format + "\033[0m"
 	(*lfc)[Fatal] = "\x1b[1m\033[1;31m" + format + "\033[0m"
 	(*lfc)[Error] = "\033[1;31m" + format + "\033[0m"

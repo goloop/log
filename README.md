@@ -407,21 +407,23 @@ settings. The zero value is an invalid flag too.
     type LevelFormatConfig map[LevelFlag]string
 
 
+LevelFormatConfig is a special type for control of the formats in different log
+level
 
 #### func (*LevelFormatConfig) Color
 
     func (lfc *LevelFormatConfig) Color()
 
-Color sets different colors for the substring of the log level. Don't use this
-style for logging to a file.
+Color sets different colors for the substring of the log level. Use this method
+only for write log messages to the *NIX console.
 
 #### func (*LevelFormatConfig) Colorf
 
     func (lfc *LevelFormatConfig) Colorf(format string)
 
 Colorf sets different colors for the substring of the log level with support for
-setting custom formatting for the level substring. Don't use this style for
-logging to a file.
+setting custom formatting for the level substring. Use this method only for
+write log messages to the *NIX console.
 
 #### func (*LevelFormatConfig) Default
 
