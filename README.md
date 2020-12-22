@@ -3,7 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
-*Version: 1.2.0*
+*Version: 1.2.1*
 
 
 # log
@@ -410,9 +410,18 @@ settings. The zero value is an invalid flag too.
 
 #### func (*LevelFormatConfig) Color
 
-    func (lfc *LevelFormatConfig) Color(format string)
+    func (lfc *LevelFormatConfig) Color()
 
-Color sets different colors for the substring of the log level.
+Color sets different colors for the substring of the log level. Don't use this
+style for logging to a file.
+
+#### func (*LevelFormatConfig) Colorf
+
+    func (lfc *LevelFormatConfig) Colorf(format string)
+
+Colorf sets different colors for the substring of the log level with support for
+setting custom formatting for the level substring. Don't use this style for
+logging to a file.
 
 #### func (*LevelFormatConfig) Default
 
