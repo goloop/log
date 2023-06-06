@@ -58,8 +58,9 @@ type Log struct {
 // The echo method creates a message of the fmt.Fprint format.
 // It is used as a base for all levels of logging in the fmt.Fprint format.
 func (l *Log) echo(skip int, level LevelFlag, w io.Writer,
-	a ...interface{}) (n int, err error) {
-	var ss = getStackSlice(skip)
+	a ...interface{},
+) (n int, err error) {
+	ss := getStackSlice(skip)
 
 	// If the level is not supported.
 	if v, err := l.Config.Levels.Has(level); !v || err != nil {
@@ -77,8 +78,9 @@ func (l *Log) echo(skip int, level LevelFlag, w io.Writer,
 // The echof method creates a message of the fmt.Fprintf format.
 // It is used as a base for all levels of logging in the fmt.Fprintf format.
 func (l *Log) echof(skip int, level LevelFlag, w io.Writer, format string,
-	a ...interface{}) (n int, err error) {
-	var ss = getStackSlice(skip)
+	a ...interface{},
+) (n int, err error) {
+	ss := getStackSlice(skip)
 
 	// If the level is not supported.
 	if v, err := l.Config.Levels.Has(level); !v || err != nil {
@@ -95,8 +97,9 @@ func (l *Log) echof(skip int, level LevelFlag, w io.Writer, format string,
 // The echoln method creates a message of the fmt.Fprintln format.
 // It is used as a base for all levels of logging in the fmt.Fprintln format.
 func (l *Log) echoln(skip int, level LevelFlag, w io.Writer,
-	a ...interface{}) (n int, err error) {
-	var ss = getStackSlice(skip)
+	a ...interface{},
+) (n int, err error) {
+	ss := getStackSlice(skip)
 
 	// If the level is not supported.
 	if v, err := l.Config.Levels.Has(level); !v || err != nil {
@@ -145,7 +148,8 @@ func (l *Log) Fpanic(w io.Writer, a ...interface{}) (n int, err error) {
 // specifier and writes to w. It returns the number of bytes written
 // and any write error encountered.
 func (l *Log) Fpanicf(w io.Writer, format string,
-	a ...interface{}) (n int, err error) {
+	a ...interface{},
+) (n int, err error) {
 	n, err = l.echof(l.skip, Panic, w, format, a...)
 	if ok, _ := l.Config.Levels.Has(Panic); ok {
 		panic(fmt.Sprintf(format, a...))
@@ -222,7 +226,8 @@ func (l *Log) Ffatal(w io.Writer, a ...interface{}) (n int, err error) {
 // specifier and writes to w. It returns the number of bytes written
 // and any write error encountered.
 func (l *Log) Ffatalf(w io.Writer, format string,
-	a ...interface{}) (n int, err error) {
+	a ...interface{},
+) (n int, err error) {
 	n, err = l.echof(l.skip, Fatal, w, format, a...)
 	if ok, _ := l.Config.Levels.Has(Fatal); ok && l.Config.FatalAllowed() {
 		os.Exit(l.Config.FatalStatusCode)
@@ -294,7 +299,8 @@ func (l *Log) Ferror(w io.Writer, a ...interface{}) (n int, err error) {
 // specifier and writes to w. It returns the number of bytes written
 // and any write error encountered.
 func (l *Log) Ferrorf(w io.Writer, format string,
-	a ...interface{}) (n int, err error) {
+	a ...interface{},
+) (n int, err error) {
 	return l.echof(l.skip, Error, w, format, a...)
 }
 
@@ -341,7 +347,8 @@ func (l *Log) Fwarn(w io.Writer, a ...interface{}) (n int, err error) {
 // specifier and writes to w. It returns the number of bytes written
 // and any write error encountered.
 func (l *Log) Fwarnf(w io.Writer, format string,
-	a ...interface{}) (n int, err error) {
+	a ...interface{},
+) (n int, err error) {
 	return l.echof(l.skip, Warn, w, format, a...)
 }
 
@@ -388,7 +395,8 @@ func (l *Log) Finfo(w io.Writer, a ...interface{}) (n int, err error) {
 // specifier and writes to w. It returns the number of bytes written
 // and any write error encountered.
 func (l *Log) Finfof(w io.Writer, format string,
-	a ...interface{}) (n int, err error) {
+	a ...interface{},
+) (n int, err error) {
 	return l.echof(l.skip, Info, w, format, a...)
 }
 
@@ -435,7 +443,8 @@ func (l *Log) Fdebug(w io.Writer, a ...interface{}) (n int, err error) {
 // specifier and writes to w. It returns the number of bytes written
 // and any write error encountered.
 func (l *Log) Fdebugf(w io.Writer, format string,
-	a ...interface{}) (n int, err error) {
+	a ...interface{},
+) (n int, err error) {
 	return l.echof(l.skip, Debug, w, format, a...)
 }
 
@@ -482,7 +491,8 @@ func (l *Log) Ftrace(w io.Writer, a ...interface{}) (n int, err error) {
 // specifier and writes to w. It returns the number of bytes written
 // and any write error encountered.
 func (l *Log) Ftracef(w io.Writer, format string,
-	a ...interface{}) (n int, err error) {
+	a ...interface{},
+) (n int, err error) {
 	return l.echof(l.skip, Trace, w, format, a...)
 }
 

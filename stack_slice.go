@@ -16,7 +16,7 @@ type StackSlice struct {
 // The getStackSlice returns the stack slice. The skip argument
 // is the number of stack frames to skip before taking a slice.
 func getStackSlice(skip int) *StackSlice {
-	var ss = &StackSlice{}
+	ss := &StackSlice{}
 
 	// Return program counters of function invocations on
 	// the calling goroutine's stack and skipping function

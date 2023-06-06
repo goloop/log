@@ -4,7 +4,7 @@ import "testing"
 
 // TestLevelFormatConfigDefault tests LevelFormatConfig.Default method.
 func TestLevelFormatConfigDefault(t *testing.T) {
-	var format = LevelFormatConfig{}
+	format := LevelFormatConfig{}
 
 	format[Debug] = "%s"
 	format.Default()
@@ -16,7 +16,7 @@ func TestLevelFormatConfigDefault(t *testing.T) {
 
 // TestLevelFormatConfigSet tests LevelFormatConfig.Set method.
 func TestLevelFormatConfigSet(t *testing.T) {
-	var format = LevelFormatConfig{}
+	format := LevelFormatConfig{}
 
 	format.Set("[%s]")
 	for l, name := range LevelNames {
@@ -25,12 +25,11 @@ func TestLevelFormatConfigSet(t *testing.T) {
 				"expected %s but %s", name, "[%s]", v)
 		}
 	}
-
 }
 
 // TestLevelFormatConfigColor tests LevelFormatConfig.Color method.
 func TestLevelFormatConfigColor(t *testing.T) {
-	var format = LevelFormatConfig{}
+	format := LevelFormatConfig{}
 
 	format.Color()
 	for l, name := range LevelNames {
@@ -42,7 +41,7 @@ func TestLevelFormatConfigColor(t *testing.T) {
 
 // TestLevelFormatConfigColorf tests LevelFormatConfig.Colorf method.
 func TestLevelFormatConfigColorf(t *testing.T) {
-	var format = LevelFormatConfig{}
+	format := LevelFormatConfig{}
 
 	format.Colorf("[%s]")
 	for l, name := range LevelNames {

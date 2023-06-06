@@ -103,7 +103,7 @@ func (f *FormatConfig) Set(flags ...FormatFlag) (FormatConfig, error) {
 // already contains. Returns a new value if all is well or old value and
 // an error if one or more invalid flags are specified.
 func (f *FormatConfig) Add(flags ...FormatFlag) (FormatConfig, error) {
-	var r = *f
+	r := *f
 
 	for _, flag := range flags {
 		if !flag.IsValid() {
@@ -123,7 +123,7 @@ func (f *FormatConfig) Add(flags ...FormatFlag) (FormatConfig, error) {
 // flags that were not set. Returns a new value if all is well or
 // old value and an error if one or more invalid flags are specified.
 func (f *FormatConfig) Delete(flags ...FormatFlag) (FormatConfig, error) {
-	var r = *f
+	r := *f
 
 	for _, flag := range flags {
 		if !flag.IsValid() {

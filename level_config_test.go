@@ -9,7 +9,7 @@ func TestLevelFlagIsValid(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{Panic, true},
 		{Fatal, true},
 		{Error, true},
@@ -35,7 +35,7 @@ func TestLevelConfigIsValid(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{LevelConfig(Panic), true},
 		{LevelConfig(Fatal), true},
 		{LevelConfig(Error), true},
@@ -62,7 +62,7 @@ func TestLevelConfigPrivateHas(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{LevelConfig(Panic), Panic, true},
 		{LevelConfig(Panic), Fatal, false},
 		{LevelConfig(Fatal), Fatal, true},
@@ -97,7 +97,7 @@ func TestLevelConfigSet(t *testing.T) {
 		result LevelConfig
 	}
 
-	var tests = []test{
+	tests := []test{
 		{[]LevelFlag{Panic}, LevelConfig(Panic)},
 		{[]LevelFlag{Panic, Fatal}, LevelConfig(Panic + Fatal)},
 		{[]LevelFlag{Fatal, Error}, LevelConfig(Fatal + Error)},
@@ -125,7 +125,7 @@ func TestLevelConfigSetError(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{[]LevelFlag{Panic}, true},
 		{[]LevelFlag{Panic, Fatal}, true},
 		{[]LevelFlag{Fatal, Error}, true},
@@ -152,7 +152,7 @@ func TestLevelConfigAdd(t *testing.T) {
 		result LevelConfig
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]LevelFlag{Panic},
 			[]LevelFlag{Panic},
@@ -198,7 +198,7 @@ func TestLevelConfigAddError(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{[]LevelFlag{Panic}, true},
 		{[]LevelFlag{Panic, Fatal}, true},
 		{[]LevelFlag{Fatal, Error, Fatal}, true},
@@ -226,7 +226,7 @@ func TestLevelConfigDelete(t *testing.T) {
 		result LevelConfig
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]LevelFlag{Panic},
 			[]LevelFlag{Panic},
@@ -287,7 +287,7 @@ func TestLevelConfigDeleteError(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{[]LevelFlag{Panic}, true},
 		{[]LevelFlag{Panic, Fatal}, true},
 		{[]LevelFlag{Fatal, Error, Fatal}, true},
@@ -314,7 +314,7 @@ func TestLevelConfigAll(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]LevelFlag{Panic},
 			[]LevelFlag{Panic},
@@ -360,7 +360,7 @@ func TestLevelConfigAny(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]LevelFlag{Panic},
 			[]LevelFlag{Panic},
@@ -410,7 +410,7 @@ func TestLevelConfigPanic(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{LevelConfig(Panic), true},
 		{LevelConfig(Fatal), false},
 		{LevelConfig(Error), false},
@@ -436,7 +436,7 @@ func TestLevelConfigFatal(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{LevelConfig(Panic), false},
 		{LevelConfig(Fatal), true},
 		{LevelConfig(Error), false},
@@ -463,7 +463,7 @@ func TestLevelConfigError(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{LevelConfig(Panic), false},
 		{LevelConfig(Fatal), false},
 		{LevelConfig(Error), true},
@@ -490,7 +490,7 @@ func TestLevelConfigInfo(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{LevelConfig(Info), true},
 		{LevelConfig(Fatal), false},
 		{LevelConfig(Debug), false},
@@ -517,7 +517,7 @@ func TestLevelConfigDebug(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{LevelConfig(Info), false},
 		{LevelConfig(Fatal), false},
 		{LevelConfig(Debug), true},
@@ -544,7 +544,7 @@ func TestLevelConfigTrace(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{LevelConfig(Info), false},
 		{LevelConfig(Fatal), false},
 		{LevelConfig(Trace), true},
