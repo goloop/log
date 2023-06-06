@@ -140,7 +140,7 @@ func (l *LevelConfig) Set(flags ...LevelFlag) (LevelConfig, error) {
 // already contains. Returns a new value if all is well or old value and
 // an error if one or more invalid flags are specified.
 func (l *LevelConfig) Add(flags ...LevelFlag) (LevelConfig, error) {
-	var r = *l
+	r := *l
 
 	for _, flag := range flags {
 		if !flag.IsValid() {
@@ -160,7 +160,7 @@ func (l *LevelConfig) Add(flags ...LevelFlag) (LevelConfig, error) {
 // flags that were not set. Returns a new value if all is well or
 // old value and an error if one or more invalid flags are specified.
 func (l *LevelConfig) Delete(flags ...LevelFlag) (LevelConfig, error) {
-	var r = *l
+	r := *l
 
 	for _, flag := range flags {
 		if !flag.IsValid() {

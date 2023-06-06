@@ -50,7 +50,7 @@ func TestNew(t *testing.T) {
 
 // TestCopy tests Log.Copy method.
 func TestCopy(t *testing.T) {
-	var log, err = New(Info, Debug)
+	log, err := New(Info, Debug)
 	if err != nil {
 		t.Error(err)
 	}
@@ -84,7 +84,7 @@ func TestEcho(t *testing.T) {
 		data    []interface{}
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			Error,
 			[]LevelFlag{Info, Debug, Trace},
@@ -106,7 +106,7 @@ func TestEcho(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 		l, _ := New(s.levels...)
 		l.skip += testSkipSeek
 		l.Config.Formats.Set(s.formats...)
@@ -138,7 +138,7 @@ func TestEchof(t *testing.T) {
 		layout  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			Error,
 			[]LevelFlag{Info, Debug, Trace},
@@ -163,7 +163,7 @@ func TestEchof(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 		l, _ := New(s.levels...)
 		l.skip += testSkipSeek
 		l.Config.Formats.Set(s.formats...)
@@ -194,7 +194,7 @@ func TestEcholn(t *testing.T) {
 		data    []interface{}
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			Error,
 			[]LevelFlag{Info, Debug, Trace},
@@ -216,7 +216,7 @@ func TestEcholn(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 		l, _ := New(s.levels...)
 		l.skip += testSkipSeek
 		l.Config.Formats.Set(s.formats...)
@@ -246,7 +246,7 @@ func TestFpanic(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Panic, Debug},
@@ -268,7 +268,7 @@ func TestFpanic(t *testing.T) {
 	defer func() { recover() }()
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -301,7 +301,7 @@ func TestFpanicf(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Panic, Debug},
@@ -326,7 +326,7 @@ func TestFpanicf(t *testing.T) {
 	defer func() { recover() }()
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -358,7 +358,7 @@ func TestFpanicln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Panic, Debug},
@@ -380,7 +380,7 @@ func TestFpanicln(t *testing.T) {
 	defer func() { recover() }()
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -412,7 +412,7 @@ func TestPanic(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Panic, Debug},
@@ -434,7 +434,7 @@ func TestPanic(t *testing.T) {
 	defer func() { recover() }()
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -468,7 +468,7 @@ func TestPanicf(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Panic, Debug},
@@ -493,7 +493,7 @@ func TestPanicf(t *testing.T) {
 	defer func() { recover() }()
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -526,7 +526,7 @@ func TestPanicln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Panic, Debug},
@@ -548,7 +548,7 @@ func TestPanicln(t *testing.T) {
 	defer func() { recover() }()
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -581,7 +581,7 @@ func TestFfatal(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Fatal, Debug},
@@ -600,7 +600,7 @@ func TestFfatal(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -634,7 +634,7 @@ func TestFfatalf(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Fatal, Debug},
@@ -656,7 +656,7 @@ func TestFfatalf(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -689,7 +689,7 @@ func TestFfatalln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Fatal, Debug},
@@ -708,7 +708,7 @@ func TestFfatalln(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -741,7 +741,7 @@ func TestFatal(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Fatal, Debug},
@@ -760,7 +760,7 @@ func TestFatal(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -795,7 +795,7 @@ func TestFatalf(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Fatal, Debug},
@@ -817,7 +817,7 @@ func TestFatalf(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -851,7 +851,7 @@ func TestFatalln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Fatal, Debug},
@@ -870,7 +870,7 @@ func TestFatalln(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -904,7 +904,7 @@ func TestFerror(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Error, Debug},
@@ -923,7 +923,7 @@ func TestFerror(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -956,7 +956,7 @@ func TestFerrorf(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Error, Debug},
@@ -978,7 +978,7 @@ func TestFerrorf(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -1010,7 +1010,7 @@ func TestFerrorln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Error, Debug},
@@ -1029,7 +1029,7 @@ func TestFerrorln(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -1061,7 +1061,7 @@ func TestError(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Error, Debug},
@@ -1080,7 +1080,7 @@ func TestError(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -1114,7 +1114,7 @@ func TestErrorf(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Error, Debug},
@@ -1136,7 +1136,7 @@ func TestErrorf(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -1169,7 +1169,7 @@ func TestErrorln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Error, Debug},
@@ -1188,7 +1188,7 @@ func TestErrorln(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -1221,7 +1221,7 @@ func TestFwarn(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Warn, Debug},
@@ -1240,7 +1240,7 @@ func TestFwarn(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -1273,7 +1273,7 @@ func TestFwarnf(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Warn, Debug},
@@ -1295,7 +1295,7 @@ func TestFwarnf(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -1327,7 +1327,7 @@ func TestFwarnln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Warn, Debug},
@@ -1346,7 +1346,7 @@ func TestFwarnln(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -1378,7 +1378,7 @@ func TestWarn(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Warn, Debug},
@@ -1397,7 +1397,7 @@ func TestWarn(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -1431,7 +1431,7 @@ func TestWarnf(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Warn, Debug},
@@ -1453,7 +1453,7 @@ func TestWarnf(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -1486,7 +1486,7 @@ func TestWarnln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Warn, Debug},
@@ -1505,7 +1505,7 @@ func TestWarnln(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -1538,7 +1538,7 @@ func TestFinfo(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Info, Debug},
@@ -1557,7 +1557,7 @@ func TestFinfo(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -1590,7 +1590,7 @@ func TestFinfof(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Info, Debug},
@@ -1612,7 +1612,7 @@ func TestFinfof(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -1644,7 +1644,7 @@ func TestFinfoln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Info, Debug},
@@ -1663,7 +1663,7 @@ func TestFinfoln(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -1695,7 +1695,7 @@ func TestInfo(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Info, Debug},
@@ -1714,7 +1714,7 @@ func TestInfo(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -1748,7 +1748,7 @@ func TestInfof(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Info, Debug},
@@ -1770,7 +1770,7 @@ func TestInfof(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -1803,7 +1803,7 @@ func TestInfoln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Info, Debug},
@@ -1822,7 +1822,7 @@ func TestInfoln(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -1855,7 +1855,7 @@ func TestFdebug(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Debug, Debug},
@@ -1874,7 +1874,7 @@ func TestFdebug(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -1907,7 +1907,7 @@ func TestFdebugf(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Debug, Debug},
@@ -1929,7 +1929,7 @@ func TestFdebugf(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -1961,7 +1961,7 @@ func TestFdebugln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Debug, Debug},
@@ -1980,7 +1980,7 @@ func TestFdebugln(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -2012,7 +2012,7 @@ func TestDebug(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Debug, Debug},
@@ -2031,7 +2031,7 @@ func TestDebug(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -2065,7 +2065,7 @@ func TestDebugf(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Debug, Debug},
@@ -2087,7 +2087,7 @@ func TestDebugf(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -2120,7 +2120,7 @@ func TestDebugln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Debug, Debug},
@@ -2139,7 +2139,7 @@ func TestDebugln(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -2172,7 +2172,7 @@ func TestFtrace(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Trace, Debug},
@@ -2191,7 +2191,7 @@ func TestFtrace(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -2224,7 +2224,7 @@ func TestFtracef(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Trace, Debug},
@@ -2246,7 +2246,7 @@ func TestFtracef(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -2278,7 +2278,7 @@ func TestFtraceln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Trace, Debug},
@@ -2297,7 +2297,7 @@ func TestFtraceln(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Config.Formats.Set(s.formats...)
@@ -2329,7 +2329,7 @@ func TestTrace(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Trace, Debug},
@@ -2348,7 +2348,7 @@ func TestTrace(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -2382,7 +2382,7 @@ func TestTracef(t *testing.T) {
 		format  string
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Trace, Debug},
@@ -2404,7 +2404,7 @@ func TestTracef(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf
@@ -2437,7 +2437,7 @@ func TestTraceln(t *testing.T) {
 		formats []FormatFlag
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]interface{}{"1", "2"},
 			[]LevelFlag{Trace, Debug},
@@ -2456,7 +2456,7 @@ func TestTraceln(t *testing.T) {
 	}
 
 	for i, s := range tests {
-		var buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		l, _ := New(s.levels...)
 		l.Writer = buf

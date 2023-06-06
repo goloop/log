@@ -9,7 +9,7 @@ func TestFormatFlagIsValid(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{FilePath, true},
 		{FuncName, true},
 		{LineNumber, true},
@@ -35,7 +35,7 @@ func TestFormatConfigIsValid(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{FormatConfig(FilePath), true},
 		{FormatConfig(FuncName), true},
 		{FormatConfig(LineNumber), true},
@@ -62,7 +62,7 @@ func TestFormatConfigPrivateHas(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{FormatConfig(FilePath), FilePath, true},
 		{FormatConfig(FilePath), FuncName, false},
 		{FormatConfig(FuncName), FuncName, true},
@@ -97,7 +97,7 @@ func TestFormatConfigSet(t *testing.T) {
 		result FormatConfig
 	}
 
-	var tests = []test{
+	tests := []test{
 		{[]FormatFlag{FilePath}, FormatConfig(FilePath)},
 		{[]FormatFlag{FilePath, FuncName}, FormatConfig(FilePath + FuncName)},
 		{[]FormatFlag{FuncName, LineNumber}, FormatConfig(FuncName + LineNumber)},
@@ -124,7 +124,7 @@ func TestFormatConfigSetError(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{[]FormatFlag{FilePath}, true},
 		{[]FormatFlag{FilePath, FuncName}, true},
 		{[]FormatFlag{FuncName, LineNumber}, true},
@@ -151,7 +151,7 @@ func TestFormatConfigAdd(t *testing.T) {
 		result FormatConfig
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]FormatFlag{FilePath},
 			[]FormatFlag{FilePath},
@@ -197,7 +197,7 @@ func TestFormatConfigAddError(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{[]FormatFlag{FilePath}, true},
 		{[]FormatFlag{FilePath, FuncName}, true},
 		{[]FormatFlag{FuncName, LineNumber, FuncName}, true},
@@ -225,7 +225,7 @@ func TestFormatConfigDelete(t *testing.T) {
 		result FormatConfig
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]FormatFlag{FilePath},
 			[]FormatFlag{FilePath},
@@ -286,7 +286,7 @@ func TestFormatConfigDeleteError(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{[]FormatFlag{FilePath}, true},
 		{[]FormatFlag{FilePath, FuncName}, true},
 		{[]FormatFlag{FuncName, LineNumber, FuncName}, true},
@@ -320,7 +320,7 @@ func TestFormatConfigAll(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]FormatFlag{FilePath},
 			[]FormatFlag{FilePath},
@@ -366,7 +366,7 @@ func TestFormatConfigAny(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{
 			[]FormatFlag{FilePath},
 			[]FormatFlag{FilePath},
@@ -416,7 +416,7 @@ func TestFormatConfigFilePath(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{FormatConfig(FilePath), true},
 		{FormatConfig(FuncName), false},
 		{FormatConfig(LineNumber), false},
@@ -442,7 +442,7 @@ func TestFormatConfigFuncName(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{FormatConfig(FilePath), false},
 		{FormatConfig(FuncName), true},
 		{FormatConfig(LineNumber), false},
@@ -469,7 +469,7 @@ func TestFormatConfigLineNumber(t *testing.T) {
 		result bool
 	}
 
-	var tests = []test{
+	tests := []test{
 		{FormatConfig(FilePath), false},
 		{FormatConfig(FuncName), false},
 		{FormatConfig(LineNumber), true},

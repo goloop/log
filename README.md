@@ -1,9 +1,4 @@
-[//]: # (!!!Don't modify the README.md, use `make readme` to generate it!!!)
-
-
-[![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-BSD-blue)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
-
-*Version: 1.2.3*
+[![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log)
 
 
 # log
@@ -12,134 +7,142 @@ The log module implements methods for logging code including various levels of
 logging:
 
     - Panic
-      A panic typically means something went unexpectedly wrong.
-      Mostly it use to fail fast on errors that shouldn't occur during
-      normal operation, or that we aren't prepared to handle gracefully.
+        A panic typically means something went unexpectedly wrong.
+        Mostly it use to fail fast on errors that shouldn't occur during
+        normal operation, or that we aren't prepared to handle gracefully.
 
     - Fatal
-      Fatal represents truly catastrophic situations, as far as
-      application is concerned. An application is about to abort
-      to prevent some kind of corruption or serious problem,
-      if possible. Exit code - 1.
+        Fatal represents truly catastrophic situations, as far as
+        application is concerned. An application is about to abort
+        to prevent some kind of corruption or serious problem,
+        if possible. Exit code - 1.
 
     - Error
-      An error is a serious issue and represents the failure of
-      something important going on in an application. Unlike FATAL,
-      the application itself isn't going down the tubes.
+        An error is a serious issue and represents the failure of
+        something important going on in an application. Unlike FATAL,
+        the application itself isn't going down the tubes.
 
     - Warn
-      It's log level to indicate that an application might have a
-      problem and that theare detected an unusual situation.
-      It's unexpected and unusual problem, but no real harm done,
-      and it's not known whether the issue will persist or recur.
+        It's log level to indicate that an application might have a
+        problem and that theare detected an unusual situation.
+        It's unexpected and unusual problem, but no real harm done,
+        and it's not known whether the issue will persist or recur.
 
     - Info
-      This level's messages correspond to normal application
-      behavior and milestones. They provide the skeleton of what
-      happened.
+        This level's messages correspond to normal application
+        behavior and milestones. They provide the skeleton of what
+        happened.
 
     - Debug
-      This level must to include more granular, diagnostic
-      information then INFO level.
+        This level must to include more granular, diagnostic
+        information then INFO level.
 
     - Trace
-      This is really fine-grained information-finer even than DEBUG.
-      At this level should capture every detail you possibly can about
-      the application's behavior.
+        This is really fine-grained information-finer even than DEBUG.
+        At this level should capture every detail you possibly can about
+        the application's behavior.
 
 ## Installation
 
 To install this module use `go get` as:
 
-    $ go get -u github.com/goloop/log
+```
+$ go get -u github.com/goloop/log
+```
 
 ## Quick Start
 
 To use this module import it as:
 
-        package main
+```go
+package main
 
-        import (
-            "github.com/goloop/log"
-        )
+import (
+    "github.com/goloop/log"
+)
 
-        type App struct {
-            Log *log.Log
-        }
+type App struct {
+    Log *log.Log
+}
 
-        func main() {
-            var app = &App{}
-            app.Log, _ = log.New()
+func main() {
+    var app = &App{}
+    app.Log, _ = log.New()
 
-    		app.Log.Config.Levels.Delete(log.Trace)
-    		app.Log.Config.Formats.Set(log.FuncName, log.LineNumber)
-    		app.Log.Config.Preifx.LevelFormat = "[%s]"
+    app.Log.Config.Levels.Delete(log.Trace)
+    app.Log.Config.Formats.Set(log.FuncName, log.LineNumber)
+    app.Log.Config.Preifx.LevelFormat = "[%s]"
 
-            app.Log.Debugln("This information will be shown on the screen")
-            app.Log.Tracef("%s\n%s\n", "Trace level was deactivated,",
-                "this message willn't be displayed!")
-        }
-
+    app.Log.Debugln("This information will be shown on the screen")
+    app.Log.Tracef("%s\n%s\n", "Trace level was deactivated,",
+        "this message willn't be displayed!")
+}
+```
 
 ## Usage
 
-    const (
-    	// FatalStatusCode is default value of the an exit code when
-    	// calling the Fatal method.
-    	FatalStatusCode = 1
+```go
+const (
+    // FatalStatusCode is default value of the an exit code when
+    // calling the Fatal method.
+    FatalStatusCode = 1
 
-    	// TimestampFormat default value of the time and date format
-    	// for the timestamp in the log message.
-    	TimestampFormat = "2006/01/02 15:04:05"
+    // TimestampFormat default value of the time and date format
+    // for the timestamp in the log message.
+    TimestampFormat = "2006/01/02 15:04:05"
 
-    	// SpaceBetweenCells is default value of the string that is set
-    	// between elements of information blocks in the logging prefix.
-    	SpaceBetweenCells = " "
+    // SpaceBetweenCells is default value of the string that is set
+    // between elements of information blocks in the logging prefix.
+    SpaceBetweenCells = " "
 
-    	// LevelFormat is default value of the format string
-    	// of the log level substring.
-    	LevelFormat = "%s"
-    )
+    // LevelFormat is default value of the format string
+    // of the log level substring.
+    LevelFormat = "%s"
+)
+```
 
 TimestampFormt is default date and time format for a timestamp.
 
-    const (
-    	// None means nothing.
-    	None = 0
-    )
+```go
+const (
+    // None means nothing.
+    None = 0
+)
 
 
-    var LevelNames = map[LevelFlag]string{
-    	Panic: "PANIC",
-    	Fatal: "FATAL",
-    	Error: "ERROR",
-    	Warn:  "WARNING",
-    	Info:  "INFO",
-    	Debug: "DEBUG",
-    	Trace: "TRACE",
-    }
+var LevelNames = map[LevelFlag]string{
+    Panic: "PANIC",
+    Fatal: "FATAL",
+    Error: "ERROR",
+    Warn:  "WARNING",
+    Info:  "INFO",
+    Debug: "DEBUG",
+    Trace: "TRACE",
+}
+```
 
 LevelNames associates human-readable headings with log levels.
 
 #### type Config
 
-    type Config struct {
-    	// Formats is the flag-holder where flags responsible for
-    	// formatting the log message prefix.
-    	Formats FormatConfig
+```go
+type Config struct {
+    // Formats is the flag-holder where flags responsible for
+    // formatting the log message prefix.
+    Formats FormatConfig
 
-    	// Levels is the flag-holder where flags responsible for
-    	// levels of the logging: Panic, Fatal, Error, Warn, Info etc.
-    	Levels LevelConfig
+    // Levels is the flag-holder where flags responsible for
+    // levels of the logging: Panic, Fatal, Error, Warn, Info etc.
+    Levels LevelConfig
 
-    	// FatalStatusCode is an exit code when calling the Fatal method.
-    	// Default - 1. If the code is <= 0, the forced exit will not occur.
-    	FatalStatusCode int
+    // FatalStatusCode is an exit code when calling the Fatal method.
+    // Default - 1. If the code is <= 0, the forced exit will not occur.
+    FatalStatusCode int
 
-    	// Prefix is prefix config of the log-message.
-    	Prefix *PrefixConfig
-    }
-
+    // Prefix is prefix config of the log-message.
+    Prefix *PrefixConfig
+}
+```
 
 Config is the type of logging configurations: message display parameters, log
 levels, etc.
@@ -238,20 +241,21 @@ and an error if one or more invalid flags are specified.
 
 FormatFlag is the type of single flags of the the FormatConfig.
 
-    const (
-    	// FilePath flag adding in the log message the path to
-    	// the go-file where the logging method was called.
-    	FilePath FormatFlag = 1 << iota
+```go
+const (
+    // FilePath flag adding in the log message the path to
+    // the go-file where the logging method was called.
+    FilePath FormatFlag = 1 << iota
 
-    	// FuncName flag adding in the log message the function's name
-    	// where the logging method was called.
-    	FuncName
+    // FuncName flag adding in the log message the function's name
+    // where the logging method was called.
+    FuncName
 
-    	// LineNumber flag adding in the log message the line number
-    	// of the go-file where the logging method was called.
-    	LineNumber
-    )
-
+    // LineNumber flag adding in the log message the line number
+    // of the go-file where the logging method was called.
+    LineNumber
+)
+```
 
 #### func (*FormatFlag) IsValid
 
@@ -370,29 +374,30 @@ if the value is invalid.
 
 LevelFlag is the type of single flags of the the LevelConfig.
 
-    const (
-    	// Panic is the panic-type logging level.
-    	Panic LevelFlag = 1 << iota
+```go
+const (
+    // Panic is the panic-type logging level.
+    Panic LevelFlag = 1 << iota
 
-    	// Fatal is the fatal-type logging level.
-    	Fatal
+    // Fatal is the fatal-type logging level.
+    Fatal
 
-    	// Error is the error-type logging level.
-    	Error
+    // Error is the error-type logging level.
+    Error
 
-    	// Warn is the warning-type logging level.
-    	Warn
+    // Warn is the warning-type logging level.
+    Warn
 
-    	// Info is the information-type logging level.
-    	Info
+    // Info is the information-type logging level.
+    Info
 
-    	// Debug is the debug-type logging level.
-    	Debug
+    // Debug is the debug-type logging level.
+    Debug
 
-    	// Trace is the trace-type logging level.
-    	Trace
-    )
-
+    // Trace is the trace-type logging level.
+    Trace
+)
+```
 
 #### func (*LevelFlag) IsValid
 
@@ -439,14 +444,14 @@ Set sets custom formats for log level substring..
 
 #### type Log
 
-    type Log struct {
+```go
+type Log struct {
+    // Writer is the message receiver object (os.Stdout by default).
+    Writer io.Writer
 
-    	// Writer is the message receiver object (os.Stdout by default).
-    	Writer io.Writer
-
-    	Config *Config
-    }
-
+    Config *Config
+}
+```
 
 Log is the logger object.
 
@@ -827,39 +832,40 @@ error encountered.
 
 #### type PrefixConfig
 
-    type PrefixConfig struct {
-    	// TimestampFormat defines the time and date format for the
-    	// timestamp in the log message.
-    	TimestampFormat string
+```go
+type PrefixConfig struct {
+    // TimestampFormat defines the time and date format for the
+    // timestamp in the log message.
+    TimestampFormat string
 
-    	// SpaceBetweenCells is string that is set between elements
-    	// of information blocks in the logging prefix.
-    	SpaceBetweenCells string
+    // SpaceBetweenCells is string that is set between elements
+    // of information blocks in the logging prefix.
+    SpaceBetweenCells string
 
-    	// LevelFormat is format string of the log level substring.
-    	// The formatting string is specified for each level separately.
-    	// If no format string is specified for special level, the default
-    	// format will be used as LevelFormat.
-    	//
-    	// Examples:
-    	//   - Shows the Debug logging level with square brackets:
-    	//     Log.Config.Prefix.LevelFormat[log.Debug] = "[%s]";
-    	//   - Shows the Error logging level as red color:
-    	//     Log.Config.Prefix.LevelFormat[log.Error] = "\033[1;31m%s\033[0m";
-    	LevelFormat LevelFormatConfig
-    }
-
+    // LevelFormat is format string of the log level substring.
+    // The formatting string is specified for each level separately.
+    // If no format string is specified for special level, the default
+    // format will be used as LevelFormat.
+    //
+    // Examples:
+    //   - Shows the Debug logging level with square brackets:
+    //     Log.Config.Prefix.LevelFormat[log.Debug] = "[%s]";
+    //   - Shows the Error logging level as red color:
+    //     Log.Config.Prefix.LevelFormat[log.Error] = "\033[1;31m%s\033[0m";
+    LevelFormat LevelFormatConfig
+}
+```
 
 PrefixConfig is config type for the log message prefix.
 
 #### type StackSlice
 
-    type StackSlice struct {
-    	FileLine int
-    	FuncName string
-    	FilePath string
-    }
+```go
+type StackSlice struct {
+    FileLine int
+    FuncName string
+    FilePath string
+}
+```
 
-
-StackSlice contains the top-level trace information where the logging method was
-called.
+StackSlice contains the top-level trace information where the logging method was called.
