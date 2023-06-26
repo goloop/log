@@ -7,51 +7,56 @@ import (
 )
 
 const (
-	// Panic is the panic-type logging level.
-	Panic LevelFlag = 1 << iota
+	// PanicLevel is the panic-type logging level.
+	PanicLevel LevelFlag = 1 << iota
 
-	// Fatal is the fatal-type logging level.
-	Fatal
+	// FatalLevel is the fatal-type logging level.
+	FatalLevel
 
-	// Error is the error-type logging level.
-	Error
+	// ErrorLevel is the error-type logging level.
+	ErrorLevel
 
-	// Warn is the warning-type logging level.
-	Warn
+	// WarnLevel is the warning-type logging level.
+	WarnLevel
 
-	// Info is the information-type logging level.
-	Info
+	// InfoLevel is the information-type logging level.
+	InfoLevel
 
-	// Debug is the debug-type logging level.
-	Debug
+	// DebugLevel is the debug-type logging level.
+	DebugLevel
 
-	// Trace is the trace-type logging level.
-	Trace
+	// TraceLevel is the trace-type logging level.
+	TraceLevel
 
 	// The maxLevelConfig is a special flag that indicating the
 	// maximum allowed for LevelConfig type.
 	maxLevelConfig LevelConfig = (1 << iota) - 1
+
+	// DefaultLevel is the default logging level.
+	DefaultLevel = PanicLevel | FatalLevel | ErrorLevel | WarnLevel |
+		InfoLevel | DebugLevel | TraceLevel
 )
 
 // LevelNames associates human-readable headings with log levels.
 var LevelNames = map[LevelFlag]string{
-	Panic: "PANIC",
-	Fatal: "FATAL",
-	Error: "ERROR",
-	Warn:  "WARNING",
-	Info:  "INFO",
-	Debug: "DEBUG",
-	Trace: "TRACE",
+	PanicLevel: "PANIC",
+	FatalLevel: "FATAL",
+	ErrorLevel: "ERROR",
+	WarnLevel:  "WARNING",
+	InfoLevel:  "INFO",
+	DebugLevel: "DEBUG",
+	TraceLevel: "TRACE",
 }
 
 // LevelFlag is the type of single flags of the the LevelConfig.
 type LevelFlag uint8
 
-// The IsValid returns true if value contains one of the available flags.
+// IsValid returns true if value contains one of the available flags.
 // The custom flags cannot be valid since they should not affect the
 // formatting settings. The zero value is an invalid flag too.
 func (l *LevelFlag) IsValid() bool {
-	return bits.OnesCount(uint(*l)) == 1 && *l <= LevelFlag(maxLevelConfig+1)>>1
+	return bits.OnesCount(uint(*l)) == 1 &&
+		*l <= LevelFlag(maxLevelConfig+1)>>1
 }
 
 // LevelConfig type is designed to control the flags responsible
@@ -59,7 +64,7 @@ func (l *LevelFlag) IsValid() bool {
 // file path, function name and line number.
 type LevelConfig LevelFlag
 
-// The Has method returns true if value contains the specified flag.
+// Has method returns true if value contains the specified flag.
 // Returns false and an error if the value is invalid or an
 // invalid flag is specified.
 func (l *LevelConfig) Has(flag LevelFlag) (bool, error) {
@@ -82,37 +87,37 @@ func (l *LevelConfig) IsValid() bool {
 // Panic returns true if value contains the Panic flag.
 // Returns false and an error if the value is invalid.
 func (l *LevelConfig) Panic() (bool, error) {
-	return l.Has(Panic)
+	return l.Has(PanicLevel)
 }
 
 // Fatal returns true if value contains the Fatal flag.
 // Returns false and an error if the value is invalid.
 func (l *LevelConfig) Fatal() (bool, error) {
-	return l.Has(Fatal)
+	return l.Has(FatalLevel)
 }
 
 // Error returns true if value contains the Error flag.
 // Returns false and an error if the value is invalid.
 func (l *LevelConfig) Error() (bool, error) {
-	return l.Has(Error)
+	return l.Has(ErrorLevel)
 }
 
 // Info returns true if value contains the Info flag.
 // Returns false and an error if the value is invalid.
 func (l *LevelConfig) Info() (bool, error) {
-	return l.Has(Info)
+	return l.Has(InfoLevel)
 }
 
 // Debug returns true if value contains the Debug flag.
 // Returns false and an error if the value is invalid.
 func (l *LevelConfig) Debug() (bool, error) {
-	return l.Has(Debug)
+	return l.Has(DebugLevel)
 }
 
 // Trace returns true if value contains the Trace flag.
 // Returns false and an error if the value is invalid.
 func (l *LevelConfig) Trace() (bool, error) {
-	return l.Has(Trace)
+	return l.Has(TraceLevel)
 }
 
 // Set sets the specified flags ignores duplicates.

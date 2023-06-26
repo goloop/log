@@ -10,11 +10,11 @@ func TestLevelFlagIsValid(t *testing.T) {
 	}
 
 	tests := []test{
-		{Panic, true},
-		{Fatal, true},
-		{Error, true},
-		{Panic + Panic, true}, // Panic + Panic == Fatal
-		{Panic + Fatal, false},
+		{PanicLevel, true},
+		{FatalLevel, true},
+		{ErrorLevel, true},
+		{PanicLevel + PanicLevel, true}, // Panic + Panic == Fatal
+		{PanicLevel + FatalLevel, false},
 		{LevelFlag(maxLevelConfig + 1), false},
 		{None, false},
 		{0, false},
@@ -36,11 +36,11 @@ func TestLevelConfigIsValid(t *testing.T) {
 	}
 
 	tests := []test{
-		{LevelConfig(Panic), true},
-		{LevelConfig(Fatal), true},
-		{LevelConfig(Error), true},
-		{LevelConfig(Panic + Panic), true},
-		{LevelConfig(Panic + Panic + Error), true},
+		{LevelConfig(PanicLevel), true},
+		{LevelConfig(FatalLevel), true},
+		{LevelConfig(ErrorLevel), true},
+		{LevelConfig(PanicLevel + PanicLevel), true},
+		{LevelConfig(PanicLevel + PanicLevel + ErrorLevel), true},
 		{maxLevelConfig + 1, false},
 		{None, true},
 		{0, true},
@@ -63,23 +63,23 @@ func TestLevelConfigPrivateHas(t *testing.T) {
 	}
 
 	tests := []test{
-		{LevelConfig(Panic), Panic, true},
-		{LevelConfig(Panic), Fatal, false},
-		{LevelConfig(Fatal), Fatal, true},
-		{LevelConfig(Fatal), Error, false},
-		{LevelConfig(Error), Error, true},
-		{LevelConfig(Error), Panic, false},
-		{LevelConfig(Panic + Fatal), Panic, true},
-		{LevelConfig(Panic + Fatal), Fatal, true},
-		{LevelConfig(Panic + Fatal), Error, false},
-		{LevelConfig(Panic + Fatal + Error), Panic, true},
-		{LevelConfig(Panic + Fatal + Error), Fatal, true},
-		{LevelConfig(Panic + Fatal + Error), Error, true},
-		{LevelConfig(Panic + Fatal + Error), 0, false},
-		{LevelConfig(Panic + Error), Fatal, false},
-		{LevelConfig(Panic + Error), Error, true},
-		{LevelConfig(Panic + Error), Panic, true},
-		{LevelConfig(Panic + Error), None, false},
+		{LevelConfig(PanicLevel), PanicLevel, true},
+		{LevelConfig(PanicLevel), FatalLevel, false},
+		{LevelConfig(FatalLevel), FatalLevel, true},
+		{LevelConfig(FatalLevel), ErrorLevel, false},
+		{LevelConfig(ErrorLevel), ErrorLevel, true},
+		{LevelConfig(ErrorLevel), PanicLevel, false},
+		{LevelConfig(PanicLevel + FatalLevel), PanicLevel, true},
+		{LevelConfig(PanicLevel + FatalLevel), FatalLevel, true},
+		{LevelConfig(PanicLevel + FatalLevel), ErrorLevel, false},
+		{LevelConfig(PanicLevel + FatalLevel + ErrorLevel), PanicLevel, true},
+		{LevelConfig(PanicLevel + FatalLevel + ErrorLevel), FatalLevel, true},
+		{LevelConfig(PanicLevel + FatalLevel + ErrorLevel), ErrorLevel, true},
+		{LevelConfig(PanicLevel + FatalLevel + ErrorLevel), 0, false},
+		{LevelConfig(PanicLevel + ErrorLevel), FatalLevel, false},
+		{LevelConfig(PanicLevel + ErrorLevel), ErrorLevel, true},
+		{LevelConfig(PanicLevel + ErrorLevel), PanicLevel, true},
+		{LevelConfig(PanicLevel + ErrorLevel), None, false},
 	}
 
 	for i, s := range tests {
@@ -98,12 +98,12 @@ func TestLevelConfigSet(t *testing.T) {
 	}
 
 	tests := []test{
-		{[]LevelFlag{Panic}, LevelConfig(Panic)},
-		{[]LevelFlag{Panic, Fatal}, LevelConfig(Panic + Fatal)},
-		{[]LevelFlag{Fatal, Error}, LevelConfig(Fatal + Error)},
+		{[]LevelFlag{PanicLevel}, LevelConfig(PanicLevel)},
+		{[]LevelFlag{PanicLevel, FatalLevel}, LevelConfig(PanicLevel + FatalLevel)},
+		{[]LevelFlag{FatalLevel, ErrorLevel}, LevelConfig(FatalLevel + ErrorLevel)},
 		{
-			[]LevelFlag{Fatal, Error, Fatal},
-			LevelConfig(Fatal + Error),
+			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel},
+			LevelConfig(FatalLevel + ErrorLevel),
 		},
 	}
 
@@ -126,12 +126,12 @@ func TestLevelConfigSetError(t *testing.T) {
 	}
 
 	tests := []test{
-		{[]LevelFlag{Panic}, true},
-		{[]LevelFlag{Panic, Fatal}, true},
-		{[]LevelFlag{Fatal, Error}, true},
-		{[]LevelFlag{Fatal, Error, Fatal}, true},
+		{[]LevelFlag{PanicLevel}, true},
+		{[]LevelFlag{PanicLevel, FatalLevel}, true},
+		{[]LevelFlag{FatalLevel, ErrorLevel}, true},
+		{[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel}, true},
 		{[]LevelFlag{LevelFlag(maxLevelConfig) + 1}, false},
-		{[]LevelFlag{Fatal, None}, false},
+		{[]LevelFlag{FatalLevel, None}, false},
 	}
 
 	for i, s := range tests {
@@ -154,29 +154,29 @@ func TestLevelConfigAdd(t *testing.T) {
 
 	tests := []test{
 		{
-			[]LevelFlag{Panic},
-			[]LevelFlag{Panic},
-			LevelConfig(Panic),
+			[]LevelFlag{PanicLevel},
+			[]LevelFlag{PanicLevel},
+			LevelConfig(PanicLevel),
 		},
 		{
-			[]LevelFlag{Fatal},
-			[]LevelFlag{Panic, Fatal},
-			LevelConfig(Panic + Fatal),
+			[]LevelFlag{FatalLevel},
+			[]LevelFlag{PanicLevel, FatalLevel},
+			LevelConfig(PanicLevel + FatalLevel),
 		},
 		{
-			[]LevelFlag{Panic, Fatal},
-			[]LevelFlag{Fatal, Error},
-			LevelConfig(Panic + Fatal + Error),
+			[]LevelFlag{PanicLevel, FatalLevel},
+			[]LevelFlag{FatalLevel, ErrorLevel},
+			LevelConfig(PanicLevel + FatalLevel + ErrorLevel),
 		},
 		{
-			[]LevelFlag{Error, Panic},
-			[]LevelFlag{Fatal, Error, Fatal},
-			LevelConfig(Panic + Fatal + Error),
+			[]LevelFlag{ErrorLevel, PanicLevel},
+			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel},
+			LevelConfig(PanicLevel + FatalLevel + ErrorLevel),
 		},
 		{
-			[]LevelFlag{Error, Panic},
-			[]LevelFlag{Fatal, Error, Panic},
-			LevelConfig(Panic + Fatal + Error),
+			[]LevelFlag{ErrorLevel, PanicLevel},
+			[]LevelFlag{FatalLevel, ErrorLevel, PanicLevel},
+			LevelConfig(PanicLevel + FatalLevel + ErrorLevel),
 		},
 	}
 
@@ -199,12 +199,12 @@ func TestLevelConfigAddError(t *testing.T) {
 	}
 
 	tests := []test{
-		{[]LevelFlag{Panic}, true},
-		{[]LevelFlag{Panic, Fatal}, true},
-		{[]LevelFlag{Fatal, Error, Fatal}, true},
-		{[]LevelFlag{Fatal, Error, Fatal, Fatal}, true},
-		{[]LevelFlag{Fatal, LevelFlag(maxLevelConfig) + 1, Fatal}, false},
-		{[]LevelFlag{Fatal, None, Fatal}, false},
+		{[]LevelFlag{PanicLevel}, true},
+		{[]LevelFlag{PanicLevel, FatalLevel}, true},
+		{[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel}, true},
+		{[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel, FatalLevel}, true},
+		{[]LevelFlag{FatalLevel, LevelFlag(maxLevelConfig) + 1, FatalLevel}, false},
+		{[]LevelFlag{FatalLevel, None, FatalLevel}, false},
 		{[]LevelFlag{None}, false},
 	}
 
@@ -228,44 +228,44 @@ func TestLevelConfigDelete(t *testing.T) {
 
 	tests := []test{
 		{
-			[]LevelFlag{Panic},
-			[]LevelFlag{Panic},
+			[]LevelFlag{PanicLevel},
+			[]LevelFlag{PanicLevel},
 			LevelConfig(None),
 		},
 		{
-			[]LevelFlag{Panic, Fatal},
-			[]LevelFlag{Fatal},
-			LevelConfig(Panic),
+			[]LevelFlag{PanicLevel, FatalLevel},
+			[]LevelFlag{FatalLevel},
+			LevelConfig(PanicLevel),
 		},
 		{
-			[]LevelFlag{Panic, Fatal},
-			[]LevelFlag{Fatal, Error},
-			LevelConfig(Panic),
+			[]LevelFlag{PanicLevel, FatalLevel},
+			[]LevelFlag{FatalLevel, ErrorLevel},
+			LevelConfig(PanicLevel),
 		},
 		{
-			[]LevelFlag{Error, Panic},
-			[]LevelFlag{Fatal, Error, Fatal},
-			LevelConfig(Panic),
+			[]LevelFlag{ErrorLevel, PanicLevel},
+			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel},
+			LevelConfig(PanicLevel),
 		},
 		{
-			[]LevelFlag{Fatal, Error},
-			[]LevelFlag{Error, Panic, Error},
-			LevelConfig(Fatal),
+			[]LevelFlag{FatalLevel, ErrorLevel},
+			[]LevelFlag{ErrorLevel, PanicLevel, ErrorLevel},
+			LevelConfig(FatalLevel),
 		},
 		{
-			[]LevelFlag{Error, Panic},
-			[]LevelFlag{Fatal, Error, Panic},
+			[]LevelFlag{ErrorLevel, PanicLevel},
+			[]LevelFlag{FatalLevel, ErrorLevel, PanicLevel},
 			LevelConfig(None),
 		},
 		{
-			[]LevelFlag{Fatal, Error, Panic},
+			[]LevelFlag{FatalLevel, ErrorLevel, PanicLevel},
 			[]LevelFlag{},
-			LevelConfig(Fatal + Error + Panic),
+			LevelConfig(FatalLevel + ErrorLevel + PanicLevel),
 		},
 		{
-			[]LevelFlag{Fatal, Error, Panic},
-			[]LevelFlag{Fatal},
-			LevelConfig(Error + Panic),
+			[]LevelFlag{FatalLevel, ErrorLevel, PanicLevel},
+			[]LevelFlag{FatalLevel},
+			LevelConfig(ErrorLevel + PanicLevel),
 		},
 	}
 
@@ -288,11 +288,11 @@ func TestLevelConfigDeleteError(t *testing.T) {
 	}
 
 	tests := []test{
-		{[]LevelFlag{Panic}, true},
-		{[]LevelFlag{Panic, Fatal}, true},
-		{[]LevelFlag{Fatal, Error, Fatal}, true},
-		{[]LevelFlag{Fatal, Error, Fatal, Fatal}, true},
-		{[]LevelFlag{Fatal, LevelFlag(maxLevelConfig + 1), Fatal}, false},
+		{[]LevelFlag{PanicLevel}, true},
+		{[]LevelFlag{PanicLevel, FatalLevel}, true},
+		{[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel}, true},
+		{[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel, FatalLevel}, true},
+		{[]LevelFlag{FatalLevel, LevelFlag(maxLevelConfig + 1), FatalLevel}, false},
 		{[]LevelFlag{None}, false},
 	}
 
@@ -316,28 +316,28 @@ func TestLevelConfigAll(t *testing.T) {
 
 	tests := []test{
 		{
-			[]LevelFlag{Panic},
-			[]LevelFlag{Panic},
+			[]LevelFlag{PanicLevel},
+			[]LevelFlag{PanicLevel},
 			true,
 		},
 		{
-			[]LevelFlag{Panic, Fatal},
-			[]LevelFlag{Fatal},
+			[]LevelFlag{PanicLevel, FatalLevel},
+			[]LevelFlag{FatalLevel},
 			true,
 		},
 		{
-			[]LevelFlag{Panic, Fatal},
-			[]LevelFlag{Error},
+			[]LevelFlag{PanicLevel, FatalLevel},
+			[]LevelFlag{ErrorLevel},
 			false,
 		},
 		{
-			[]LevelFlag{Fatal, Error, Fatal},
-			[]LevelFlag{Error, Panic},
+			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel},
+			[]LevelFlag{ErrorLevel, PanicLevel},
 			false,
 		},
 		{
-			[]LevelFlag{Fatal, Error, Fatal, None},
-			[]LevelFlag{Error, Panic},
+			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel, None},
+			[]LevelFlag{ErrorLevel, PanicLevel},
 			false,
 		},
 	}
@@ -362,33 +362,33 @@ func TestLevelConfigAny(t *testing.T) {
 
 	tests := []test{
 		{
-			[]LevelFlag{Panic},
-			[]LevelFlag{Panic},
+			[]LevelFlag{PanicLevel},
+			[]LevelFlag{PanicLevel},
 			true,
 		},
 		{
-			[]LevelFlag{Panic, Fatal},
-			[]LevelFlag{Fatal},
+			[]LevelFlag{PanicLevel, FatalLevel},
+			[]LevelFlag{FatalLevel},
 			true,
 		},
 		{
-			[]LevelFlag{Panic, Fatal},
-			[]LevelFlag{Error},
+			[]LevelFlag{PanicLevel, FatalLevel},
+			[]LevelFlag{ErrorLevel},
 			false,
 		},
 		{
-			[]LevelFlag{Fatal, Error, Fatal},
-			[]LevelFlag{Error, Panic},
+			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel},
+			[]LevelFlag{ErrorLevel, PanicLevel},
 			true,
 		},
 		{
-			[]LevelFlag{Fatal, Error, Fatal},
-			[]LevelFlag{Panic, Panic, Error, Panic},
+			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel},
+			[]LevelFlag{PanicLevel, PanicLevel, ErrorLevel, PanicLevel},
 			true,
 		},
 		{
-			[]LevelFlag{Panic, Fatal},
-			[]LevelFlag{Error, Panic},
+			[]LevelFlag{PanicLevel, FatalLevel},
+			[]LevelFlag{ErrorLevel, PanicLevel},
 			true,
 		},
 	}
@@ -411,11 +411,11 @@ func TestLevelConfigPanic(t *testing.T) {
 	}
 
 	tests := []test{
-		{LevelConfig(Panic), true},
-		{LevelConfig(Fatal), false},
-		{LevelConfig(Error), false},
-		{LevelConfig(Panic + Fatal), true},
-		{LevelConfig(Fatal + Error), false},
+		{LevelConfig(PanicLevel), true},
+		{LevelConfig(FatalLevel), false},
+		{LevelConfig(ErrorLevel), false},
+		{LevelConfig(PanicLevel + FatalLevel), true},
+		{LevelConfig(FatalLevel + ErrorLevel), false},
 		{maxLevelConfig + 1, false},
 		{None, false},
 		{0, false},
@@ -437,12 +437,12 @@ func TestLevelConfigFatal(t *testing.T) {
 	}
 
 	tests := []test{
-		{LevelConfig(Panic), false},
-		{LevelConfig(Fatal), true},
-		{LevelConfig(Error), false},
-		{LevelConfig(Panic + Fatal), true},
-		{LevelConfig(Fatal + Error), true},
-		{LevelConfig(Panic + Error), false},
+		{LevelConfig(PanicLevel), false},
+		{LevelConfig(FatalLevel), true},
+		{LevelConfig(ErrorLevel), false},
+		{LevelConfig(PanicLevel + FatalLevel), true},
+		{LevelConfig(FatalLevel + ErrorLevel), true},
+		{LevelConfig(PanicLevel + ErrorLevel), false},
 		{maxLevelConfig + 1, false},
 		{None, false},
 		{0, false},
@@ -464,12 +464,12 @@ func TestLevelConfigError(t *testing.T) {
 	}
 
 	tests := []test{
-		{LevelConfig(Panic), false},
-		{LevelConfig(Fatal), false},
-		{LevelConfig(Error), true},
-		{LevelConfig(Panic + Fatal), false},
-		{LevelConfig(Fatal + Error), true},
-		{LevelConfig(Error + Panic), true},
+		{LevelConfig(PanicLevel), false},
+		{LevelConfig(FatalLevel), false},
+		{LevelConfig(ErrorLevel), true},
+		{LevelConfig(PanicLevel + FatalLevel), false},
+		{LevelConfig(FatalLevel + ErrorLevel), true},
+		{LevelConfig(ErrorLevel + PanicLevel), true},
 		{maxLevelConfig + 1, false},
 		{None, false},
 		{0, false},
@@ -491,12 +491,12 @@ func TestLevelConfigInfo(t *testing.T) {
 	}
 
 	tests := []test{
-		{LevelConfig(Info), true},
-		{LevelConfig(Fatal), false},
-		{LevelConfig(Debug), false},
-		{LevelConfig(Panic + Fatal + Debug), false},
-		{LevelConfig(Fatal + Error + Info), true},
-		{LevelConfig(Error + Info + Panic), true},
+		{LevelConfig(InfoLevel), true},
+		{LevelConfig(FatalLevel), false},
+		{LevelConfig(DebugLevel), false},
+		{LevelConfig(PanicLevel + FatalLevel + DebugLevel), false},
+		{LevelConfig(FatalLevel + ErrorLevel + InfoLevel), true},
+		{LevelConfig(ErrorLevel + InfoLevel + PanicLevel), true},
 		{maxLevelConfig + 1, false},
 		{None, false},
 		{0, false},
@@ -518,12 +518,12 @@ func TestLevelConfigDebug(t *testing.T) {
 	}
 
 	tests := []test{
-		{LevelConfig(Info), false},
-		{LevelConfig(Fatal), false},
-		{LevelConfig(Debug), true},
-		{LevelConfig(Panic + Fatal + Debug), true},
-		{LevelConfig(Fatal + Error + Info), false},
-		{LevelConfig(Error + Info + Panic + Debug), true},
+		{LevelConfig(InfoLevel), false},
+		{LevelConfig(FatalLevel), false},
+		{LevelConfig(DebugLevel), true},
+		{LevelConfig(PanicLevel + FatalLevel + DebugLevel), true},
+		{LevelConfig(FatalLevel + ErrorLevel + InfoLevel), false},
+		{LevelConfig(ErrorLevel + InfoLevel + PanicLevel + DebugLevel), true},
 		{maxLevelConfig + 1, false},
 		{None, false},
 		{0, false},
@@ -545,12 +545,12 @@ func TestLevelConfigTrace(t *testing.T) {
 	}
 
 	tests := []test{
-		{LevelConfig(Info), false},
-		{LevelConfig(Fatal), false},
-		{LevelConfig(Trace), true},
-		{LevelConfig(Trace + Fatal + Debug), true},
-		{LevelConfig(Fatal + Error + Info), false},
-		{LevelConfig(Error + Trace + Panic + Debug), true},
+		{LevelConfig(InfoLevel), false},
+		{LevelConfig(FatalLevel), false},
+		{LevelConfig(TraceLevel), true},
+		{LevelConfig(TraceLevel + FatalLevel + DebugLevel), true},
+		{LevelConfig(FatalLevel + ErrorLevel + InfoLevel), false},
+		{LevelConfig(ErrorLevel + TraceLevel + PanicLevel + DebugLevel), true},
 		{maxLevelConfig + 1, false},
 		{None, false},
 		{0, false},

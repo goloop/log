@@ -34,13 +34,13 @@ func (lfc *LevelFormatConfig) Colorf(format string) {
 	}
 
 	// See more: https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
-	(*lfc)[Panic] = "\x1b[5m\x1b[1m\x1b[31m" + format + "\x1b[0m"
-	(*lfc)[Fatal] = "\x1b[1m\x1b[31m" + format + "\x1b[0m"
-	(*lfc)[Error] = "\x1b[31m" + format + "\x1b[0m"
-	(*lfc)[Warn] = "\x1b[2m\x1b[1m\x1b[31m" + format + "\x1b[0m"
-	(*lfc)[Info] = "\x1b[2m\x1b[30m" + format + "\x1b[0m"
-	(*lfc)[Debug] = "\x1b[1m\x1b[32m" + format + "\x1b[0m"
-	(*lfc)[Trace] = "\x1b[1m\x1b[33m" + format + "\x1b[0m"
+	(*lfc)[PanicLevel] = "\x1b[5m\x1b[1m\x1b[31m" + format + "\x1b[0m"
+	(*lfc)[FatalLevel] = "\x1b[1m\x1b[31m" + format + "\x1b[0m"
+	(*lfc)[ErrorLevel] = "\x1b[31m" + format + "\x1b[0m"
+	(*lfc)[WarnLevel] = "\x1b[2m\x1b[1m\x1b[31m" + format + "\x1b[0m"
+	(*lfc)[InfoLevel] = "\x1b[2m\x1b[30m" + format + "\x1b[0m"
+	(*lfc)[DebugLevel] = "\x1b[1m\x1b[32m" + format + "\x1b[0m"
+	(*lfc)[TraceLevel] = "\x1b[1m\x1b[33m" + format + "\x1b[0m"
 }
 
 // PrefixConfig is config type for the log message prefix.

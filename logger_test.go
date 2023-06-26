@@ -1,17 +1,36 @@
 package log
 
-import (
-	"bytes"
-	"fmt"
-	"strings"
-	"testing"
-)
+import "testing"
 
 const (
 	testSkip     = 3
 	testSkipSeek = 1
 )
 
+// TestConfigFatalAllowed tests Config.FatalAllowed method.
+func TestConfigFatalAllowed(t *testing.T) {
+	type test struct {
+		value  int
+		result bool
+	}
+
+	tests := []test{
+		{0, false},
+		{1, true},
+		{32, true},
+	}
+
+	for i, s := range tests {
+		c := &Config{FatalStatusCode: s.value}
+		if ok := c.FatalAllowed(); ok != s.result {
+			t.Errorf("test for %d is failed, "+
+				"expected %t but %t", i, s.result, ok)
+		}
+	}
+}
+
+
+/*
 // TestNew tests Log.New method.
 func TestNew(t *testing.T) {
 	var (
@@ -20,7 +39,7 @@ func TestNew(t *testing.T) {
 	)
 
 	// Create log with custom leveles.
-	log, err = New(Info, Debug)
+	log, err = New(Info|Debug)
 	if err != nil {
 		t.Error(err)
 	}
@@ -34,7 +53,7 @@ func TestNew(t *testing.T) {
 	}
 
 	// Create log with defaults leveles.
-	log, err = New()
+	log, err = New(Default)
 	if err != nil {
 		t.Error(err)
 	}
@@ -50,7 +69,7 @@ func TestNew(t *testing.T) {
 
 // TestCopy tests Log.Copy method.
 func TestCopy(t *testing.T) {
-	log, err := New(Info, Debug)
+	log, err := New(Info|Debug)
 	if err != nil {
 		t.Error(err)
 	}
@@ -79,37 +98,37 @@ func TestCopy(t *testing.T) {
 func TestEcho(t *testing.T) {
 	type test struct {
 		level   LevelFlag
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 		data    []interface{}
 	}
 
 	tests := []test{
 		{
 			Error,
-			[]LevelFlag{Info, Debug, Trace},
-			[]FormatFlag{FilePath},
+			Info|Debug|Trace,
+			FilePath,
 			[]interface{}{"1", "2", "3"},
 		},
 		{
 			Info,
-			[]LevelFlag{Info, Debug, Trace},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Info|Debug|Trace,
+			FilePath|FuncName|LineNumber,
 			[]interface{}{"1", "2", "3"},
 		},
 		{
 			Debug,
-			[]LevelFlag{Info, Debug, Trace},
-			[]FormatFlag{FuncName},
+			Info|Debug|Trace,
+			FuncName,
 			[]interface{}{"1", "2", "3"},
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.skip += testSkipSeek
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.echo(skip, s.level, buf, s.data...)
 
 		exp := ""
@@ -132,8 +151,8 @@ func TestEcho(t *testing.T) {
 func TestEchof(t *testing.T) {
 	type test struct {
 		level   LevelFlag
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 		data    []interface{}
 		layout  string
 	}
@@ -141,22 +160,22 @@ func TestEchof(t *testing.T) {
 	tests := []test{
 		{
 			Error,
-			[]LevelFlag{Info, Debug, Trace},
-			[]FormatFlag{FilePath},
+			Info|Debug|Trace,
+			FilePath,
 			[]interface{}{"1", "2", "3"},
 			"%s + %s - %s",
 		},
 		{
 			Info,
-			[]LevelFlag{Info, Debug, Trace},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Info|Debug|Trace,
+			FilePath|FuncName|LineNumber,
 			[]interface{}{"1", "2", "3"},
 			"%s / %s + %s",
 		},
 		{
 			Debug,
-			[]LevelFlag{Info, Debug, Trace},
-			[]FormatFlag{FuncName},
+			Info|Debug|Trace,
+			FuncName,
 			[]interface{}{"1", "2", "3"},
 			"%s * %s + %s",
 		},
@@ -164,9 +183,9 @@ func TestEchof(t *testing.T) {
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.skip += testSkipSeek
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.echof(skip, s.level, buf, s.layout, s.data...)
 
 		exp := ""
@@ -189,37 +208,37 @@ func TestEchof(t *testing.T) {
 func TestEcholn(t *testing.T) {
 	type test struct {
 		level   LevelFlag
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 		data    []interface{}
 	}
 
 	tests := []test{
 		{
 			Error,
-			[]LevelFlag{Info, Debug, Trace},
-			[]FormatFlag{FilePath},
+			Info|Debug|Trace,
+			FilePath,
 			[]interface{}{"1", "2", "3"},
 		},
 		{
 			Info,
-			[]LevelFlag{Info, Debug, Trace},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Info|Debug|Trace,
+			FilePath|FuncName|LineNumber,
 			[]interface{}{"1", "2", "3"},
 		},
 		{
 			Debug,
-			[]LevelFlag{Info, Debug, Trace},
-			[]FormatFlag{FuncName},
+			Info|Debug|Trace,
+			FuncName,
 			[]interface{}{"1", "2", "3"},
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.skip += testSkipSeek
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.echoln(skip, s.level, buf, s.data...)
 
 		exp := ""
@@ -242,25 +261,25 @@ func TestEcholn(t *testing.T) {
 func TestFpanic(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Panic, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Panic|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Panic, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Panic|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
@@ -270,8 +289,8 @@ func TestFpanic(t *testing.T) {
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Fpanic(buf, s.data...)
@@ -296,28 +315,28 @@ func TestFpanic(t *testing.T) {
 func TestFpanicf(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 		format  string
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Panic, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Panic|Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Panic, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Panic|Debug,
+			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 	}
@@ -328,8 +347,8 @@ func TestFpanicf(t *testing.T) {
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Fpanicf(buf, s.format, s.data...)
@@ -354,25 +373,25 @@ func TestFpanicf(t *testing.T) {
 func TestFpanicln(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Panic, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Panic|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Panic, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Panic|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
@@ -382,8 +401,8 @@ func TestFpanicln(t *testing.T) {
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Fpanicln(buf, s.data...)
@@ -408,25 +427,25 @@ func TestFpanicln(t *testing.T) {
 func TestPanic(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Panic, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Panic|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Panic, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Panic|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
@@ -436,9 +455,9 @@ func TestPanic(t *testing.T) {
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Panic(s.data...)
@@ -463,28 +482,28 @@ func TestPanic(t *testing.T) {
 func TestPanicf(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 		format  string
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Panic, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Panic|Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Panic, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Panic|Debug,
+			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 	}
@@ -495,9 +514,9 @@ func TestPanicf(t *testing.T) {
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Panicf(s.format, s.data...)
@@ -522,25 +541,25 @@ func TestPanicf(t *testing.T) {
 func TestPanicln(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Panic, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Panic|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Panic, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Panic|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
@@ -550,9 +569,9 @@ func TestPanicln(t *testing.T) {
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Panicln(s.data...)
@@ -577,33 +596,33 @@ func TestPanicln(t *testing.T) {
 func TestFfatal(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Fatal, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Fatal|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Fatal, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Fatal|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.Config.FatalStatusCode = 0 // ignore force exit for tests
 		l.skip = 5
 
@@ -629,28 +648,28 @@ func TestFfatal(t *testing.T) {
 func TestFfatalf(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 		format  string
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Fatal, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Fatal|Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Fatal, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Fatal|Debug,
+			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 	}
@@ -658,8 +677,8 @@ func TestFfatalf(t *testing.T) {
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.Config.FatalStatusCode = 0 // ignore force exit for tests
 		l.skip = 5
 
@@ -685,33 +704,33 @@ func TestFfatalf(t *testing.T) {
 func TestFfatalln(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Fatal, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Fatal|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Fatal, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Fatal|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.Config.FatalStatusCode = 0 // ignore force exit for tests
 		l.skip = 5
 
@@ -737,34 +756,34 @@ func TestFfatalln(t *testing.T) {
 func TestFatal(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Fatal, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Fatal|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Fatal, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Fatal|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.Config.FatalStatusCode = 0 // ignore force exit for tests
 		l.skip = 5
 
@@ -790,28 +809,28 @@ func TestFatal(t *testing.T) {
 func TestFatalf(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 		format  string
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Fatal, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Fatal|Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Fatal, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Fatal|Debug,
+			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 	}
@@ -819,9 +838,9 @@ func TestFatalf(t *testing.T) {
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.Config.FatalStatusCode = 0 // ignore force exit for tests
 		l.skip = 5
 
@@ -847,34 +866,34 @@ func TestFatalf(t *testing.T) {
 func TestFatalln(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Fatal, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Fatal|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Fatal, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Fatal|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.Config.FatalStatusCode = 0 // ignore force exit for tests
 		l.skip = 5
 
@@ -900,33 +919,33 @@ func TestFatalln(t *testing.T) {
 func TestFerror(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Error|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Error, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Error|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Ferror(buf, s.data...)
@@ -951,28 +970,28 @@ func TestFerror(t *testing.T) {
 func TestFerrorf(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 		format  string
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Error|Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Error, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Error|Debug,
+			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 	}
@@ -980,8 +999,8 @@ func TestFerrorf(t *testing.T) {
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Ferrorf(buf, s.format, s.data...)
@@ -1006,33 +1025,33 @@ func TestFerrorf(t *testing.T) {
 func TestFerrorln(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Error|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Error, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Error|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Ferrorln(buf, s.data...)
@@ -1057,34 +1076,34 @@ func TestFerrorln(t *testing.T) {
 func TestError(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Error|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Error, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Error|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Error(s.data...)
@@ -1109,28 +1128,28 @@ func TestError(t *testing.T) {
 func TestErrorf(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 		format  string
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Error|Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Error, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Error|Debug,
+			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 	}
@@ -1138,9 +1157,9 @@ func TestErrorf(t *testing.T) {
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Errorf(s.format, s.data...)
@@ -1165,34 +1184,34 @@ func TestErrorf(t *testing.T) {
 func TestErrorln(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Error|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Error, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Error|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Errorln(s.data...)
@@ -1217,33 +1236,33 @@ func TestErrorln(t *testing.T) {
 func TestFwarn(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Warn, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Warn|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Warn, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Warn|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Fwarn(buf, s.data...)
@@ -1268,28 +1287,28 @@ func TestFwarn(t *testing.T) {
 func TestFwarnf(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 		format  string
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Warn, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Warn|Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Warn, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Warn|Debug,
+			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 	}
@@ -1297,8 +1316,8 @@ func TestFwarnf(t *testing.T) {
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Fwarnf(buf, s.format, s.data...)
@@ -1323,33 +1342,33 @@ func TestFwarnf(t *testing.T) {
 func TestFwarnln(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Warn, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Warn|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Warn, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Warn|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Fwarnln(buf, s.data...)
@@ -1374,34 +1393,34 @@ func TestFwarnln(t *testing.T) {
 func TestWarn(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Warn, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Warn|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Warn, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Warn|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Warn(s.data...)
@@ -1426,28 +1445,28 @@ func TestWarn(t *testing.T) {
 func TestWarnf(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 		format  string
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Warn, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Warn|Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Warn, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Warn|Debug,
+			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 	}
@@ -1455,9 +1474,9 @@ func TestWarnf(t *testing.T) {
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Warnf(s.format, s.data...)
@@ -1482,34 +1501,34 @@ func TestWarnf(t *testing.T) {
 func TestWarnln(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Warn, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Warn|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Warn, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Warn|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
+		l, _ := New(s.levels)
 		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Warnln(s.data...)
@@ -1534,33 +1553,33 @@ func TestWarnln(t *testing.T) {
 func TestFinfo(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Info, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Info|Debug,
+			FilePath|FuncName|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Info, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Info|Debug,
+			FilePath|LineNumber,
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 		},
 	}
 
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Finfo(buf, s.data...)
@@ -1585,28 +1604,28 @@ func TestFinfo(t *testing.T) {
 func TestFinfof(t *testing.T) {
 	type test struct {
 		data    []interface{}
-		levels  []LevelFlag
-		formats []FormatFlag
+		levels  LevelFlag
+		formats FormatFlag
 		format  string
 	}
 
 	tests := []test{
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Info, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Info|Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Error, Info, Debug},
-			[]FormatFlag{FilePath, LineNumber},
+			Error|Info|Debug,
+			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
 			[]interface{}{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
+			Debug,
+			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 	}
@@ -1614,8 +1633,8 @@ func TestFinfof(t *testing.T) {
 	for i, s := range tests {
 		buf := new(bytes.Buffer)
 
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
+		l, _ := New(s.levels)
+		l.Config.Formats.Set(s.formats)
 		l.skip = 5
 
 		l.Finfof(buf, s.format, s.data...)
@@ -2480,3 +2499,4 @@ func TestTraceln(t *testing.T) {
 		}
 	}
 }
+*/

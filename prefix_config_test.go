@@ -6,7 +6,7 @@ import "testing"
 func TestLevelFormatConfigDefault(t *testing.T) {
 	format := LevelFormatConfig{}
 
-	format[Debug] = "%s"
+	format[DebugLevel] = "%s"
 	format.Default()
 	if len(format) != 0 {
 		t.Errorf("test is failed, "+

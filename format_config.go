@@ -7,27 +7,34 @@ import (
 )
 
 const (
-	// FilePath flag adding in the log message the path to
+	// FullPathFormat flag adding in the log message the path to
 	// the go-file where the logging method was called.
-	FilePath FormatFlag = 1 << iota
+	FullPathFormat FormatFlag = 1 << iota
 
-	// FuncName flag adding in the log message the function's name
+	// ShortPathFormat flag adding in the log message the short path
+	// to the go-file where the logging method was called.
+	ShortPathFormat
+
+	// FuncNameFormat flag adding in the log message the function's name
 	// where the logging method was called.
-	FuncName
+	FuncNameFormat
 
-	// LineNumber flag adding in the log message the line number
+	// LineNumberFormat flag adding in the log message the line number
 	// of the go-file where the logging method was called.
-	LineNumber
+	LineNumberFormat
 
 	// The maxFormatConfig is a special flag that indicating the
 	// maximum allowed for FormatFlag type.
 	maxFormatConfig FormatConfig = (1 << iota) - 1
+
+	// DefaultFormat is the default format for the log message.
+	DefaultFormat = ShortPathFormat | FuncNameFormat | LineNumberFormat
 )
 
 // FormatFlag is the type of single flags of the the FormatConfig.
 type FormatFlag uint8
 
-// The IsValid returns true if value contains one of the available flags.
+// IsValid returns true if value contains one of the available flags.
 // The custom flags cannot be valid since they should not affect the
 // formatting settings. The zero value is an invalid flag too.
 func (f *FormatFlag) IsValid() bool {
@@ -40,7 +47,7 @@ func (f *FormatFlag) IsValid() bool {
 // file path, function name and line number.
 type FormatConfig FormatFlag
 
-// The Has method returns true if value contains the specified flag.
+// Has method returns true if value contains the specified flag.
 // Returns false and an error if the value is invalid or an
 // invalid flag is specified.
 func (f *FormatConfig) Has(flag FormatFlag) (bool, error) {
@@ -60,22 +67,39 @@ func (f *FormatConfig) IsValid() bool {
 	return *f <= maxFormatConfig
 }
 
-// FilePath returns true if value contains the FilePath flag.
+// FilePath returns true if value contains the FullPath or ShortPath flags.
 // Returns false and an error if the value is invalid.
 func (f *FormatConfig) FilePath() (bool, error) {
-	return f.Has(FilePath)
+	v, err := f.Has(FullPathFormat)
+	if err == nil && v {
+		return true, nil
+	}
+
+	return f.Has(ShortPathFormat)
+}
+
+// FullPath returns true if value contains the FullPath flag.
+// Returns false and an error if the value is invalid.
+func (f *FormatConfig) FullPath() (bool, error) {
+	return f.Has(FullPathFormat)
+}
+
+// ShortPath returns true if value contains the ShortPath flag.
+// Returns false and an error if the value is invalid.
+func (f *FormatConfig) ShortPath() (bool, error) {
+	return f.Has(ShortPathFormat)
 }
 
 // FuncName returns true if value contains the FuncName flag.
 // Returns false and an error if the value is invalid.
 func (f *FormatConfig) FuncName() (bool, error) {
-	return f.Has(FuncName)
+	return f.Has(FuncNameFormat)
 }
 
 // LineNumber returns true if value contains the LineNumber flag.
 // Returns false and an error if the value is invalid.
 func (f *FormatConfig) LineNumber() (bool, error) {
-	return f.Has(LineNumber)
+	return f.Has(LineNumberFormat)
 }
 
 // Set sets the specified flags ignores duplicates.
