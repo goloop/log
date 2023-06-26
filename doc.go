@@ -1,7 +1,5 @@
 /*
-# log
-
-The log module implements methods for logging code including various
+Package log implements methods for logging code including various
 levels of logging:
 
   - Panic
@@ -74,3 +72,15 @@ To use this module import it as:
 	}
 */
 package log
+
+/*
+
+MY-APP: 2023/06/26 11:42:08 ERROR .../ground/log/main.go main:13 some error
+======  =================== ===== ============================== ==========
+   |            |             |                 |                  |__ message
+   |            |             |                 |_____________________ data
+   |            |             |_______________________________________ level
+   |            |_____________________________________________________ date and time
+   |__________________________________________________________________ prefix (optional) from labels
+
+*/

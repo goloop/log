@@ -10,11 +10,11 @@ func TestFormatFlagIsValid(t *testing.T) {
 	}
 
 	tests := []test{
-		{FilePath, true},
-		{FuncName, true},
-		{LineNumber, true},
-		{FilePath + FilePath, true}, // FilePath + FilePath == FuncName
-		{FilePath + FuncName, false},
+		{FullPathFormat, true},
+		{FuncNameFormat, true},
+		{LineNumberFormat, true},
+		{FullPathFormat + FullPathFormat, true}, // FilePath + FilePath == FuncName
+		{FullPathFormat + FuncNameFormat, false},
 		{FormatFlag(maxFormatConfig + 1), false},
 		{None, false},
 		{0, false},
@@ -36,11 +36,11 @@ func TestFormatConfigIsValid(t *testing.T) {
 	}
 
 	tests := []test{
-		{FormatConfig(FilePath), true},
-		{FormatConfig(FuncName), true},
-		{FormatConfig(LineNumber), true},
-		{FormatConfig(FilePath + FilePath), true},
-		{FormatConfig(FilePath + FilePath + LineNumber), true},
+		{FormatConfig(FullPathFormat), true},
+		{FormatConfig(FuncNameFormat), true},
+		{FormatConfig(LineNumberFormat), true},
+		{FormatConfig(FullPathFormat + FullPathFormat), true},
+		{FormatConfig(FullPathFormat + FullPathFormat + LineNumberFormat), true},
 		{maxFormatConfig + 1, false},
 		{None, true},
 		{0, true},
@@ -63,23 +63,23 @@ func TestFormatConfigPrivateHas(t *testing.T) {
 	}
 
 	tests := []test{
-		{FormatConfig(FilePath), FilePath, true},
-		{FormatConfig(FilePath), FuncName, false},
-		{FormatConfig(FuncName), FuncName, true},
-		{FormatConfig(FuncName), LineNumber, false},
-		{FormatConfig(LineNumber), LineNumber, true},
-		{FormatConfig(LineNumber), FilePath, false},
-		{FormatConfig(FilePath + FuncName), FilePath, true},
-		{FormatConfig(FilePath + FuncName), FuncName, true},
-		{FormatConfig(FilePath + FuncName), LineNumber, false},
-		{FormatConfig(FilePath + FuncName + LineNumber), FilePath, true},
-		{FormatConfig(FilePath + FuncName + LineNumber), FuncName, true},
-		{FormatConfig(FilePath + FuncName + LineNumber), LineNumber, true},
-		{FormatConfig(FilePath + FuncName + LineNumber), 0, false},
-		{FormatConfig(FilePath + LineNumber), FuncName, false},
-		{FormatConfig(FilePath + LineNumber), LineNumber, true},
-		{FormatConfig(FilePath + LineNumber), FilePath, true},
-		{FormatConfig(FilePath + LineNumber), None, false},
+		{FormatConfig(FullPathFormat), FullPathFormat, true},
+		{FormatConfig(FullPathFormat), FuncNameFormat, false},
+		{FormatConfig(FuncNameFormat), FuncNameFormat, true},
+		{FormatConfig(FuncNameFormat), LineNumberFormat, false},
+		{FormatConfig(LineNumberFormat), LineNumberFormat, true},
+		{FormatConfig(LineNumberFormat), FullPathFormat, false},
+		{FormatConfig(FullPathFormat + FuncNameFormat), FullPathFormat, true},
+		{FormatConfig(FullPathFormat + FuncNameFormat), FuncNameFormat, true},
+		{FormatConfig(FullPathFormat + FuncNameFormat), LineNumberFormat, false},
+		{FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat), FullPathFormat, true},
+		{FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat), FuncNameFormat, true},
+		{FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat), LineNumberFormat, true},
+		{FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat), 0, false},
+		{FormatConfig(FullPathFormat + LineNumberFormat), FuncNameFormat, false},
+		{FormatConfig(FullPathFormat + LineNumberFormat), LineNumberFormat, true},
+		{FormatConfig(FullPathFormat + LineNumberFormat), FullPathFormat, true},
+		{FormatConfig(FullPathFormat + LineNumberFormat), None, false},
 	}
 
 	for i, s := range tests {
@@ -98,12 +98,12 @@ func TestFormatConfigSet(t *testing.T) {
 	}
 
 	tests := []test{
-		{[]FormatFlag{FilePath}, FormatConfig(FilePath)},
-		{[]FormatFlag{FilePath, FuncName}, FormatConfig(FilePath + FuncName)},
-		{[]FormatFlag{FuncName, LineNumber}, FormatConfig(FuncName + LineNumber)},
+		{[]FormatFlag{FullPathFormat}, FormatConfig(FullPathFormat)},
+		{[]FormatFlag{FullPathFormat, FuncNameFormat}, FormatConfig(FullPathFormat + FuncNameFormat)},
+		{[]FormatFlag{FuncNameFormat, LineNumberFormat}, FormatConfig(FuncNameFormat + LineNumberFormat)},
 		{
-			[]FormatFlag{FuncName, LineNumber, FuncName},
-			FormatConfig(FuncName + LineNumber),
+			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat},
+			FormatConfig(FuncNameFormat + LineNumberFormat),
 		},
 	}
 
@@ -125,12 +125,12 @@ func TestFormatConfigSetError(t *testing.T) {
 	}
 
 	tests := []test{
-		{[]FormatFlag{FilePath}, true},
-		{[]FormatFlag{FilePath, FuncName}, true},
-		{[]FormatFlag{FuncName, LineNumber}, true},
-		{[]FormatFlag{FuncName, LineNumber, FuncName}, true},
+		{[]FormatFlag{FullPathFormat}, true},
+		{[]FormatFlag{FullPathFormat, FuncNameFormat}, true},
+		{[]FormatFlag{FuncNameFormat, LineNumberFormat}, true},
+		{[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat}, true},
 		{[]FormatFlag{FormatFlag(maxFormatConfig) + 1}, false},
-		{[]FormatFlag{FuncName, None}, false},
+		{[]FormatFlag{FuncNameFormat, None}, false},
 	}
 
 	for i, s := range tests {
@@ -153,29 +153,29 @@ func TestFormatConfigAdd(t *testing.T) {
 
 	tests := []test{
 		{
-			[]FormatFlag{FilePath},
-			[]FormatFlag{FilePath},
-			FormatConfig(FilePath),
+			[]FormatFlag{FullPathFormat},
+			[]FormatFlag{FullPathFormat},
+			FormatConfig(FullPathFormat),
 		},
 		{
-			[]FormatFlag{FuncName},
-			[]FormatFlag{FilePath, FuncName},
-			FormatConfig(FilePath + FuncName),
+			[]FormatFlag{FuncNameFormat},
+			[]FormatFlag{FullPathFormat, FuncNameFormat},
+			FormatConfig(FullPathFormat + FuncNameFormat),
 		},
 		{
-			[]FormatFlag{FilePath, FuncName},
-			[]FormatFlag{FuncName, LineNumber},
-			FormatConfig(FilePath + FuncName + LineNumber),
+			[]FormatFlag{FullPathFormat, FuncNameFormat},
+			[]FormatFlag{FuncNameFormat, LineNumberFormat},
+			FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat),
 		},
 		{
-			[]FormatFlag{LineNumber, FilePath},
-			[]FormatFlag{FuncName, LineNumber, FuncName},
-			FormatConfig(FilePath + FuncName + LineNumber),
+			[]FormatFlag{LineNumberFormat, FullPathFormat},
+			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat},
+			FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat),
 		},
 		{
-			[]FormatFlag{LineNumber, FilePath},
-			[]FormatFlag{FuncName, LineNumber, FilePath},
-			FormatConfig(FilePath + FuncName + LineNumber),
+			[]FormatFlag{LineNumberFormat, FullPathFormat},
+			[]FormatFlag{FuncNameFormat, LineNumberFormat, FullPathFormat},
+			FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat),
 		},
 	}
 
@@ -198,12 +198,12 @@ func TestFormatConfigAddError(t *testing.T) {
 	}
 
 	tests := []test{
-		{[]FormatFlag{FilePath}, true},
-		{[]FormatFlag{FilePath, FuncName}, true},
-		{[]FormatFlag{FuncName, LineNumber, FuncName}, true},
-		{[]FormatFlag{FuncName, LineNumber, FuncName, FuncName}, true},
-		{[]FormatFlag{FuncName, FormatFlag(maxFormatConfig) + 1, FuncName}, false},
-		{[]FormatFlag{FuncName, None, FuncName}, false},
+		{[]FormatFlag{FullPathFormat}, true},
+		{[]FormatFlag{FullPathFormat, FuncNameFormat}, true},
+		{[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat}, true},
+		{[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat, FuncNameFormat}, true},
+		{[]FormatFlag{FuncNameFormat, FormatFlag(maxFormatConfig) + 1, FuncNameFormat}, false},
+		{[]FormatFlag{FuncNameFormat, None, FuncNameFormat}, false},
 		{[]FormatFlag{None}, false},
 	}
 
@@ -227,44 +227,44 @@ func TestFormatConfigDelete(t *testing.T) {
 
 	tests := []test{
 		{
-			[]FormatFlag{FilePath},
-			[]FormatFlag{FilePath},
+			[]FormatFlag{FullPathFormat},
+			[]FormatFlag{FullPathFormat},
 			FormatConfig(None),
 		},
 		{
-			[]FormatFlag{FilePath, FuncName},
-			[]FormatFlag{FuncName},
-			FormatConfig(FilePath),
+			[]FormatFlag{FullPathFormat, FuncNameFormat},
+			[]FormatFlag{FuncNameFormat},
+			FormatConfig(FullPathFormat),
 		},
 		{
-			[]FormatFlag{FilePath, FuncName},
-			[]FormatFlag{FuncName, LineNumber},
-			FormatConfig(FilePath),
+			[]FormatFlag{FullPathFormat, FuncNameFormat},
+			[]FormatFlag{FuncNameFormat, LineNumberFormat},
+			FormatConfig(FullPathFormat),
 		},
 		{
-			[]FormatFlag{LineNumber, FilePath},
-			[]FormatFlag{FuncName, LineNumber, FuncName},
-			FormatConfig(FilePath),
+			[]FormatFlag{LineNumberFormat, FullPathFormat},
+			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat},
+			FormatConfig(FullPathFormat),
 		},
 		{
-			[]FormatFlag{FuncName, LineNumber},
-			[]FormatFlag{LineNumber, FilePath, LineNumber},
-			FormatConfig(FuncName),
+			[]FormatFlag{FuncNameFormat, LineNumberFormat},
+			[]FormatFlag{LineNumberFormat, FullPathFormat, LineNumberFormat},
+			FormatConfig(FuncNameFormat),
 		},
 		{
-			[]FormatFlag{LineNumber, FilePath},
-			[]FormatFlag{FuncName, LineNumber, FilePath},
+			[]FormatFlag{LineNumberFormat, FullPathFormat},
+			[]FormatFlag{FuncNameFormat, LineNumberFormat, FullPathFormat},
 			FormatConfig(None),
 		},
 		{
-			[]FormatFlag{FuncName, LineNumber, FilePath},
+			[]FormatFlag{FuncNameFormat, LineNumberFormat, FullPathFormat},
 			[]FormatFlag{},
-			FormatConfig(FuncName + LineNumber + FilePath),
+			FormatConfig(FuncNameFormat + LineNumberFormat + FullPathFormat),
 		},
 		{
-			[]FormatFlag{FuncName, LineNumber, FilePath},
-			[]FormatFlag{FuncName},
-			FormatConfig(LineNumber + FilePath),
+			[]FormatFlag{FuncNameFormat, LineNumberFormat, FullPathFormat},
+			[]FormatFlag{FuncNameFormat},
+			FormatConfig(LineNumberFormat + FullPathFormat),
 		},
 	}
 
@@ -287,15 +287,15 @@ func TestFormatConfigDeleteError(t *testing.T) {
 	}
 
 	tests := []test{
-		{[]FormatFlag{FilePath}, true},
-		{[]FormatFlag{FilePath, FuncName}, true},
-		{[]FormatFlag{FuncName, LineNumber, FuncName}, true},
-		{[]FormatFlag{FuncName, LineNumber, FuncName, FuncName}, true},
+		{[]FormatFlag{FullPathFormat}, true},
+		{[]FormatFlag{FullPathFormat, FuncNameFormat}, true},
+		{[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat}, true},
+		{[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat, FuncNameFormat}, true},
 		{
 			[]FormatFlag{
-				FuncName,
+				FuncNameFormat,
 				FormatFlag(maxFormatConfig + 1),
-				FuncName,
+				FuncNameFormat,
 			},
 			false,
 		},
@@ -322,28 +322,28 @@ func TestFormatConfigAll(t *testing.T) {
 
 	tests := []test{
 		{
-			[]FormatFlag{FilePath},
-			[]FormatFlag{FilePath},
+			[]FormatFlag{FullPathFormat},
+			[]FormatFlag{FullPathFormat},
 			true,
 		},
 		{
-			[]FormatFlag{FilePath, FuncName},
-			[]FormatFlag{FuncName},
+			[]FormatFlag{FullPathFormat, FuncNameFormat},
+			[]FormatFlag{FuncNameFormat},
 			true,
 		},
 		{
-			[]FormatFlag{FilePath, FuncName},
-			[]FormatFlag{LineNumber},
+			[]FormatFlag{FullPathFormat, FuncNameFormat},
+			[]FormatFlag{LineNumberFormat},
 			false,
 		},
 		{
-			[]FormatFlag{FuncName, LineNumber, FuncName},
-			[]FormatFlag{LineNumber, FilePath},
+			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat},
+			[]FormatFlag{LineNumberFormat, FullPathFormat},
 			false,
 		},
 		{
-			[]FormatFlag{FuncName, LineNumber, FuncName, None},
-			[]FormatFlag{LineNumber, FilePath},
+			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat, None},
+			[]FormatFlag{LineNumberFormat, FullPathFormat},
 			false,
 		},
 	}
@@ -368,33 +368,33 @@ func TestFormatConfigAny(t *testing.T) {
 
 	tests := []test{
 		{
-			[]FormatFlag{FilePath},
-			[]FormatFlag{FilePath},
+			[]FormatFlag{FullPathFormat},
+			[]FormatFlag{FullPathFormat},
 			true,
 		},
 		{
-			[]FormatFlag{FilePath, FuncName},
-			[]FormatFlag{FuncName},
+			[]FormatFlag{FullPathFormat, FuncNameFormat},
+			[]FormatFlag{FuncNameFormat},
 			true,
 		},
 		{
-			[]FormatFlag{FilePath, FuncName},
-			[]FormatFlag{LineNumber},
+			[]FormatFlag{FullPathFormat, FuncNameFormat},
+			[]FormatFlag{LineNumberFormat},
 			false,
 		},
 		{
-			[]FormatFlag{FuncName, LineNumber, FuncName},
-			[]FormatFlag{LineNumber, FilePath},
+			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat},
+			[]FormatFlag{LineNumberFormat, FullPathFormat},
 			true,
 		},
 		{
-			[]FormatFlag{FuncName, LineNumber, FuncName},
-			[]FormatFlag{FilePath, FilePath, LineNumber, FilePath},
+			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat},
+			[]FormatFlag{FullPathFormat, FullPathFormat, LineNumberFormat, FullPathFormat},
 			true,
 		},
 		{
-			[]FormatFlag{FilePath, FuncName},
-			[]FormatFlag{LineNumber, FilePath},
+			[]FormatFlag{FullPathFormat, FuncNameFormat},
+			[]FormatFlag{LineNumberFormat, FullPathFormat},
 			true,
 		},
 	}
@@ -417,11 +417,11 @@ func TestFormatConfigFilePath(t *testing.T) {
 	}
 
 	tests := []test{
-		{FormatConfig(FilePath), true},
-		{FormatConfig(FuncName), false},
-		{FormatConfig(LineNumber), false},
-		{FormatConfig(FilePath + FuncName), true},
-		{FormatConfig(FuncName + LineNumber), false},
+		{FormatConfig(FullPathFormat), true},
+		{FormatConfig(FuncNameFormat), false},
+		{FormatConfig(LineNumberFormat), false},
+		{FormatConfig(FullPathFormat + FuncNameFormat), true},
+		{FormatConfig(FuncNameFormat + LineNumberFormat), false},
 		{maxFormatConfig + 1, false},
 		{None, false},
 		{0, false},
@@ -443,12 +443,12 @@ func TestFormatConfigFuncName(t *testing.T) {
 	}
 
 	tests := []test{
-		{FormatConfig(FilePath), false},
-		{FormatConfig(FuncName), true},
-		{FormatConfig(LineNumber), false},
-		{FormatConfig(FilePath + FuncName), true},
-		{FormatConfig(FuncName + LineNumber), true},
-		{FormatConfig(FilePath + LineNumber), false},
+		{FormatConfig(FullPathFormat), false},
+		{FormatConfig(FuncNameFormat), true},
+		{FormatConfig(LineNumberFormat), false},
+		{FormatConfig(FullPathFormat + FuncNameFormat), true},
+		{FormatConfig(FuncNameFormat + LineNumberFormat), true},
+		{FormatConfig(FullPathFormat + LineNumberFormat), false},
 		{maxFormatConfig + 1, false},
 		{None, false},
 		{0, false},
@@ -470,12 +470,12 @@ func TestFormatConfigLineNumber(t *testing.T) {
 	}
 
 	tests := []test{
-		{FormatConfig(FilePath), false},
-		{FormatConfig(FuncName), false},
-		{FormatConfig(LineNumber), true},
-		{FormatConfig(FilePath + FuncName), false},
-		{FormatConfig(FuncName + LineNumber), true},
-		{FormatConfig(LineNumber + FilePath), true},
+		{FormatConfig(FullPathFormat), false},
+		{FormatConfig(FuncNameFormat), false},
+		{FormatConfig(LineNumberFormat), true},
+		{FormatConfig(FullPathFormat + FuncNameFormat), false},
+		{FormatConfig(FuncNameFormat + LineNumberFormat), true},
+		{FormatConfig(LineNumberFormat + FullPathFormat), true},
 		{maxFormatConfig + 1, false},
 		{None, false},
 		{0, false},
