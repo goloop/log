@@ -2,49 +2,69 @@ package log
 
 import (
 	"io"
-	"os"
+	"strings"
+
+	"github.com/goloop/g"
 )
 
-const (
-	// None means nothing.
-	None = 0
-
-	// The skipStackFrames specifies the number of stack frames to skip before
-	// the program counter stack is collected.
-	skipStackFrames = 4
-
-	// The shortPathSections is the number of sections
-	// in the short path of the file.
-	shortPathSections = 3
-)
-
+// The self is the default logger instance.
 var self *Logger
 
 // New returns new Logger object.
 func New(prefixes ...string) *Logger {
+	// Generate prefix.
+	prefix := ""
+	if len(prefixes) != 0 {
+		// Concatenate prefixes.
+		if l := len(prefixes); l == 1 {
+			// If there is only one prefix, use it as is.
+			// In this case, no changes are made to the prefix.
+			prefix = prefixes[0]
+		} else if l > 1 {
+			// Several words that characterize the prefix are given.
+			// In this case, they must be combined as ONE-TWO-THREE in
+			// upper case, removing all special characters such as spaces,
+			// colons and \t, \i, \n.
+			i := 0
+			sb := strings.Builder{}
+			for _, p := range prefixes {
+				v := g.Trim(p, ": \t\n\r")
+				if v == "" {
+					continue
+				}
+
+				if i != 0 {
+					sb.WriteString("-")
+				}
+				i++
+
+				sb.WriteString(v)
+			}
+
+			// If the prefix is not empty, add a marker at the end.
+			if sb.Len() > 0 {
+				sb.WriteString(":") // add marker at the end
+				prefix = sb.String()
+			}
+		}
+	}
+
 	logger := &Logger{
 		skipStackFrames: skipStackFrames,
-		name:            "",
-		writer:          os.Stdout, // the os.Stdout is default writer.
-		config: &Config{
-			Formats:         FormatConfig(DefaultFormat),
-			Levels:          LevelConfig(DefaultLevel),
-			FatalStatusCode: 1,
-			Prefix: &PrefixConfig{
-				TimestampFormat:   TimestampFormat,
-				SpaceBetweenCells: SpaceBetweenCells,
-				LevelFormat:       LevelFormatConfig{},
-			},
-		},
+		fatalStatusCode: fatalStatusCode,
+		prefix:          prefix,
+		outputs:         map[string]*Output{},
 	}
-	logger.SetName(prefixes...)
+
+	logger.SetOutputs(Stdout, Stderr)
 	return logger
 }
 
 // Initializes the logger.
 func init() {
 	self = New()
-	self.SetSkip(skipStackFrames + 1) // because self works at the imported package level
+	sik := skipStackFrames + 1 // self works at the imported package level
+	self.SetSkipStackFrames(sik)
 }
 
 // Copy returns copy of the log object.
@@ -52,344 +72,325 @@ func Copy() *Logger {
 	return self.Copy()
 }
 
-// SetSkip returns the skip value of the log object.
-func SetSkip(skips ...int) int {
-	return self.SetSkip(skips...)
+// SetSkipStackFrames sets skip stack frames level.
+func SetSkipStackFrames(skips int) {
+	self.SetSkipStackFrames(skips)
 }
 
-// SetWriter sets the writer of the log object.
-func SetWriter(writers ...io.Writer) io.Writer {
-	return self.SetWriter(writers...)
+// SetPrefix returns the name of the log object.
+func SetPrefix(prefixes string) {
+	self.SetPrefix(prefixes)
 }
 
-// SetName returns the name of the log object.
-func SetName(prefixes ...string) string {
-	return self.SetName(prefixes...)
+// SetOutputs sets the outputs of the log object.
+func SetOutputs(outputs ...Output) error {
+	return self.SetOutputs(outputs...)
 }
 
-// Configure sets the configuration of the log object.
-func Configure(config *Config) {
-	self.Configure(config)
+// EditOutputs edits the outputs of the log object.
+func EditOutputs(outputs ...Output) error {
+	return self.SetOutputs(outputs...)
+}
+
+// DeleteOutputs deletes the outputs of the log object.
+func DeleteOutputs(names ...string) {
+	self.DeleteOutputs(names...)
 }
 
 // Fpanic creates message with Panic level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
-// when neither is a string. It returns the number of bytes written
-// and any write error encountered.
-func Fpanic(w io.Writer, a ...interface{}) (int, error) {
-	return self.Fpanic(w, a...)
+// when neither is a string.
+func Fpanic(w io.Writer, a ...any) {
+	self.Fpanic(w, a...)
 }
 
 // Fpanicf creates message with Panic level, according to a format
-// specifier and writes to w. It returns the number of bytes written
-// and any write error encountered.
-func Fpanicf(w io.Writer, format string, a ...interface{}) (int, error) {
-	return self.Fpanicf(w, format, a...)
+// specifier and writes to w.
+func Fpanicf(w io.Writer, format string, a ...any) {
+	self.Fpanicf(w, format, a...)
 }
 
 // Fpanicln creates message with Panic level, using the default formats
 // for its operands and writes to w. Spaces are always added between
-// operands and a newline is appended. It returns the number of bytes
-// written and any write error encountered.
-func Fpanicln(w io.Writer, a ...interface{}) (int, error) {
-	return self.Fpanicln(w, a...)
+// operands and a newline is appended.
+func Fpanicln(w io.Writer, a ...any) {
+	self.Fpanicln(w, a...)
 }
 
 // Panic creates message with Panic level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
-// operands when neither is a string. It returns the number of bytes
-// written and any write error encountered.
-func Panic(a ...interface{}) (int, error) {
-	return self.Panic(a...)
+// operands when neither is a string.
+func Panic(a ...any) {
+	self.Panic(a...)
 }
 
 // Panicf creates message with Panic level, according to a format specifier
-// and writes to log.Writer. It returns the number of bytes written and any
-// write error encountered.
-func Panicf(format string, a ...interface{}) (int, error) {
-	return self.Panicf(format, a...)
+// and writes to log.Writer.
+func Panicf(format string, a ...any) {
+	self.Panicf(format, a...)
 }
 
 // Panicln creates message with Panic, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
-// between operands and a newline is appended. It returns the number
-// of bytes written and any write error encountered.
-func Panicln(a ...interface{}) (int, error) {
-	return self.Panicln(a...)
+// between operands and a newline is appended.
+func Panicln(a ...any) {
+	self.Panicln(a...)
 }
 
 // Ffatal creates message with Fatal level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
-// when neither is a string. It returns the number of bytes written
-// and any write error encountered.
-func Ffatal(w io.Writer, a ...interface{}) (int, error) {
-	return self.Ffatal(w, a...)
+// when neither is a string.
+func Ffatal(w io.Writer, a ...any) {
+	self.Ffatal(w, a...)
 }
 
 // Ffatalf creates message with Fatal level, according to a format
-// specifier and writes to w. It returns the number of bytes written
-// and any write error encountered.
-func Ffatalf(w io.Writer, format string, a ...interface{}) (int, error) {
-	return self.Ffatalf(w, format, a...)
+// specifier and writes to w.
+func Ffatalf(w io.Writer, format string, a ...any) {
+	self.Ffatalf(w, format, a...)
 }
 
 // Ffatalln creates message with Fatal level, using the default formats
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
-func Ffatalln(w io.Writer, a ...interface{}) (int, error) {
-	return self.Ffatalln(w, a...)
+func Ffatalln(w io.Writer, a ...any) {
+	self.Ffatalln(w, a...)
 }
 
 // Fatal creates message with Fatal level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
-func Fatal(a ...interface{}) (int, error) {
-	return self.Fatal(a...)
+func Fatal(a ...any) {
+	self.Fatal(a...)
 }
 
 // Fatalf creates message with Fatal level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
-func Fatalf(format string, a ...interface{}) (int, error) {
-	return self.Fatalf(format, a...)
+func Fatalf(format string, a ...any) {
+	self.Fatalf(format, a...)
 }
 
 // Fatalln creates message with Fatal, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
-// between operands and a newline is appended. It returns the number
-// of bytes written and any write error encountered.
-func Fatalln(a ...interface{}) (int, error) {
-	return self.Fatalln(a...)
+// between operands and a newline is appended.
+func Fatalln(a ...any) {
+	self.Fatalln(a...)
 }
 
 // Ferror creates message with Error level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
-// when neither is a string. It returns the number of bytes written
-// and any write error encountered.
-func Ferror(w io.Writer, a ...interface{}) (int, error) {
-	return self.Ferror(w, a...)
+// when neither is a string.
+func Ferror(w io.Writer, a ...any) {
+	self.Ferror(w, a...)
 }
 
 // Ferrorf creates message with Error level, according to a format
-// specifier and writes to w. It returns the number of bytes written
-// and any write error encountered.
-func Ferrorf(w io.Writer, format string, a ...interface{}) (int, error) {
-	return self.Ferrorf(w, format, a...)
+// specifier and writes to w.
+func Ferrorf(w io.Writer, format string, a ...any) {
+	self.Ferrorf(w, format, a...)
 }
 
 // Ferrorln creates message with Error level, using the default formats
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
-func Ferrorln(w io.Writer, a ...interface{}) (int, error) {
-	return self.Ferrorln(w, a...)
+func Ferrorln(w io.Writer, a ...any) {
+	self.Ferrorln(w, a...)
 }
 
 // Error creates message with Error level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
-func Error(a ...interface{}) (int, error) {
-	return self.Error(a...)
+func Error(a ...any) {
+	self.Error(a...)
 }
 
 // Errorf creates message with Error level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
-func Errorf(format string, a ...interface{}) (int, error) {
-	return self.Errorf(format, a...)
+func Errorf(format string, a ...any) {
+	self.Errorf(format, a...)
 }
 
 // Errorln creates message with Error, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
-// between operands and a newline is appended. It returns the number
-// of bytes written and any write error encountered.
-func Errorln(a ...interface{}) (int, error) {
-	return self.Errorln(a...)
+// between operands and a newline is appended.
+func Errorln(a ...any) {
+	self.Errorln(a...)
 }
 
 // Fwarn creates message with Warn level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
-// when neither is a string. It returns the number of bytes written
-// and any write error encountered.
-func Fwarn(w io.Writer, a ...interface{}) (int, error) {
-	return self.Fwarn(w, a...)
+// when neither is a string.
+func Fwarn(w io.Writer, a ...any) {
+	self.Fwarn(w, a...)
 }
 
 // Fwarnf creates message with Warn level, according to a format
-// specifier and writes to w. It returns the number of bytes written
-// and any write error encountered.
-func Fwarnf(w io.Writer, format string, a ...interface{}) (int, error) {
-	return self.Fwarnf(w, format, a...)
+// specifier and writes to w.
+func Fwarnf(w io.Writer, format string, a ...any) {
+	self.Fwarnf(w, format, a...)
 }
 
 // Fwarnln creates message with Warn level, using the default formats
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
-func Fwarnln(w io.Writer, a ...interface{}) (int, error) {
-	return self.Fwarnln(w, a...)
+func Fwarnln(w io.Writer, a ...any) {
+	self.Fwarnln(w, a...)
 }
 
 // Warn creates message with Warn level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
-func Warn(a ...interface{}) (int, error) {
-	return self.Warn(a...)
+func Warn(a ...any) {
+	self.Warn(a...)
 }
 
 // Warnf creates message with Warn level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
-func Warnf(format string, a ...interface{}) (int, error) {
-	return self.Warnf(format, a...)
+func Warnf(format string, a ...any) {
+	self.Warnf(format, a...)
 }
 
 // Warnln creates message with Warn, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
-// between operands and a newline is appended. It returns the number
-// of bytes written and any write error encountered.
-func Warnln(a ...interface{}) (int, error) {
-	return self.Warnln(a...)
+// between operands and a newline is appended.
+func Warnln(a ...any) {
+	self.Warnln(a...)
 }
 
 // Finfo creates message with Info level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
-// when neither is a string. It returns the number of bytes written
-// and any write error encountered.
-func Finfo(w io.Writer, a ...interface{}) (int, error) {
-	return self.Finfo(w, a...)
+// when neither is a string.
+func Finfo(w io.Writer, a ...any) {
+	self.Finfo(w, a...)
 }
 
 // Finfof creates message with Info level, according to a format
-// specifier and writes to w. It returns the number of bytes written
-// and any write error encountered.
-func Finfof(w io.Writer, format string, a ...interface{}) (int, error) {
-	return self.Finfof(w, format, a...)
+// specifier and writes to w.
+func Finfof(w io.Writer, format string, a ...any) {
+	self.Finfof(w, format, a...)
 }
 
 // Finfoln creates message with Info level, using the default formats
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
-func Finfoln(w io.Writer, a ...interface{}) (int, error) {
-	return self.Finfoln(w, a...)
+func Finfoln(w io.Writer, a ...any) {
+	self.Finfoln(w, a...)
 }
 
 // Info creates message with Info level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
-func Info(a ...interface{}) (int, error) {
-	return self.Info(a...)
+func Info(a ...any) {
+	self.Info(a...)
 }
 
 // Infof creates message with Info level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
-func Infof(format string, a ...interface{}) (int, error) {
-	return self.Infof(format, a...)
+func Infof(format string, a ...any) {
+	self.Infof(format, a...)
 }
 
 // Infoln creates message with Info, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
-// between operands and a newline is appended. It returns the number
-// of bytes written and any write error encountered.
-func Infoln(a ...interface{}) (int, error) {
-	return self.Infoln(a...)
+// between operands and a newline is appended.
+func Infoln(a ...any) {
+	self.Infoln(a...)
 }
 
 // Fdebug creates message with Debug level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
-// when neither is a string. It returns the number of bytes written
-// and any write error encountered.
-func Fdebug(w io.Writer, a ...interface{}) (int, error) {
-	return self.Fdebug(w, a...)
+// when neither is a string.
+func Fdebug(w io.Writer, a ...any) {
+	self.Fdebug(w, a...)
 }
 
 // Fdebugf creates message with Debug level, according to a format
-// specifier and writes to w. It returns the number of bytes written
-// and any write error encountered.
-func Fdebugf(w io.Writer, format string, a ...interface{}) (int, error) {
-	return self.Fdebugf(w, format, a...)
+// specifier and writes to w.
+func Fdebugf(w io.Writer, format string, a ...any) {
+	self.Fdebugf(w, format, a...)
 }
 
 // Fdebugln creates message with Debug level, using the default formats
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
-func Fdebugln(w io.Writer, a ...interface{}) (int, error) {
-	return self.Fdebugln(w, a...)
+func Fdebugln(w io.Writer, a ...any) {
+	self.Fdebugln(w, a...)
 }
 
 // Debug creates message with Debug level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
-func Debug(a ...interface{}) (int, error) {
-	return self.Debug(a...)
+func Debug(a ...any) {
+	self.Debug(a...)
 }
 
 // Debugf creates message with Debug level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
-func Debugf(format string, a ...interface{}) (int, error) {
-	return self.Debugf(format, a...)
+func Debugf(format string, a ...any) {
+	self.Debugf(format, a...)
 }
 
 // Debugln creates message with Debug, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
-// between operands and a newline is appended. It returns the number
-// of bytes written and any write error encountered.
-func Debugln(a ...interface{}) (int, error) {
-	return self.Debugln(a...)
+// between operands and a newline is appended.
+func Debugln(a ...any) {
+	self.Debugln(a...)
 }
 
 // Ftrace creates message with Trace level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
-// when neither is a string. It returns the number of bytes written
-// and any write error encountered.
-func Ftrace(w io.Writer, a ...interface{}) (int, error) {
-	return self.Ftrace(w, a...)
+// when neither is a string.
+func Ftrace(w io.Writer, a ...any) {
+	self.Ftrace(w, a...)
 }
 
 // Ftracef creates message with Trace level, according to a format
-// specifier and writes to w. It returns the number of bytes written
-// and any write error encountered.
-func Ftracef(w io.Writer, format string, a ...interface{}) (int, error) {
-	return self.Ftracef(w, format, a...)
+// specifier and writes to w.
+func Ftracef(w io.Writer, format string, a ...any) {
+	self.Ftracef(w, format, a...)
 }
 
 // Ftraceln creates message with Trace level, using the default formats
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
-func Ftraceln(w io.Writer, a ...interface{}) (int, error) {
-	return self.Ftraceln(w, a...)
+func Ftraceln(w io.Writer, a ...any) {
+	self.Ftraceln(w, a...)
 }
 
 // Trace creates message with Trace level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
-func Trace(a ...interface{}) (int, error) {
-	return self.Trace(a...)
+func Trace(a ...any) {
+	self.Trace(a...)
 }
 
 // Tracef creates message with Trace level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
-func Tracef(format string, a ...interface{}) (int, error) {
-	return self.Tracef(format, a...)
+func Tracef(format string, a ...any) {
+	self.Tracef(format, a...)
 }
 
 // Traceln creates message with Trace, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
-// between operands and a newline is appended. It returns the number
-// of bytes written and any write error encountered.
-func Traceln(a ...interface{}) (int, error) {
-	return self.Traceln(a...)
+// between operands and a newline is appended.
+func Traceln(a ...any) {
+	self.Traceln(a...)
 }
