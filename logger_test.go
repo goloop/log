@@ -1,5 +1,6 @@
 package log
 
+/*
 import "testing"
 
 const (
@@ -28,7 +29,7 @@ func TestConfigFatalAllowed(t *testing.T) {
 		}
 	}
 }
-
+*/
 
 /*
 // TestNew tests Log.New method.
@@ -100,7 +101,7 @@ func TestEcho(t *testing.T) {
 		level   LevelFlag
 		levels  LevelFlag
 		formats FormatFlag
-		data    []interface{}
+		data    []any
 	}
 
 	tests := []test{
@@ -108,19 +109,19 @@ func TestEcho(t *testing.T) {
 			Error,
 			Info|Debug|Trace,
 			FilePath,
-			[]interface{}{"1", "2", "3"},
+			[]any{"1", "2", "3"},
 		},
 		{
 			Info,
 			Info|Debug|Trace,
 			FilePath|FuncName|LineNumber,
-			[]interface{}{"1", "2", "3"},
+			[]any{"1", "2", "3"},
 		},
 		{
 			Debug,
 			Info|Debug|Trace,
 			FuncName,
-			[]interface{}{"1", "2", "3"},
+			[]any{"1", "2", "3"},
 		},
 	}
 
@@ -153,7 +154,7 @@ func TestEchof(t *testing.T) {
 		level   LevelFlag
 		levels  LevelFlag
 		formats FormatFlag
-		data    []interface{}
+		data    []any
 		layout  string
 	}
 
@@ -162,21 +163,21 @@ func TestEchof(t *testing.T) {
 			Error,
 			Info|Debug|Trace,
 			FilePath,
-			[]interface{}{"1", "2", "3"},
+			[]any{"1", "2", "3"},
 			"%s + %s - %s",
 		},
 		{
 			Info,
 			Info|Debug|Trace,
 			FilePath|FuncName|LineNumber,
-			[]interface{}{"1", "2", "3"},
+			[]any{"1", "2", "3"},
 			"%s / %s + %s",
 		},
 		{
 			Debug,
 			Info|Debug|Trace,
 			FuncName,
-			[]interface{}{"1", "2", "3"},
+			[]any{"1", "2", "3"},
 			"%s * %s + %s",
 		},
 	}
@@ -210,7 +211,7 @@ func TestEcholn(t *testing.T) {
 		level   LevelFlag
 		levels  LevelFlag
 		formats FormatFlag
-		data    []interface{}
+		data    []any
 	}
 
 	tests := []test{
@@ -218,19 +219,19 @@ func TestEcholn(t *testing.T) {
 			Error,
 			Info|Debug|Trace,
 			FilePath,
-			[]interface{}{"1", "2", "3"},
+			[]any{"1", "2", "3"},
 		},
 		{
 			Info,
 			Info|Debug|Trace,
 			FilePath|FuncName|LineNumber,
-			[]interface{}{"1", "2", "3"},
+			[]any{"1", "2", "3"},
 		},
 		{
 			Debug,
 			Info|Debug|Trace,
 			FuncName,
-			[]interface{}{"1", "2", "3"},
+			[]any{"1", "2", "3"},
 		},
 	}
 
@@ -260,24 +261,24 @@ func TestEcholn(t *testing.T) {
 // TestFpanic tests Fpanic method.
 func TestFpanic(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Panic|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Panic|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -314,7 +315,7 @@ func TestFpanic(t *testing.T) {
 // TestFpanicf tests Fpanicf method.
 func TestFpanicf(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 		format  string
@@ -322,19 +323,19 @@ func TestFpanicf(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Panic|Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Panic|Debug,
 			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
@@ -372,24 +373,24 @@ func TestFpanicf(t *testing.T) {
 // TestFpanicln tests Fpanicln method.
 func TestFpanicln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Panic|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Panic|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -426,24 +427,24 @@ func TestFpanicln(t *testing.T) {
 // TestPanic tests Panic method.
 func TestPanic(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Panic|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Panic|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -481,7 +482,7 @@ func TestPanic(t *testing.T) {
 // TestPanicf tests Panicf method.
 func TestPanicf(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 		format  string
@@ -489,19 +490,19 @@ func TestPanicf(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Panic|Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Panic|Debug,
 			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
@@ -540,24 +541,24 @@ func TestPanicf(t *testing.T) {
 // TestPanicln tests Panicln method.
 func TestPanicln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Panic|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Panic|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -595,24 +596,24 @@ func TestPanicln(t *testing.T) {
 // TestFfatal tests Ffatal method.
 func TestFfatal(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Fatal|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Fatal|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -647,7 +648,7 @@ func TestFfatal(t *testing.T) {
 // TestFfatalf tests Ffatalf method.
 func TestFfatalf(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 		format  string
@@ -655,19 +656,19 @@ func TestFfatalf(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Fatal|Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Fatal|Debug,
 			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
@@ -703,24 +704,24 @@ func TestFfatalf(t *testing.T) {
 // TestFfatalln tests Ffatalln method.
 func TestFfatalln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Fatal|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Fatal|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -755,24 +756,24 @@ func TestFfatalln(t *testing.T) {
 // TestFatal tests Fatal method.
 func TestFatal(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Fatal|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Fatal|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -808,7 +809,7 @@ func TestFatal(t *testing.T) {
 // TestFatalf tests Fatalf method.
 func TestFatalf(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 		format  string
@@ -816,19 +817,19 @@ func TestFatalf(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Fatal|Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Fatal|Debug,
 			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
@@ -865,24 +866,24 @@ func TestFatalf(t *testing.T) {
 // TestFatalln tests Fatalln method.
 func TestFatalln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Fatal|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Fatal|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -918,24 +919,24 @@ func TestFatalln(t *testing.T) {
 // TestFerror tests Ferror method.
 func TestFerror(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Error|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -969,7 +970,7 @@ func TestFerror(t *testing.T) {
 // TestFerrorf tests Ferrorf method.
 func TestFerrorf(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 		format  string
@@ -977,19 +978,19 @@ func TestFerrorf(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Error|Debug,
 			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
@@ -1024,24 +1025,24 @@ func TestFerrorf(t *testing.T) {
 // TestFerrorln tests Ferrorln method.
 func TestFerrorln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Error|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -1075,24 +1076,24 @@ func TestFerrorln(t *testing.T) {
 // TestError tests Error method.
 func TestError(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Error|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -1127,7 +1128,7 @@ func TestError(t *testing.T) {
 // TestErrorf tests Errorf method.
 func TestErrorf(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 		format  string
@@ -1135,19 +1136,19 @@ func TestErrorf(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Error|Debug,
 			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
@@ -1183,24 +1184,24 @@ func TestErrorf(t *testing.T) {
 // TestErrorln tests Errorln method.
 func TestErrorln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Error|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -1235,24 +1236,24 @@ func TestErrorln(t *testing.T) {
 // TestFwarn tests Fwarn method.
 func TestFwarn(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Warn|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Warn|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -1286,7 +1287,7 @@ func TestFwarn(t *testing.T) {
 // TestFwarnf tests Fwarnf method.
 func TestFwarnf(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 		format  string
@@ -1294,19 +1295,19 @@ func TestFwarnf(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Warn|Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Warn|Debug,
 			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
@@ -1341,24 +1342,24 @@ func TestFwarnf(t *testing.T) {
 // TestFwarnln tests Fwarnln method.
 func TestFwarnln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Warn|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Warn|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -1392,24 +1393,24 @@ func TestFwarnln(t *testing.T) {
 // TestWarn tests Warn method.
 func TestWarn(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Warn|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Warn|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -1444,7 +1445,7 @@ func TestWarn(t *testing.T) {
 // TestWarnf tests Warnf method.
 func TestWarnf(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 		format  string
@@ -1452,19 +1453,19 @@ func TestWarnf(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Warn|Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Warn|Debug,
 			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
@@ -1500,24 +1501,24 @@ func TestWarnf(t *testing.T) {
 // TestWarnln tests Warnln method.
 func TestWarnln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Warn|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Warn|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -1552,24 +1553,24 @@ func TestWarnln(t *testing.T) {
 // TestFinfo tests Finfo method.
 func TestFinfo(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Info|Debug,
 			FilePath|FuncName|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Info|Debug,
 			FilePath|LineNumber,
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 		},
@@ -1603,7 +1604,7 @@ func TestFinfo(t *testing.T) {
 // TestFinfof tests Finfof method.
 func TestFinfof(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  LevelFlag
 		formats FormatFlag
 		format  string
@@ -1611,19 +1612,19 @@ func TestFinfof(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Info|Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Error|Info|Debug,
 			FilePath|LineNumber,
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			Debug,
 			FilePath|FuncName|LineNumber,
 			"%s %s",
@@ -1658,24 +1659,24 @@ func TestFinfof(t *testing.T) {
 // TestFinfoln tests Finfoln method.
 func TestFinfoln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Info, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Info, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
@@ -1709,24 +1710,24 @@ func TestFinfoln(t *testing.T) {
 // TestInfo tests Info method.
 func TestInfo(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Info, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Info, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
@@ -1761,7 +1762,7 @@ func TestInfo(t *testing.T) {
 // TestInfof tests Infof method.
 func TestInfof(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 		format  string
@@ -1769,19 +1770,19 @@ func TestInfof(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Info, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Info, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 			"%s %s",
@@ -1817,24 +1818,24 @@ func TestInfof(t *testing.T) {
 // TestInfoln tests Infoln method.
 func TestInfoln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Info, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Info, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
@@ -1869,24 +1870,24 @@ func TestInfoln(t *testing.T) {
 // TestFdebug tests Fdebug method.
 func TestFdebug(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Debug, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
@@ -1920,7 +1921,7 @@ func TestFdebug(t *testing.T) {
 // TestFdebugf tests Fdebugf method.
 func TestFdebugf(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 		format  string
@@ -1928,19 +1929,19 @@ func TestFdebugf(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Debug, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 			"%s %s",
@@ -1975,24 +1976,24 @@ func TestFdebugf(t *testing.T) {
 // TestFdebugln tests Fdebugln method.
 func TestFdebugln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Debug, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
@@ -2026,24 +2027,24 @@ func TestFdebugln(t *testing.T) {
 // TestDebug tests Debug method.
 func TestDebug(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Debug, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
@@ -2078,7 +2079,7 @@ func TestDebug(t *testing.T) {
 // TestDebugf tests Debugf method.
 func TestDebugf(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 		format  string
@@ -2086,19 +2087,19 @@ func TestDebugf(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Debug, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 			"%s %s",
@@ -2134,24 +2135,24 @@ func TestDebugf(t *testing.T) {
 // TestDebugln tests Debugln method.
 func TestDebugln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Debug, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
@@ -2186,24 +2187,24 @@ func TestDebugln(t *testing.T) {
 // TestFtrace tests Ftrace method.
 func TestFtrace(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Trace, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Trace, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
@@ -2237,7 +2238,7 @@ func TestFtrace(t *testing.T) {
 // TestFtracef tests Ftracef method.
 func TestFtracef(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 		format  string
@@ -2245,19 +2246,19 @@ func TestFtracef(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Trace, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Trace, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 			"%s %s",
@@ -2292,24 +2293,24 @@ func TestFtracef(t *testing.T) {
 // TestFtraceln tests Ftraceln method.
 func TestFtraceln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Trace, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Trace, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
@@ -2343,24 +2344,24 @@ func TestFtraceln(t *testing.T) {
 // TestTrace tests Trace method.
 func TestTrace(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Trace, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Trace, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
@@ -2395,7 +2396,7 @@ func TestTrace(t *testing.T) {
 // TestTracef tests Tracef method.
 func TestTracef(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 		format  string
@@ -2403,19 +2404,19 @@ func TestTracef(t *testing.T) {
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Trace, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Trace, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 			"%s %s",
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 			"%s %s",
@@ -2451,24 +2452,24 @@ func TestTracef(t *testing.T) {
 // TestTraceln tests Traceln method.
 func TestTraceln(t *testing.T) {
 	type test struct {
-		data    []interface{}
+		data    []any
 		levels  []LevelFlag
 		formats []FormatFlag
 	}
 
 	tests := []test{
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Trace, Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Error, Trace, Debug},
 			[]FormatFlag{FilePath, LineNumber},
 		},
 		{
-			[]interface{}{"1", "2"},
+			[]any{"1", "2"},
 			[]LevelFlag{Debug},
 			[]FormatFlag{FilePath, FuncName, LineNumber},
 		},

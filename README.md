@@ -470,7 +470,7 @@ Copy returns copy of the log object.
 
 #### func (*Log) Debug
 
-    func (l *Log) Debug(a ...interface{}) (n int, err error)
+    func (l *Log) Debug(a ...any) (n int, err error)
 
 Debug creates message with Debug level, using the default formats for its
 operands and writes to log.Writer. Spaces are added between operands when
@@ -479,7 +479,7 @@ encountered.
 
 #### func (*Log) Debugf
 
-    func (l *Log) Debugf(format string, a ...interface{}) (n int, err error)
+    func (l *Log) Debugf(format string, a ...any) (n int, err error)
 
 Debugf creates message with Debug level, according to a format specifier and
 writes to log.Writer. It returns the number of bytes written and any write error
@@ -487,7 +487,7 @@ encountered.
 
 #### func (*Log) Debugln
 
-    func (l *Log) Debugln(a ...interface{}) (n int, err error)
+    func (l *Log) Debugln(a ...any) (n int, err error)
 
 Debugln creates message with Debug, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
@@ -496,7 +496,7 @@ error encountered.
 
 #### func (*Log) Error
 
-    func (l *Log) Error(a ...interface{}) (n int, err error)
+    func (l *Log) Error(a ...any) (n int, err error)
 
 Error creates message with Error level, using the default formats for its
 operands and writes to log.Writer. Spaces are added between operands when
@@ -505,7 +505,7 @@ encountered.
 
 #### func (*Log) Errorf
 
-    func (l *Log) Errorf(format string, a ...interface{}) (n int, err error)
+    func (l *Log) Errorf(format string, a ...any) (n int, err error)
 
 Errorf creates message with Error level, according to a format specifier and
 writes to log.Writer. It returns the number of bytes written and any write error
@@ -513,7 +513,7 @@ encountered.
 
 #### func (*Log) Errorln
 
-    func (l *Log) Errorln(a ...interface{}) (n int, err error)
+    func (l *Log) Errorln(a ...any) (n int, err error)
 
 Errorln creates message with Error, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
@@ -522,7 +522,7 @@ error encountered.
 
 #### func (*Log) Fatal
 
-    func (l *Log) Fatal(a ...interface{}) (n int, err error)
+    func (l *Log) Fatal(a ...any) (n int, err error)
 
 Fatal creates message with Fatal level, using the default formats for its
 operands and writes to log.Writer. Spaces are added between operands when
@@ -531,7 +531,7 @@ encountered.
 
 #### func (*Log) Fatalf
 
-    func (l *Log) Fatalf(format string, a ...interface{}) (n int, err error)
+    func (l *Log) Fatalf(format string, a ...any) (n int, err error)
 
 Fatalf creates message with Fatal level, according to a format specifier and
 writes to log.Writer. It returns the number of bytes written and any write error
@@ -539,7 +539,7 @@ encountered.
 
 #### func (*Log) Fatalln
 
-    func (l *Log) Fatalln(a ...interface{}) (n int, err error)
+    func (l *Log) Fatalln(a ...any) (n int, err error)
 
 Fatalln creates message with Fatal, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
@@ -548,7 +548,7 @@ error encountered.
 
 #### func (*Log) Fdebug
 
-    func (l *Log) Fdebug(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Fdebug(w io.Writer, a ...any) (n int, err error)
 
 Fdebug creates message with Debug level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
@@ -557,7 +557,7 @@ string. It returns the number of bytes written and any write error encountered.
 #### func (*Log) Fdebugf
 
     func (l *Log) Fdebugf(w io.Writer, format string,
-    	a ...interface{}) (n int, err error)
+    	a ...any) (n int, err error)
 
 Fdebugf creates message with Debug level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
@@ -565,7 +565,7 @@ encountered.
 
 #### func (*Log) Fdebugln
 
-    func (l *Log) Fdebugln(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Fdebugln(w io.Writer, a ...any) (n int, err error)
 
 Fdebugln creates message with Debug level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
@@ -574,7 +574,7 @@ encountered.
 
 #### func (*Log) Ferror
 
-    func (l *Log) Ferror(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Ferror(w io.Writer, a ...any) (n int, err error)
 
 Ferror creates message with Error level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
@@ -583,7 +583,7 @@ string. It returns the number of bytes written and any write error encountered.
 #### func (*Log) Ferrorf
 
     func (l *Log) Ferrorf(w io.Writer, format string,
-    	a ...interface{}) (n int, err error)
+    	a ...any) (n int, err error)
 
 Ferrorf creates message with Error level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
@@ -591,7 +591,7 @@ encountered.
 
 #### func (*Log) Ferrorln
 
-    func (l *Log) Ferrorln(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Ferrorln(w io.Writer, a ...any) (n int, err error)
 
 Ferrorln creates message with Error level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
@@ -600,7 +600,7 @@ encountered.
 
 #### func (*Log) Ffatal
 
-    func (l *Log) Ffatal(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Ffatal(w io.Writer, a ...any) (n int, err error)
 
 Ffatal creates message with Fatal level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
@@ -609,7 +609,7 @@ string. It returns the number of bytes written and any write error encountered.
 #### func (*Log) Ffatalf
 
     func (l *Log) Ffatalf(w io.Writer, format string,
-    	a ...interface{}) (n int, err error)
+    	a ...any) (n int, err error)
 
 Ffatalf creates message with Fatal level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
@@ -617,7 +617,7 @@ encountered.
 
 #### func (*Log) Ffatalln
 
-    func (l *Log) Ffatalln(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Ffatalln(w io.Writer, a ...any) (n int, err error)
 
 Ffatalln creates message with Fatal level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
@@ -626,7 +626,7 @@ encountered.
 
 #### func (*Log) Finfo
 
-    func (l *Log) Finfo(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Finfo(w io.Writer, a ...any) (n int, err error)
 
 Finfo creates message with Info level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
@@ -635,7 +635,7 @@ string. It returns the number of bytes written and any write error encountered.
 #### func (*Log) Finfof
 
     func (l *Log) Finfof(w io.Writer, format string,
-    	a ...interface{}) (n int, err error)
+    	a ...any) (n int, err error)
 
 Finfof creates message with Info level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
@@ -643,7 +643,7 @@ encountered.
 
 #### func (*Log) Finfoln
 
-    func (l *Log) Finfoln(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Finfoln(w io.Writer, a ...any) (n int, err error)
 
 Finfoln creates message with Info level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
@@ -652,7 +652,7 @@ encountered.
 
 #### func (*Log) Fpanic
 
-    func (l *Log) Fpanic(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Fpanic(w io.Writer, a ...any) (n int, err error)
 
 Fpanic creates message with Panic level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
@@ -661,7 +661,7 @@ string. It returns the number of bytes written and any write error encountered.
 #### func (*Log) Fpanicf
 
     func (l *Log) Fpanicf(w io.Writer, format string,
-    	a ...interface{}) (n int, err error)
+    	a ...any) (n int, err error)
 
 Fpanicf creates message with Panic level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
@@ -669,7 +669,7 @@ encountered.
 
 #### func (*Log) Fpanicln
 
-    func (l *Log) Fpanicln(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Fpanicln(w io.Writer, a ...any) (n int, err error)
 
 Fpanicln creates message with Panic level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
@@ -678,7 +678,7 @@ encountered.
 
 #### func (*Log) Ftrace
 
-    func (l *Log) Ftrace(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Ftrace(w io.Writer, a ...any) (n int, err error)
 
 Ftrace creates message with Trace level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
@@ -687,7 +687,7 @@ string. It returns the number of bytes written and any write error encountered.
 #### func (*Log) Ftracef
 
     func (l *Log) Ftracef(w io.Writer, format string,
-    	a ...interface{}) (n int, err error)
+    	a ...any) (n int, err error)
 
 Ftracef creates message with Trace level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
@@ -695,7 +695,7 @@ encountered.
 
 #### func (*Log) Ftraceln
 
-    func (l *Log) Ftraceln(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Ftraceln(w io.Writer, a ...any) (n int, err error)
 
 Ftraceln creates message with Trace level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
@@ -704,7 +704,7 @@ encountered.
 
 #### func (*Log) Fwarn
 
-    func (l *Log) Fwarn(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Fwarn(w io.Writer, a ...any) (n int, err error)
 
 Fwarn creates message with Warn level, using the default formats for its
 operands and writes to w. Spaces are added between operands when neither is a
@@ -713,7 +713,7 @@ string. It returns the number of bytes written and any write error encountered.
 #### func (*Log) Fwarnf
 
     func (l *Log) Fwarnf(w io.Writer, format string,
-    	a ...interface{}) (n int, err error)
+    	a ...any) (n int, err error)
 
 Fwarnf creates message with Warn level, according to a format specifier and
 writes to w. It returns the number of bytes written and any write error
@@ -721,7 +721,7 @@ encountered.
 
 #### func (*Log) Fwarnln
 
-    func (l *Log) Fwarnln(w io.Writer, a ...interface{}) (n int, err error)
+    func (l *Log) Fwarnln(w io.Writer, a ...any) (n int, err error)
 
 Fwarnln creates message with Warn level, using the default formats for its
 operands and writes to w. Spaces are always added between operands and a newline
@@ -730,7 +730,7 @@ encountered.
 
 #### func (*Log) Info
 
-    func (l *Log) Info(a ...interface{}) (n int, err error)
+    func (l *Log) Info(a ...any) (n int, err error)
 
 Info creates message with Info level, using the default formats for its operands
 and writes to log.Writer. Spaces are added between operands when neither is a
@@ -738,7 +738,7 @@ string. It returns the number of bytes written and any write error encountered.
 
 #### func (*Log) Infof
 
-    func (l *Log) Infof(format string, a ...interface{}) (n int, err error)
+    func (l *Log) Infof(format string, a ...any) (n int, err error)
 
 Infof creates message with Info level, according to a format specifier and
 writes to log.Writer. It returns the number of bytes written and any write error
@@ -746,7 +746,7 @@ encountered.
 
 #### func (*Log) Infoln
 
-    func (l *Log) Infoln(a ...interface{}) (n int, err error)
+    func (l *Log) Infoln(a ...any) (n int, err error)
 
 Infoln creates message with Info, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
@@ -755,7 +755,7 @@ error encountered.
 
 #### func (*Log) Panic
 
-    func (l *Log) Panic(a ...interface{}) (n int, err error)
+    func (l *Log) Panic(a ...any) (n int, err error)
 
 Panic creates message with Panic level, using the default formats for its
 operands and writes to log.Writer. Spaces are added between operands when
@@ -764,7 +764,7 @@ encountered.
 
 #### func (*Log) Panicf
 
-    func (l *Log) Panicf(format string, a ...interface{}) (n int, err error)
+    func (l *Log) Panicf(format string, a ...any) (n int, err error)
 
 Panicf creates message with Panic level, according to a format specifier and
 writes to log.Writer. It returns the number of bytes written and any write error
@@ -772,7 +772,7 @@ encountered.
 
 #### func (*Log) Panicln
 
-    func (l *Log) Panicln(a ...interface{}) (n int, err error)
+    func (l *Log) Panicln(a ...any) (n int, err error)
 
 Panicln creates message with Panic, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
@@ -781,7 +781,7 @@ error encountered.
 
 #### func (*Log) Trace
 
-    func (l *Log) Trace(a ...interface{}) (n int, err error)
+    func (l *Log) Trace(a ...any) (n int, err error)
 
 Trace creates message with Trace level, using the default formats for its
 operands and writes to log.Writer. Spaces are added between operands when
@@ -790,7 +790,7 @@ encountered.
 
 #### func (*Log) Tracef
 
-    func (l *Log) Tracef(format string, a ...interface{}) (n int, err error)
+    func (l *Log) Tracef(format string, a ...any) (n int, err error)
 
 Tracef creates message with Trace level, according to a format specifier and
 writes to log.Writer. It returns the number of bytes written and any write error
@@ -798,7 +798,7 @@ encountered.
 
 #### func (*Log) Traceln
 
-    func (l *Log) Traceln(a ...interface{}) (n int, err error)
+    func (l *Log) Traceln(a ...any) (n int, err error)
 
 Traceln creates message with Trace, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
@@ -807,7 +807,7 @@ error encountered.
 
 #### func (*Log) Warn
 
-    func (l *Log) Warn(a ...interface{}) (n int, err error)
+    func (l *Log) Warn(a ...any) (n int, err error)
 
 Warn creates message with Warn level, using the default formats for its operands
 and writes to log.Writer. Spaces are added between operands when neither is a
@@ -815,7 +815,7 @@ string. It returns the number of bytes written and any write error encountered.
 
 #### func (*Log) Warnf
 
-    func (l *Log) Warnf(format string, a ...interface{}) (n int, err error)
+    func (l *Log) Warnf(format string, a ...any) (n int, err error)
 
 Warnf creates message with Warn level, according to a format specifier and
 writes to log.Writer. It returns the number of bytes written and any write error
@@ -823,7 +823,7 @@ encountered.
 
 #### func (*Log) Warnln
 
-    func (l *Log) Warnln(a ...interface{}) (n int, err error)
+    func (l *Log) Warnln(a ...any) (n int, err error)
 
 Warnln creates message with Warn, level using the default formats for its
 operands and writes to log.Writer. Spaces are always added between operands and
