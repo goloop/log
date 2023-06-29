@@ -10,6 +10,7 @@ import (
 	"github.com/goloop/g"
 	"github.com/goloop/log/layout"
 	"github.com/goloop/log/level"
+	"github.com/goloop/trit"
 )
 
 const (
@@ -27,26 +28,17 @@ const (
 	// The fatalStatusCode is the default status code for the fatal level.
 	fatalStatusCode = 1
 
-	// No is the numeric equivalent for triple false value.
-	No = -1
-
-	// Yes is the numeric equivalent for triple true value.
-	Yes = 1
-
-	// Void is the numeric equivalent for triple nil value.
-	Void = 0
-
 	// The outWithPrefix is default values for the output prefix parameters.
-	outWithPrefix = Yes
+	outWithPrefix = trit.True
 
 	// The outWithColor is default values for the output color parameters.
-	outWithColor = No
+	outWithColor = trit.False
 
 	// The outText is default values for the output text parameters.
-	outText = Yes
+	outText = trit.True
 
 	// The outEnabled is default values for the output enabled parameters.
-	outEnabled = Yes
+	outEnabled = trit.True
 
 	// The outSpace is the space between the blocks of the
 	// output prefix.
@@ -147,7 +139,7 @@ type Output struct {
 	//  - values greater than zero are considered true;
 	//  - the value set to 0 is considered the default value
 	//    (or don't change, for edit mode).
-	WithPrefix int
+	WithPrefix trit.Trit
 
 	// WithColor is the flag that determines whether to use color for the
 	// log-message. Each message level has its own color. This is handy for
@@ -164,7 +156,7 @@ type Output struct {
 	// The color scheme works only for UNIX-like systems.
 	// The color scheme works for flat format only (i.e. display of log
 	// messages in the form of text, not as JSON).
-	WithColor int
+	WithColor trit.Trit
 
 	// Enabled is the flag that determines whether to enable the output.
 	//
@@ -175,7 +167,7 @@ type Output struct {
 	//  - values greater than zero are considered true;
 	//  - the value set to 0 is considered the default value
 	//    (or don't change, for edit mode).
-	Enabled int
+	Enabled trit.Trit
 
 	// Text is the flag that determines whether to use text format for the
 	// log-message. Otherwise, the result will be displayed in JSON format.
@@ -185,7 +177,7 @@ type Output struct {
 	//  - values greater than zero are considered true;
 	//  - the value set to 0 is considered the default value
 	//    (or don't change, for edit mode).
-	Text int
+	Text trit.Trit
 
 	// TimestampFormat is the format of the timestamp in the log-message.
 	// Must be specified in the format of the time.Format() function.
@@ -332,22 +324,22 @@ func (logger *Logger) SetOutputs(outputs ...Output) error {
 		}
 
 		// Set default value for prefix.
-		if o.WithPrefix == Void {
+		if o.WithPrefix.IsUnknown() {
 			o.WithPrefix = outWithPrefix
 		}
 
 		// Set default value for color.
-		if o.WithColor == Void {
+		if o.WithColor.IsUnknown() {
 			o.WithColor = outWithColor
 		}
 
 		// Set default value for disabled.
-		if o.Enabled == Void {
+		if o.Enabled.IsUnknown() {
 			o.Enabled = outEnabled
 		}
 
 		// Set default value for text.
-		if o.Text == Void {
+		if o.Text.IsUnknown() {
 			o.Text = outText
 		}
 
