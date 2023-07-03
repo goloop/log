@@ -34,8 +34,8 @@ const (
 	// The outWithColor is default values for the output color parameters.
 	outWithColor = trit.False
 
-	// The outText is default values for the output text parameters.
-	outText = trit.True
+	// The outTextStyle is default values for the output text parameters.
+	outTextStyle = trit.True
 
 	// The outEnabled is default values for the output enabled parameters.
 	outEnabled = trit.True
@@ -63,7 +63,7 @@ var (
 		WithPrefix:      outWithPrefix,
 		WithColor:       outWithColor,
 		Enabled:         outEnabled,
-		Text:            outText,
+		TextStyle:       outTextStyle,
 		TimestampFormat: outTimestampFormat,
 		LevelFormat:     outLevelFormat,
 	}
@@ -79,7 +79,7 @@ var (
 		WithPrefix:      outWithPrefix,
 		WithColor:       outWithColor,
 		Enabled:         outEnabled,
-		Text:            outText,
+		TextStyle:       outTextStyle,
 		TimestampFormat: outTimestampFormat,
 		LevelFormat:     outLevelFormat,
 	}
@@ -94,7 +94,7 @@ var (
 		WithPrefix:      outWithPrefix,
 		WithColor:       outWithColor,
 		Enabled:         outEnabled,
-		Text:            outText,
+		TextStyle:       outTextStyle,
 		TimestampFormat: outTimestampFormat,
 		LevelFormat:     outLevelFormat,
 	}
@@ -172,22 +172,24 @@ type Output struct {
 	//    (or don't change, for edit mode).
 	Enabled trit.Trit
 
-	// Text is the flag that determines whether to use text format for the
-	// log-message. Otherwise, the result will be displayed in JSON format.
+	// TextStyle is the flag that determines whether to use text style for
+	// the log-message. Otherwise, the result will be displayed in JSON style.
+	//
+	// By default, the new output has text style.
 	//
 	// Values are given by numerical marks, where:
 	//  - values less than zero are considered false;
 	//  - values greater than zero are considered true;
 	//  - the value set to 0 is considered the default value
 	//    (or don't change, for edit mode).
-	Text trit.Trit
+	TextStyle trit.Trit
 
 	// TimestampFormat is the format of the timestamp in the log-message.
 	// Must be specified in the format of the time.Format() function.
 	TimestampFormat string
 
 	// LevelFormat is the format of the level in the log-message.
-	// Allows you to add additional information or a label around
+	// Allows us to add additional information or a label around
 	// the ID of the level, for example, to display the level in
 	// square brackets: [LEVEL_NAME] - we need to specify the
 	// format as "[%s]".
@@ -266,7 +268,7 @@ func (logger *Logger) SetSkipStackFrames(skip int) int {
 	// Take the highest possible value.
 	for {
 		func() {
-			// If you panic, reduce the skip value by one.
+			// If panic, reduce the skip value by one.
 			defer func() {
 				if r := recover(); r != nil {
 					skip--
@@ -414,8 +416,8 @@ func (logger *Logger) SetOutputs(outputs ...Output) error {
 		}
 
 		// Set default value for text.
-		if o.Text.IsUnknown() {
-			o.Text = outText
+		if o.TextStyle.IsUnknown() {
+			o.TextStyle = outTextStyle
 		}
 
 		// Set default value for timestamp.
@@ -503,8 +505,8 @@ func (logger *Logger) EditOutputs(outputs ...Output) error {
 		}
 
 		// Set value for text.
-		if !o.Text.IsUnknown() {
-			out.Text = o.Text
+		if !o.TextStyle.IsUnknown() {
+			out.TextStyle = o.TextStyle
 		}
 
 		// Set value for timestamp.
@@ -594,7 +596,7 @@ func (logger *Logger) echo(w io.Writer, l level.Level, f string, a ...any) {
 			continue
 		}
 
-		if o.Text > 0 {
+		if o.TextStyle > 0 {
 			msg = textMessage(logger.prefix, l, time.Now(), o, sf, f, a...)
 		} else {
 			msg = objectMessage(logger.prefix, l, time.Now(), o, sf, f, a...)

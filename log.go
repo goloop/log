@@ -10,7 +10,31 @@ import (
 // The self is the default logger instance.
 var self *Logger
 
-// New returns new Logger object.
+// New returns a new Logger object. We can optionally provide one or more
+// prefixes that will be prepended to each log message. If multiple prefixes
+// are provided, they will be joined with hyphens. Additionally, prefixes
+// are stripped of leading and trailing whitespace characters.
+//
+// Example usage:
+//
+//	// The simplest use-case is to create a new logger without any prefixes.
+//	logger := log.New()
+//	logger.Info("Hello, World!")
+//
+//	// We can also add a prefix for our logger. Here, 'MYAPP' will be
+//	// prepended to each log message.
+//	loggerWithPrefix := log.New("MYAPP")
+//	loggerWithPrefix.Info("Hello, World!")
+//
+//	// If multiple prefixes are provided, they will be joined with hyphens.
+//	// Here, 'MYAPP-PREFIX' will be prepended to each log message.
+//	loggerWithMultiplePrefixes := log.New("MYAPP", "PREFIX")
+//	loggerWithMultiplePrefixes.Info("Hello, World!")
+//
+//	// Any leading and trailing whitespace characters are removed from
+//	// prefixes. 'MYAPP-PREFIX' will be prepended to each log message.
+//	loggerWithWhitespace := log.New(" MYAPP ", " PREFIX ")
+//	loggerWithWhitespace.Info("Hello, World!")
 func New(prefixes ...string) *Logger {
 	// Generate prefix.
 	prefix := ""
