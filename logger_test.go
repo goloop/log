@@ -1,2503 +1,1110 @@
 package log
 
-/*
-import "testing"
+import (
+	"os"
+	"strings"
+	"testing"
 
-const (
-	testSkip     = 3
-	testSkipSeek = 1
+	"github.com/goloop/log/level"
+	"github.com/goloop/trit"
 )
 
-// TestConfigFatalAllowed tests Config.FatalAllowed method.
-func TestConfigFatalAllowed(t *testing.T) {
-	type test struct {
-		value  int
-		result bool
+// TestEcho tests the echo method of the Logger.
+func TestEcho(t *testing.T) {
+	logger := New()
+
+	r, w, _ := os.Pipe()
+	err := logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	tests := []test{
-		{0, false},
-		{1, true},
-		{32, true},
+	logger.echo(nil, level.Debug, "test %s", "message")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
+
+	if !strings.Contains(out, "test message") {
+		t.Errorf("echo did not write the correct TEXT message: %s", out)
 	}
 
-	for i, s := range tests {
-		c := &Config{FatalStatusCode: s.value}
-		if ok := c.FatalAllowed(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
+	// As JSON.
+	r, w, _ = os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+		Text:   trit.False,
+	})
+
+	logger.echo(nil, level.Debug, "test %s", "message")
+	outC = make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out = <-outC
+
+	if !strings.Contains(out, "\"level\":\"DEBUG\"") {
+		t.Errorf("echo did not write the correct JSON message: %s", out)
+	}
+
+	// Disabled.
+	r, w, _ = os.Pipe()
+	logger.SetOutputs(Output{
+		Name:    "test",
+		Writer:  w,
+		Enabled: trit.False,
+	})
+
+	logger.echo(nil, level.Debug, "test %s", "message")
+	outC = make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out = <-outC
+
+	if len(out) != 0 {
+		t.Errorf("should not write anything: %s", out)
+	}
+}
+
+/*
+
+// TestSetSkipStackFramesMethod tests the SetSkipStackFrames
+// method of the Logger.
+func TestSetSkipStackFramesMethod(t *testing.T) {
+	logger := New()
+	skip := 5
+
+	logger.SetSkipStackFrames(skip)
+	if logger.skipStackFrames != skip {
+		t.Errorf("SetSkipStackFrames failed, got %d, want %d",
+			logger.skipStackFrames, skip)
+	}
+}
+
+// TestSetPrefixMethod tests the SetPrefix method of the Logger.
+func TestSetPrefixMethod(t *testing.T) {
+	logger := New()
+	prefix := "test"
+
+	logger.SetPrefix(prefix)
+	if logger.prefix != prefix {
+		t.Errorf("SetPrefix failed, got %s, want %s", logger.prefix, prefix)
+	}
+}
+
+// TestSetOutputsMethod tests the SetOutputs method of the Logger.
+func TestSetOutputsMethod(t *testing.T) {
+	logger := New()
+	output := Output{
+		Name:   "test",
+		Writer: os.Stdout,
+	}
+
+	err := logger.SetOutputs(output)
+	if err != nil {
+		t.Errorf("SetOutputs failed with error: %v", err)
+	}
+
+	if len(logger.outputs) != 1 {
+		t.Errorf("SetOutputs failed, got %d outputs, want 1",
+			len(logger.outputs))
+	}
+
+	if _, ok := logger.outputs["test"]; !ok {
+		t.Errorf("SetOutputs failed, did not find output with name 'test'")
+	}
+}
+
+// TestSetOutputsMethodNoName tests the SetOutputs method with
+// an output with no name.
+func TestSetOutputsMethodNoName(t *testing.T) {
+	logger := New()
+	output := Output{
+		Writer: os.Stdout,
+	}
+
+	err := logger.SetOutputs(output)
+	if err == nil {
+		t.Errorf("SetOutputs did not fail with error for output with no name")
+	}
+}
+
+// TestSetOutputsMethodDuplicateName tests the SetOutputs method
+// with duplicate output names.
+func TestSetOutputsMethodDuplicateName(t *testing.T) {
+	logger := New()
+	output1 := Output{
+		Name:   "test",
+		Writer: os.Stdout,
+	}
+	output2 := Output{
+		Name:   "test",
+		Writer: os.Stdout,
+	}
+
+	err := logger.SetOutputs(output1, output2)
+	if err == nil {
+		t.Errorf("SetOutputs didn't fail with error for dupl. output names")
+	}
+}
+
+// TestSetOutputsMethodNilWriter tests the SetOutputs method with
+// an output with a nil writer and empty list.
+func TestSetOutputsMethodNil(t *testing.T) {
+	logger := New()
+	output := Output{
+		Name: "test",
+	}
+
+	err := logger.SetOutputs(output)
+	if err == nil {
+		t.Errorf("SetOutputs didn't fail with error " +
+			"for output with nil writer")
+	}
+
+	err = logger.SetOutputs()
+	if err == nil {
+		t.Errorf("SetOutputs didn't fail with error " +
+			"for empty list of outputs")
+	}
+}
+
+// TestEditOutputsMethod tests the EditOutputs method of the Logger.
+func TestEditOutputsMethod(t *testing.T) {
+	logger := New()
+	output := Output{
+		Name:   "test",
+		Writer: os.Stdout,
+		Levels: level.Error,
+	}
+
+	err := logger.SetOutputs(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output.Levels = level.Debug
+	err = logger.EditOutputs(output)
+	if err != nil {
+		t.Errorf("EditOutputs failed with error: %v", err)
+	}
+
+	if logger.outputs["test"].Levels != level.Debug {
+		t.Errorf("EditOutputs did not update the output levels correctly")
+	}
+}
+
+// TestDeleteOutputsMethod tests the DeleteOutputs method of the Logger.
+func TestDeleteOutputsMethod(t *testing.T) {
+	logger := New()
+	output := Output{
+		Name:   "test",
+		Writer: os.Stdout,
+	}
+
+	err := logger.SetOutputs(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	logger.DeleteOutputs(output.Name)
+
+	if _, ok := logger.outputs["test"]; ok {
+		t.Errorf("DeleteOutputs did not delete the output")
+	}
+}
+
+// TestOutputsMethod tests the Outputs method of the Logger.
+func TestOutputsMethod(t *testing.T) {
+	logger := New()
+	output := Output{
+		Name:   "test",
+		Writer: os.Stdout,
+	}
+
+	err := logger.SetOutputs(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	outputs := logger.Outputs()
+
+	if len(outputs) != 1 {
+		t.Errorf("Outputs did not return the correct number of outputs")
+	}
+
+	if outputs[0].Name != output.Name {
+		t.Errorf("Outputs did not return the correct output")
+	}
+}
+
+// TestCopyMethod tests the Copy method of the Logger.
+func TestCopyMethod(t *testing.T) {
+	logger := New()
+	logger.SetPrefix("test")
+	copy := logger.Copy()
+	if copy.prefix != "test" {
+		t.Errorf("Copy did not correctly copy the prefix")
+	}
+}
+
+
+
+// TestPanicMethods tests the Panic, Panicf, and Panicln methods of the Logger.
+func TestPanicMethods(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic as expected")
 		}
+	}()
+
+	logger := New()
+	_, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
+
+	logger.Panic("Test panic")
+
+	// Panicf
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic as expected")
+		}
+	}()
+	logger.Panicf("Test panicf %s", "formatted")
+
+	// Panicln
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic as expected")
+		}
+	}()
+	logger.Panicln("Test panicln")
+}
+*/
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+// Fatal methods (like Fatal, Fatalf, Fatalln) exit the program,
+// which makes them difficult to test directly. They should be covered
+// in an integration test, where you can check that a program with a fatal
+// log statement exits as expected.
+//
+// For unit testing, we can at least test that it logs as expected
+// before calling os.Exit.
+//
+// TestFatalMethods tests the Fatal, Fatalf, and Fatalln methods of the Logger.
+func TestFatalMethods(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic as expected")
+		}
+	}()
+
+	logger := New()
+
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
+
+	logger.Fatal("Test fatal")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
+
+	expected := "Test fatal"
+	if !strings.Contains(out, expected) || !strings.Contains(out, "FATAL") {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+            out, expected, n)
+	}
+}
+
+// TestFatalfMethod tests the Fatalf method of the Logger.
+func TestFatalfMethod(t *testing.T) {
+	logger := New()
+
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
+
+	logger.Fatalf("Test fatal %s", "formatted")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
+
+	expected := "Test fatal formatted"
+	if !strings.Contains(out, expected) || !strings.Contains(out, "FATAL") {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+            out, expected, n)
+	}
+}
+
+// TestFatallnMethod tests the Fatalln method of the Logger.
+func TestFatallnMethod(t *testing.T) {
+	logger := New()
+
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
+
+	logger.Fatalln("Test fatalln")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
+
+	expected := "Test fatalln"
+	if !strings.Contains(out, expected) || !strings.Contains(out, "FATAL") {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+            out, expected, n)
 	}
 }
 */
 
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /*
-// TestNew tests Log.New method.
-func TestNew(t *testing.T) {
-	var (
-		log *Log
-		err error
-	)
+// TestErrorMethod tests the Error method of the Logger.
+func TestErrorMethod(t *testing.T) {
+	logger := New()
 
-	// Create log with custom leveles.
-	log, err = New(Info|Debug)
-	if err != nil {
-		t.Error(err)
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	if ok, _ := log.Config.Levels.All(Info, Debug); !ok {
-		t.Error("the Info and Debug levels must be active")
-	}
+	logger.Error("Test Error")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-	if ok, _ := log.Config.Levels.All(Info, Error); ok {
-		t.Error("the Error level shouldn't be active")
-	}
-
-	// Create log with defaults leveles.
-	log, err = New(Default)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if ok, _ := log.Config.Levels.All(Info, Debug); !ok {
-		t.Error("the Info and Debug levels must be active")
-	}
-
-	if ok, _ := log.Config.Levels.All(Panic, Fatal, Error, Warn); !ok {
-		t.Error("all log levels must be set")
+	expected := "Test Error"
+	n := level.Labels[level.Error]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestCopy tests Log.Copy method.
-func TestCopy(t *testing.T) {
-	log, err := New(Info|Debug)
-	if err != nil {
-		t.Error(err)
-	}
+// TestErrorfMethod tests the Errorf method of the Logger.
+func TestErrorfMethod(t *testing.T) {
+	logger := New()
 
-	log.Config.Levels.Add(Error)
-	log.Config.Formats.Set(FuncName, LineNumber)
-	log.Config.FatalStatusCode = 7
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	clone := log.Copy()
-	clone.Config.FatalStatusCode = 3
+	logger.Errorf("Test %s", "Errorf")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-	if log.Config.Levels != clone.Config.Levels {
-		t.Error("log levels don't match")
-	}
-
-	if log.Config.Formats != clone.Config.Formats {
-		t.Error("format styles don't match")
-	}
-
-	if log.Config.FatalStatusCode == clone.Config.FatalStatusCode {
-		t.Error("the FatalStatusCode must be different")
+	expected := "Test Errorf"
+	n := level.Labels[level.Error]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestEcho tests Log.echo method.
-func TestEcho(t *testing.T) {
-	type test struct {
-		level   LevelFlag
-		levels  LevelFlag
-		formats FormatFlag
-		data    []any
-	}
+// TestErrorlnMethod tests the Errorln method of the Logger.
+func TestErrorlnMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			Error,
-			Info|Debug|Trace,
-			FilePath,
-			[]any{"1", "2", "3"},
-		},
-		{
-			Info,
-			Info|Debug|Trace,
-			FilePath|FuncName|LineNumber,
-			[]any{"1", "2", "3"},
-		},
-		{
-			Debug,
-			Info|Debug|Trace,
-			FuncName,
-			[]any{"1", "2", "3"},
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-		l, _ := New(s.levels)
-		l.skip += testSkipSeek
-		l.Config.Formats.Set(s.formats)
-		l.echo(skip, s.level, buf, s.data...)
+	logger.Errorln("Test Errorln")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.All(s.level); ok {
-			res = res[19:]
-			exp = getPrefix(s.level, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Errorln"
+	n := level.Labels[level.Error]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestEchof tests Log.echof method.
-func TestEchof(t *testing.T) {
-	type test struct {
-		level   LevelFlag
-		levels  LevelFlag
-		formats FormatFlag
-		data    []any
-		layout  string
-	}
+// TestFerrorMethod tests the Ferror method of the Logger.
+func TestFerrorMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			Error,
-			Info|Debug|Trace,
-			FilePath,
-			[]any{"1", "2", "3"},
-			"%s + %s - %s",
-		},
-		{
-			Info,
-			Info|Debug|Trace,
-			FilePath|FuncName|LineNumber,
-			[]any{"1", "2", "3"},
-			"%s / %s + %s",
-		},
-		{
-			Debug,
-			Info|Debug|Trace,
-			FuncName,
-			[]any{"1", "2", "3"},
-			"%s * %s + %s",
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-		l, _ := New(s.levels)
-		l.skip += testSkipSeek
-		l.Config.Formats.Set(s.formats)
-		l.echof(skip, s.level, buf, s.layout, s.data...)
+	logger.Ferror(w, "Test Ferror")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.All(s.level); ok {
-			res = res[19:]
-			exp = getPrefix(s.level, l.Config, ss) +
-				fmt.Sprintf(s.layout, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Ferror"
+	n := level.Labels[level.Error]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestEcholn tests Log.echoln method.
-func TestEcholn(t *testing.T) {
-	type test struct {
-		level   LevelFlag
-		levels  LevelFlag
-		formats FormatFlag
-		data    []any
-	}
+// TestFerrorfMethod tests the Ferrorf method of the Logger.
+func TestFerrorfMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			Error,
-			Info|Debug|Trace,
-			FilePath,
-			[]any{"1", "2", "3"},
-		},
-		{
-			Info,
-			Info|Debug|Trace,
-			FilePath|FuncName|LineNumber,
-			[]any{"1", "2", "3"},
-		},
-		{
-			Debug,
-			Info|Debug|Trace,
-			FuncName,
-			[]any{"1", "2", "3"},
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-		l, _ := New(s.levels)
-		l.skip += testSkipSeek
-		l.Config.Formats.Set(s.formats)
-		l.echoln(skip, s.level, buf, s.data...)
+	logger.Ferrorf(w, "Test %s", "Ferrorf")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.All(s.level); ok {
-			res = res[19:]
-			exp = getPrefix(s.level, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Ferrorf"
+	n := level.Labels[level.Error]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFpanic tests Fpanic method.
-func TestFpanic(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestFerrorlnMethod tests the Ferrorln method of the Logger.
+func TestFerrorlnMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Panic|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Panic|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	// Ignore panic for tests.
-	defer func() { recover() }()
+	logger.Ferrorln(w, "Test Ferrorln")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Fpanic(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Panic); ok {
-			res = res[19:]
-			exp = getPrefix(Panic, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Ferrorln"
+	n := level.Labels[level.Error]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFpanicf tests Fpanicf method.
-func TestFpanicf(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-		format  string
-	}
+// TestFwarnMethod tests the Fwarn method of the Logger.
+func TestFwarnMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Panic|Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Error|Panic|Debug,
-			FilePath|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	// Ignore panic for tests.
-	defer func() { recover() }()
+	logger.Fwarn(w, "Test Fwarn")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Fpanicf(buf, s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Panic); ok {
-			res = res[19:]
-			exp = getPrefix(Panic, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Fwarn"
+	n := level.Labels[level.Warn]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFpanicln tests Fpanicln method.
-func TestFpanicln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestFwarnfMethod tests the Fwarnf method of the Logger.
+func TestFwarnfMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Panic|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Panic|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	// Ignore panic for tests.
-	defer func() { recover() }()
+	logger.Fwarnf(w, "Test %s", "Fwarnf")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Fpanicln(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Panic); ok {
-			res = res[19:]
-			exp = getPrefix(Panic, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Fwarnf"
+	n := level.Labels[level.Warn]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestPanic tests Panic method.
-func TestPanic(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestFwarnlnMethod tests the Fwarnln method of the Logger.
+func TestFwarnlnMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Panic|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Panic|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	// Ignore panic for tests.
-	defer func() { recover() }()
+	logger.Fwarnln(w, "Test Fwarnln")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Panic(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Panic); ok {
-			res = res[19:]
-			exp = getPrefix(Panic, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Fwarnln"
+	n := level.Labels[level.Warn]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestPanicf tests Panicf method.
-func TestPanicf(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-		format  string
-	}
+// TestWarnfMethod tests the Warnf method of the Logger.
+func TestWarnfMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Panic|Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Error|Panic|Debug,
-			FilePath|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	// Ignore panic for tests.
-	defer func() { recover() }()
+	logger.Warnf("Test warning %s", "formatted")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Panicf(s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Panic); ok {
-			res = res[19:]
-			exp = getPrefix(Panic, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test warning formatted"
+	n := level.Labels[level.Warn]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestPanicln tests Panicln method.
-func TestPanicln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestWarnlnMethod tests the Warnln method of the Logger.
+func TestWarnlnMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Panic|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Panic|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	// Ignore panic for tests.
-	defer func() { recover() }()
+	logger.Warnln("Test warnln")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Panicln(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Panic); ok {
-			res = res[19:]
-			exp = getPrefix(Panic, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test warnln"
+	n := level.Labels[level.Warn]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFfatal tests Ffatal method.
-func TestFfatal(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestFinfoMethod tests the Finfo method of the Logger.
+func TestFinfoMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Fatal|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Fatal|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Finfo(w, "Test finfo")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.Config.FatalStatusCode = 0 // ignore force exit for tests
-		l.skip = 5
-
-		l.Ffatal(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Fatal); ok {
-			res = res[19:]
-			exp = getPrefix(Fatal, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test finfo"
+	n := level.Labels[level.Info]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFfatalf tests Ffatalf method.
-func TestFfatalf(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-		format  string
-	}
+// TestFinfofMethod tests the Finfof method of the Logger.
+func TestFinfofMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Fatal|Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Error|Fatal|Debug,
-			FilePath|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Finfof(w, "Test %s", "finfof")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.Config.FatalStatusCode = 0 // ignore force exit for tests
-		l.skip = 5
-
-		l.Ffatalf(buf, s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Fatal); ok {
-			res = res[19:]
-			exp = getPrefix(Fatal, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test finfof"
+	n := level.Labels[level.Info]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFfatalln tests Ffatalln method.
-func TestFfatalln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestFinfolnMethod tests the Finfoln method of the Logger.
+func TestFinfolnMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Fatal|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Fatal|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Finfoln(w, "Test finfoln")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.Config.FatalStatusCode = 0 // ignore force exit for tests
-		l.skip = 5
-
-		l.Ffatalln(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Fatal); ok {
-			res = res[19:]
-			exp = getPrefix(Fatal, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test finfoln"
+	n := level.Labels[level.Info]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFatal tests Fatal method.
-func TestFatal(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestInfoMethod tests the Info method of the Logger.
+func TestInfoMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Fatal|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Fatal|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Info("Test info")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats)
-		l.Config.FatalStatusCode = 0 // ignore force exit for tests
-		l.skip = 5
-
-		l.Fatal(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Fatal); ok {
-			res = res[19:]
-			exp = getPrefix(Fatal, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test info"
+	n := level.Labels[level.Info]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFatalf tests Fatalf method.
-func TestFatalf(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-		format  string
-	}
+// TestInfofMethod tests the Infof method of the Logger.
+func TestInfofMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Fatal|Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Error|Fatal|Debug,
-			FilePath|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Infof("Test %s", "infof")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats)
-		l.Config.FatalStatusCode = 0 // ignore force exit for tests
-		l.skip = 5
-
-		l.Fatalf(s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Fatal); ok {
-			res = res[19:]
-			exp = getPrefix(Fatal, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test infof"
+	n := level.Labels[level.Info]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFatalln tests Fatalln method.
-func TestFatalln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestInfolnMethod tests the Infoln method of the Logger.
+func TestInfolnMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Fatal|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Fatal|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Infoln("Test infoln")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats)
-		l.Config.FatalStatusCode = 0 // ignore force exit for tests
-		l.skip = 5
-
-		l.Fatalln(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Fatal); ok {
-			res = res[19:]
-			exp = getPrefix(Fatal, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test infoln"
+	n := level.Labels[level.Info]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFerror tests Ferror method.
-func TestFerror(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestFdebugMethod tests the Fdebug method of the Logger.
+func TestFdebugMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Error|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Error|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Fdebug(w, "Test Fdebug")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Ferror(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Error); ok {
-			res = res[19:]
-			exp = getPrefix(Error, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Fdebug"
+	n := level.Labels[level.Debug]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFerrorf tests Ferrorf method.
-func TestFerrorf(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-		format  string
-	}
+// TestFdebugfMethod tests the Fdebugf method of the Logger.
+func TestFdebugfMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Error|Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Error|Error|Debug,
-			FilePath|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Fdebugf(w, "Test %s", "Fdebugf")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Ferrorf(buf, s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Error); ok {
-			res = res[19:]
-			exp = getPrefix(Error, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Fdebugf"
+	n := level.Labels[level.Debug]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFerrorln tests Ferrorln method.
-func TestFerrorln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestFdebuglnMethod tests the Fdebugln method of the Logger.
+func TestFdebuglnMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Error|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Error|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Fdebugln(w, "Test Fdebugln")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Ferrorln(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Error); ok {
-			res = res[19:]
-			exp = getPrefix(Error, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Fdebugln"
+	n := level.Labels[level.Debug]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestError tests Error method.
-func TestError(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestDebugMethod tests the Debug method of the Logger.
+func TestDebugMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Error|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Error|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Debug("Test Debug")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Error(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Error); ok {
-			res = res[19:]
-			exp = getPrefix(Error, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Debug"
+	n := level.Labels[level.Debug]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestErrorf tests Errorf method.
-func TestErrorf(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-		format  string
-	}
+// TestDebugfMethod tests the Debugf method of the Logger.
+func TestDebugfMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Error|Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Error|Error|Debug,
-			FilePath|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Debugf("Test %s", "Debugf")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Errorf(s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Error); ok {
-			res = res[19:]
-			exp = getPrefix(Error, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Debugf"
+	n := level.Labels[level.Debug]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestErrorln tests Errorln method.
-func TestErrorln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestDebuglnMethod tests the Debugln method of the Logger.
+func TestDebuglnMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Error|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Error|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Debugln("Test Debugln")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Errorln(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Error); ok {
-			res = res[19:]
-			exp = getPrefix(Error, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Debugln"
+	n := level.Labels[level.Debug]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFwarn tests Fwarn method.
-func TestFwarn(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestFtraceMethod tests the Ftrace method of the Logger.
+func TestFtraceMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Warn|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Warn|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Ftrace(w, "Test Ftrace")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Fwarn(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Warn); ok {
-			res = res[19:]
-			exp = getPrefix(Warn, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Ftrace"
+	n := level.Labels[level.Trace]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFwarnf tests Fwarnf method.
-func TestFwarnf(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-		format  string
-	}
+// TestFtracefMethod tests the Ftracef method of the Logger.
+func TestFtracefMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Warn|Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Error|Warn|Debug,
-			FilePath|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Ftracef(w, "Test %s", "Ftracef")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Fwarnf(buf, s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Warn); ok {
-			res = res[19:]
-			exp = getPrefix(Warn, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Ftracef"
+	n := level.Labels[level.Trace]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestFwarnln tests Fwarnln method.
-func TestFwarnln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestFtracelnMethod tests the Ftraceln method of the Logger.
+func TestFtracelnMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Warn|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Warn|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Ftraceln(w, "Test Ftraceln")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Fwarnln(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Warn); ok {
-			res = res[19:]
-			exp = getPrefix(Warn, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Ftraceln"
+	n := level.Labels[level.Trace]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestWarn tests Warn method.
-func TestWarn(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
+// TestTraceMethod tests the Trace method of the Logger.
+func TestTraceMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Warn|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Warn|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Trace("Test Trace")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Warn(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Warn); ok {
-			res = res[19:]
-			exp = getPrefix(Warn, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Trace"
+	n := level.Labels[level.Trace]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestWarnf tests Warnf method.
-func TestWarnf(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-		format  string
-	}
+// TestTracefMethod tests the Tracef method of the Logger.
+func TestTracefMethod(t *testing.T) {
+	logger := New()
 
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Warn|Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Error|Warn|Debug,
-			FilePath|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-	}
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
 
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
+	logger.Tracef("Test %s", "Tracef")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
 
-		l, _ := New(s.levels)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Warnf(s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Warn); ok {
-			res = res[19:]
-			exp = getPrefix(Warn, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+	expected := "Test Tracef"
+	n := level.Labels[level.Trace]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 
-// TestWarnln tests Warnln method.
-func TestWarnln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Warn|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Warn|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Warnln(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Warn); ok {
-			res = res[19:]
-			exp = getPrefix(Warn, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestFinfo tests Finfo method.
-func TestFinfo(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Info|Debug,
-			FilePath|FuncName|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Error|Info|Debug,
-			FilePath|LineNumber,
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Finfo(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Info); ok {
-			res = res[19:]
-			exp = getPrefix(Info, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestFinfof tests Finfof method.
-func TestFinfof(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  LevelFlag
-		formats FormatFlag
-		format  string
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			Info|Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Error|Info|Debug,
-			FilePath|LineNumber,
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			Debug,
-			FilePath|FuncName|LineNumber,
-			"%s %s",
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels)
-		l.Config.Formats.Set(s.formats)
-		l.skip = 5
-
-		l.Finfof(buf, s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Info); ok {
-			res = res[19:]
-			exp = getPrefix(Info, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestFinfoln tests Finfoln method.
-func TestFinfoln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Info, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Info, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Finfoln(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Info); ok {
-			res = res[19:]
-			exp = getPrefix(Info, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestInfo tests Info method.
-func TestInfo(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Info, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Info, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Info(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Info); ok {
-			res = res[19:]
-			exp = getPrefix(Info, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestInfof tests Infof method.
-func TestInfof(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-		format  string
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Info, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Info, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-			"%s %s",
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Infof(s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Info); ok {
-			res = res[19:]
-			exp = getPrefix(Info, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestInfoln tests Infoln method.
-func TestInfoln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Info, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Info, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Infoln(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Info); ok {
-			res = res[19:]
-			exp = getPrefix(Info, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestFdebug tests Fdebug method.
-func TestFdebug(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Debug, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Fdebug(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Debug); ok {
-			res = res[19:]
-			exp = getPrefix(Debug, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestFdebugf tests Fdebugf method.
-func TestFdebugf(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-		format  string
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Debug, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-			"%s %s",
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Fdebugf(buf, s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Debug); ok {
-			res = res[19:]
-			exp = getPrefix(Debug, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestFdebugln tests Fdebugln method.
-func TestFdebugln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Debug, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Fdebugln(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Debug); ok {
-			res = res[19:]
-			exp = getPrefix(Debug, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestDebug tests Debug method.
-func TestDebug(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Debug, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Debug(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Debug); ok {
-			res = res[19:]
-			exp = getPrefix(Debug, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestDebugf tests Debugf method.
-func TestDebugf(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-		format  string
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Debug, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-			"%s %s",
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Debugf(s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Debug); ok {
-			res = res[19:]
-			exp = getPrefix(Debug, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestDebugln tests Debugln method.
-func TestDebugln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Debug, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Debugln(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Debug); ok {
-			res = res[19:]
-			exp = getPrefix(Debug, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestFtrace tests Ftrace method.
-func TestFtrace(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Trace, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Trace, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Ftrace(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Trace); ok {
-			res = res[19:]
-			exp = getPrefix(Trace, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestFtracef tests Ftracef method.
-func TestFtracef(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-		format  string
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Trace, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Trace, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-			"%s %s",
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Ftracef(buf, s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Trace); ok {
-			res = res[19:]
-			exp = getPrefix(Trace, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestFtraceln tests Ftraceln method.
-func TestFtraceln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Trace, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Trace, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Ftraceln(buf, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Trace); ok {
-			res = res[19:]
-			exp = getPrefix(Trace, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestTrace tests Trace method.
-func TestTrace(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Trace, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Trace, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Trace(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Trace); ok {
-			res = res[19:]
-			exp = getPrefix(Trace, l.Config, ss) +
-				fmt.Sprint(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestTracef tests Tracef method.
-func TestTracef(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-		format  string
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Trace, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Trace, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-			"%s %s",
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-			"%s %s",
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Tracef(s.format, s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Trace); ok {
-			res = res[19:]
-			exp = getPrefix(Trace, l.Config, ss) +
-				fmt.Sprintf(s.format, s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
-	}
-}
-
-// TestTraceln tests Traceln method.
-func TestTraceln(t *testing.T) {
-	type test struct {
-		data    []any
-		levels  []LevelFlag
-		formats []FormatFlag
-	}
-
-	tests := []test{
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Trace, Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Error, Trace, Debug},
-			[]FormatFlag{FilePath, LineNumber},
-		},
-		{
-			[]any{"1", "2"},
-			[]LevelFlag{Debug},
-			[]FormatFlag{FilePath, FuncName, LineNumber},
-		},
-	}
-
-	for i, s := range tests {
-		buf := new(bytes.Buffer)
-
-		l, _ := New(s.levels...)
-		l.Writer = buf
-		l.Config.Formats.Set(s.formats...)
-		l.skip = 5
-
-		l.Traceln(s.data...)
-
-		exp := ""
-		res := buf.String()
-		ss := getStackSlice(testSkip)
-
-		if ok, _ := l.Config.Levels.Has(Trace); ok {
-			res = res[19:]
-			exp = getPrefix(Trace, l.Config, ss) +
-				fmt.Sprintln(s.data...)
-		}
-
-		if !strings.HasSuffix(res, exp) {
-			t.Errorf("test %d is failed, expected `%s` but `%s`", i, exp, res)
-		}
+// TestTracelnMethod tests the Traceln method of the Logger.
+func TestTracelnMethod(t *testing.T) {
+	logger := New()
+
+	r, w, _ := os.Pipe()
+	logger.SetOutputs(Output{
+		Name:   "test",
+		Writer: w,
+		Levels: level.Default,
+	})
+
+	logger.Traceln("Test Traceln")
+	outC := make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out := <-outC
+
+	expected := "Test Traceln"
+	n := level.Labels[level.Trace]
+	if !strings.Contains(out, expected) || !strings.Contains(out, n) {
+		t.Errorf("Result `%s` doesn't contains `%s` and `%s`",
+			out, expected, n)
 	}
 }
 */

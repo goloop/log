@@ -82,14 +82,14 @@ func (f *Layout) FilePath() bool {
 	return false
 }
 
-// FullPath returns true if value contains the FullPath flag.
-func (f *Layout) FullPath() bool {
+// FullFilePath returns true if value contains the FullPath flag.
+func (f *Layout) FullFilePath() bool {
 	v, _ := f.Contains(FullFilePath)
 	return v
 }
 
-// ShortPath returns true if value contains the ShortPath flag.
-func (f *Layout) ShortPath() bool {
+// ShortFilePath returns true if value contains the ShortPath flag.
+func (f *Layout) ShortFilePath() bool {
 	v, _ := f.Contains(ShortFilePath)
 	return v
 }

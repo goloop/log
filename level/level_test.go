@@ -1,567 +1,210 @@
 package level
 
-/*
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
-// TestLevelFlagIsValid tests LevelFlag.IsValid method.
-func TestLevelFlagIsValid(t *testing.T) {
-	type test struct {
-		value  LevelFlag
-		result bool
+func TestIsValid(t *testing.T) {
+	tests := []struct {
+		name   string
+		level  Level
+		expect bool
+	}{
+		{name: "Panic Level", level: Panic, expect: true},
+		{name: "Fatal Level", level: Fatal, expect: true},
+		{name: "Error Level", level: Error, expect: true},
+		{name: "Overflow Level", level: overflowLevelValue + 1, expect: false},
 	}
 
-	tests := []test{
-		{PanicLevel, true},
-		{FatalLevel, true},
-		{ErrorLevel, true},
-		{PanicLevel + PanicLevel, true}, // Panic + Panic == Fatal
-		{PanicLevel + FatalLevel, false},
-		{LevelFlag(maxLevelConfig + 1), false},
-		{None, false},
-		{0, false},
-	}
-
-	for i, s := range tests {
-		if ok := s.value.IsValid(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.level.IsValid(); got != test.expect {
+				t.Errorf("IsValid = %v; want %v", got, test.expect)
+			}
+		})
 	}
 }
 
-// TestLevelConfigIsValid tests LevelConfig.IsValid method.
-func TestLevelConfigIsValid(t *testing.T) {
-	type test struct {
-		value  LevelConfig
-		result bool
+func TestIsSingle(t *testing.T) {
+	tests := []struct {
+		name   string
+		level  Level
+		expect bool
+	}{
+		{name: "Panic Level", level: Panic, expect: true},
+		{name: "Combined Level", level: Panic | Fatal, expect: false},
+		// add more tests as needed
 	}
 
-	tests := []test{
-		{LevelConfig(PanicLevel), true},
-		{LevelConfig(FatalLevel), true},
-		{LevelConfig(ErrorLevel), true},
-		{LevelConfig(PanicLevel + PanicLevel), true},
-		{LevelConfig(PanicLevel + PanicLevel + ErrorLevel), true},
-		{maxLevelConfig + 1, false},
-		{None, true},
-		{0, true},
-	}
-
-	for i, s := range tests {
-		if ok := s.value.IsValid(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.level.IsSingle(); got != test.expect {
+				t.Errorf("IsSingle = %v; want %v", got, test.expect)
+			}
+		})
 	}
 }
 
-// TestLevelConfigPrivateHas tests LevelConfig.Has method.
-func TestLevelConfigPrivateHas(t *testing.T) {
-	type test struct {
-		value  LevelConfig
-		target LevelFlag
-		result bool
+func TestContains(t *testing.T) {
+	tests := []struct {
+		name   string
+		level  Level
+		flag   Level
+		expect bool
+		err    error
+	}{
+		{name: "Panic Level contains Panic", level: Panic, flag: Panic, expect: true, err: nil},
+		{name: "Panic Level contains Error", level: Panic, flag: Error, expect: false, err: nil},
+		// add more tests as needed
 	}
 
-	tests := []test{
-		{LevelConfig(PanicLevel), PanicLevel, true},
-		{LevelConfig(PanicLevel), FatalLevel, false},
-		{LevelConfig(FatalLevel), FatalLevel, true},
-		{LevelConfig(FatalLevel), ErrorLevel, false},
-		{LevelConfig(ErrorLevel), ErrorLevel, true},
-		{LevelConfig(ErrorLevel), PanicLevel, false},
-		{LevelConfig(PanicLevel + FatalLevel), PanicLevel, true},
-		{LevelConfig(PanicLevel + FatalLevel), FatalLevel, true},
-		{LevelConfig(PanicLevel + FatalLevel), ErrorLevel, false},
-		{LevelConfig(PanicLevel + FatalLevel + ErrorLevel), PanicLevel, true},
-		{LevelConfig(PanicLevel + FatalLevel + ErrorLevel), FatalLevel, true},
-		{LevelConfig(PanicLevel + FatalLevel + ErrorLevel), ErrorLevel, true},
-		{LevelConfig(PanicLevel + FatalLevel + ErrorLevel), 0, false},
-		{LevelConfig(PanicLevel + ErrorLevel), FatalLevel, false},
-		{LevelConfig(PanicLevel + ErrorLevel), ErrorLevel, true},
-		{LevelConfig(PanicLevel + ErrorLevel), PanicLevel, true},
-		{LevelConfig(PanicLevel + ErrorLevel), None, false},
-	}
-
-	for i, s := range tests {
-		if ok, _ := s.value.Has(s.target); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.level.Contains(test.flag)
+			if err != test.err || got != test.expect {
+				t.Errorf("Contains = %v, error = %v; want %v, error = %v", got, err, test.expect, test.err)
+			}
+		})
 	}
 }
 
-// TestLevelConfigSet tests LevelConfig.Set method.
-func TestLevelConfigSet(t *testing.T) {
-	type test struct {
-		value  []LevelFlag
-		result LevelConfig
+func TestLevelFlags(t *testing.T) {
+	tests := []struct {
+		name    string
+		level   Level
+		method  func(*Level) bool
+		contain bool
+	}{
+		{name: "Panic Flag in Panic Level", level: Panic, method: (*Level).Panic, contain: true},
+		{name: "Panic Flag in Error Level", level: Error, method: (*Level).Panic, contain: false},
+		{name: "Fatal Flag in Fatal Level", level: Fatal, method: (*Level).Fatal, contain: true},
+		{name: "Fatal Flag in Error Level", level: Error, method: (*Level).Fatal, contain: false},
+		{name: "Error Flag in Error Level", level: Error, method: (*Level).Error, contain: true},
+		{name: "Error Flag in Info Level", level: Info, method: (*Level).Error, contain: false},
+		{name: "Info Flag in Info Level", level: Info, method: (*Level).Info, contain: true},
+		{name: "Info Flag in Debug Level", level: Debug, method: (*Level).Info, contain: false},
+		{name: "Debug Flag in Debug Level", level: Debug, method: (*Level).Debug, contain: true},
+		{name: "Debug Flag in Trace Level", level: Trace, method: (*Level).Debug, contain: false},
+		{name: "Trace Flag in Trace Level", level: Trace, method: (*Level).Trace, contain: true},
+		{name: "Trace Flag in Panic Level", level: Panic, method: (*Level).Trace, contain: false},
+		// add more tests as needed
 	}
 
-	tests := []test{
-		{[]LevelFlag{PanicLevel}, LevelConfig(PanicLevel)},
-		{[]LevelFlag{PanicLevel, FatalLevel}, LevelConfig(PanicLevel + FatalLevel)},
-		{[]LevelFlag{FatalLevel, ErrorLevel}, LevelConfig(FatalLevel + ErrorLevel)},
-		{
-			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel},
-			LevelConfig(FatalLevel + ErrorLevel),
-		},
-	}
-
-	for i, s := range tests {
-		var f LevelConfig
-		f.Set(s.value...)
-		if f != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %d but %d", i, s.result, f)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.method(&test.level); got != test.contain {
+				t.Errorf("%s got = %v; want %v", test.name, got, test.contain)
+			}
+		})
 	}
 }
 
-// TestLevelConfigSetError tests LevelConfig.Set method
-// with invalid flag values.
-func TestLevelConfigSetError(t *testing.T) {
-	type test struct {
-		value  []LevelFlag
-		result bool
+func TestSet(t *testing.T) {
+	tests := []struct {
+		name   string
+		level  Level
+		flags  []Level
+		expect Level
+		err    error
+	}{
+		{name: "Set Panic and Error flags", level: Default, flags: []Level{Panic, Error}, expect: Panic | Error, err: nil},
+		// add more tests as needed
 	}
 
-	tests := []test{
-		{[]LevelFlag{PanicLevel}, true},
-		{[]LevelFlag{PanicLevel, FatalLevel}, true},
-		{[]LevelFlag{FatalLevel, ErrorLevel}, true},
-		{[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel}, true},
-		{[]LevelFlag{LevelFlag(maxLevelConfig) + 1}, false},
-		{[]LevelFlag{FatalLevel, None}, false},
-	}
-
-	for i, s := range tests {
-		var f LevelConfig
-		_, err := f.Set(s.value...)
-		if (err == nil) != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, err == nil)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.level.Set(test.flags...)
+			if err != test.err || got != test.expect {
+				t.Errorf("Set = %v, error = %v; want %v, error = %v", got, err, test.expect, test.err)
+			}
+		})
 	}
 }
 
-// TestLevelConfigAdd tests Add method.
-func TestLevelConfigAdd(t *testing.T) {
-	type test struct {
-		def    []LevelFlag
-		value  []LevelFlag
-		result LevelConfig
+func TestLevelAdd(t *testing.T) {
+	tests := []struct {
+		name  string
+		start Level
+		add   []Level
+		want  Level
+		err   error
+	}{
+		{name: "Add Panic to Empty Level", start: 0, add: []Level{Panic}, want: Panic, err: nil},
+		{name: "Add Panic to Panic Level", start: Panic, add: []Level{Panic}, want: Panic, err: nil},
+		{name: "Add Error to Panic Level", start: Panic, add: []Level{Error}, want: Panic | Error, err: nil},
+		//{name: "Add Invalid Flag", start: Panic, add: []Level{overflowLevelValue}, want: Panic, err: fmt.Errorf("the %d is invalid flag value", overflowLevelValue)},
 	}
 
-	tests := []test{
-		{
-			[]LevelFlag{PanicLevel},
-			[]LevelFlag{PanicLevel},
-			LevelConfig(PanicLevel),
-		},
-		{
-			[]LevelFlag{FatalLevel},
-			[]LevelFlag{PanicLevel, FatalLevel},
-			LevelConfig(PanicLevel + FatalLevel),
-		},
-		{
-			[]LevelFlag{PanicLevel, FatalLevel},
-			[]LevelFlag{FatalLevel, ErrorLevel},
-			LevelConfig(PanicLevel + FatalLevel + ErrorLevel),
-		},
-		{
-			[]LevelFlag{ErrorLevel, PanicLevel},
-			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel},
-			LevelConfig(PanicLevel + FatalLevel + ErrorLevel),
-		},
-		{
-			[]LevelFlag{ErrorLevel, PanicLevel},
-			[]LevelFlag{FatalLevel, ErrorLevel, PanicLevel},
-			LevelConfig(PanicLevel + FatalLevel + ErrorLevel),
-		},
-	}
-
-	for i, s := range tests {
-		var f LevelConfig
-		f.Set(s.def...)
-		f.Add(s.value...)
-		if f != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %d but %d", i, s.result, f)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.start.Add(test.add...)
+			if got != test.want || !errors.Is(err, test.err) {
+				t.Errorf("%s got = %v, err = %v; want %v, %v", test.name, got, err, test.want, test.err)
+			}
+		})
 	}
 }
 
-// TestLevelConfigAddError tests Add method with invalid flag values.
-func TestLevelConfigAddError(t *testing.T) {
-	type test struct {
-		value  []LevelFlag
-		result bool
+func TestLevelDelete(t *testing.T) {
+	tests := []struct {
+		name   string
+		start  Level
+		delete []Level
+		want   Level
+		err    error
+	}{
+		{name: "Delete Panic from Panic Level", start: Panic, delete: []Level{Panic}, want: 0, err: nil},
+		{name: "Delete Panic from Error Level", start: Error, delete: []Level{Panic}, want: Error, err: nil},
+		//{name: "Delete Invalid Flag", start: Panic, delete: []Level{overflowLevelValue}, want: Panic, err: fmt.Errorf("the %d is invalid flag value", overflowLevelValue)},
 	}
 
-	tests := []test{
-		{[]LevelFlag{PanicLevel}, true},
-		{[]LevelFlag{PanicLevel, FatalLevel}, true},
-		{[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel}, true},
-		{[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel, FatalLevel}, true},
-		{[]LevelFlag{FatalLevel, LevelFlag(maxLevelConfig) + 1, FatalLevel}, false},
-		{[]LevelFlag{FatalLevel, None, FatalLevel}, false},
-		{[]LevelFlag{None}, false},
-	}
-
-	for i, s := range tests {
-		var f LevelConfig
-		_, err := f.Add(s.value...)
-		if (err == nil) != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, (err == nil))
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.start.Delete(test.delete...)
+			if got != test.want || !errors.Is(err, test.err) {
+				t.Errorf("%s got = %v, err = %v; want %v, %v", test.name, got, err, test.want, test.err)
+			}
+		})
 	}
 }
 
-// TestLevelConfigDelete tests Delete method.
-func TestLevelConfigDelete(t *testing.T) {
-	type test struct {
-		def    []LevelFlag
-		value  []LevelFlag
-		result LevelConfig
+func TestLevelAll(t *testing.T) {
+	tests := []struct {
+		name  string
+		start Level
+		all   []Level
+		want  bool
+	}{
+		{name: "All Panic and Error in Panic Level", start: Panic, all: []Level{Panic, Error}, want: false},
+		{name: "All Panic and Error in Panic and Error Level", start: Panic | Error, all: []Level{Panic, Error}, want: true},
 	}
 
-	tests := []test{
-		{
-			[]LevelFlag{PanicLevel},
-			[]LevelFlag{PanicLevel},
-			LevelConfig(None),
-		},
-		{
-			[]LevelFlag{PanicLevel, FatalLevel},
-			[]LevelFlag{FatalLevel},
-			LevelConfig(PanicLevel),
-		},
-		{
-			[]LevelFlag{PanicLevel, FatalLevel},
-			[]LevelFlag{FatalLevel, ErrorLevel},
-			LevelConfig(PanicLevel),
-		},
-		{
-			[]LevelFlag{ErrorLevel, PanicLevel},
-			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel},
-			LevelConfig(PanicLevel),
-		},
-		{
-			[]LevelFlag{FatalLevel, ErrorLevel},
-			[]LevelFlag{ErrorLevel, PanicLevel, ErrorLevel},
-			LevelConfig(FatalLevel),
-		},
-		{
-			[]LevelFlag{ErrorLevel, PanicLevel},
-			[]LevelFlag{FatalLevel, ErrorLevel, PanicLevel},
-			LevelConfig(None),
-		},
-		{
-			[]LevelFlag{FatalLevel, ErrorLevel, PanicLevel},
-			[]LevelFlag{},
-			LevelConfig(FatalLevel + ErrorLevel + PanicLevel),
-		},
-		{
-			[]LevelFlag{FatalLevel, ErrorLevel, PanicLevel},
-			[]LevelFlag{FatalLevel},
-			LevelConfig(ErrorLevel + PanicLevel),
-		},
-	}
-
-	for i, s := range tests {
-		var f LevelConfig
-		f.Set(s.def...)
-		f.Delete(s.value...)
-		if f != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %d but %d", i, s.result, f)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.start.All(test.all...); got != test.want {
+				t.Errorf("%s got = %v; want %v", test.name, got, test.want)
+			}
+		})
 	}
 }
 
-// TestLevelConfigDeleteError tests Delete method with invalid flag values.
-func TestLevelConfigDeleteError(t *testing.T) {
-	type test struct {
-		value  []LevelFlag
-		result bool
+func TestLevelAny(t *testing.T) {
+	tests := []struct {
+		name  string
+		start Level
+		any   []Level
+		want  bool
+	}{
+		{name: "Any Panic and Error in Panic Level", start: Panic, any: []Level{Panic, Error}, want: true},
+		{name: "Any Panic and Error in Info Level", start: Info, any: []Level{Panic, Error}, want: false},
 	}
 
-	tests := []test{
-		{[]LevelFlag{PanicLevel}, true},
-		{[]LevelFlag{PanicLevel, FatalLevel}, true},
-		{[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel}, true},
-		{[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel, FatalLevel}, true},
-		{[]LevelFlag{FatalLevel, LevelFlag(maxLevelConfig + 1), FatalLevel}, false},
-		{[]LevelFlag{None}, false},
-	}
-
-	for i, s := range tests {
-		var f LevelConfig
-		_, err := f.Delete(s.value...)
-		if (err == nil) != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, (err == nil))
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.start.Any(test.any...); got != test.want {
+				t.Errorf("%s got = %v; want %v", test.name, got, test.want)
+			}
+		})
 	}
 }
-
-// TestLevelConfigAll tests All method.
-func TestLevelConfigAll(t *testing.T) {
-	type test struct {
-		def    []LevelFlag
-		value  []LevelFlag
-		result bool
-	}
-
-	tests := []test{
-		{
-			[]LevelFlag{PanicLevel},
-			[]LevelFlag{PanicLevel},
-			true,
-		},
-		{
-			[]LevelFlag{PanicLevel, FatalLevel},
-			[]LevelFlag{FatalLevel},
-			true,
-		},
-		{
-			[]LevelFlag{PanicLevel, FatalLevel},
-			[]LevelFlag{ErrorLevel},
-			false,
-		},
-		{
-			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel},
-			[]LevelFlag{ErrorLevel, PanicLevel},
-			false,
-		},
-		{
-			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel, None},
-			[]LevelFlag{ErrorLevel, PanicLevel},
-			false,
-		},
-	}
-
-	for i, s := range tests {
-		var f LevelConfig
-		f.Set(s.def...)
-		if ok, _ := f.All(s.value...); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-
-// TestLevelConfigAny tests Any method.
-func TestLevelConfigAny(t *testing.T) {
-	type test struct {
-		def    []LevelFlag
-		value  []LevelFlag
-		result bool
-	}
-
-	tests := []test{
-		{
-			[]LevelFlag{PanicLevel},
-			[]LevelFlag{PanicLevel},
-			true,
-		},
-		{
-			[]LevelFlag{PanicLevel, FatalLevel},
-			[]LevelFlag{FatalLevel},
-			true,
-		},
-		{
-			[]LevelFlag{PanicLevel, FatalLevel},
-			[]LevelFlag{ErrorLevel},
-			false,
-		},
-		{
-			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel},
-			[]LevelFlag{ErrorLevel, PanicLevel},
-			true,
-		},
-		{
-			[]LevelFlag{FatalLevel, ErrorLevel, FatalLevel},
-			[]LevelFlag{PanicLevel, PanicLevel, ErrorLevel, PanicLevel},
-			true,
-		},
-		{
-			[]LevelFlag{PanicLevel, FatalLevel},
-			[]LevelFlag{ErrorLevel, PanicLevel},
-			true,
-		},
-	}
-
-	for i, s := range tests {
-		var f LevelConfig
-		f.Set(s.def...)
-		if ok, _ := f.Any(s.value...); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-
-// TestLevelConfigPanic tests LevelConfig.Panic method.
-func TestLevelConfigPanic(t *testing.T) {
-	type test struct {
-		value  LevelConfig
-		result bool
-	}
-
-	tests := []test{
-		{LevelConfig(PanicLevel), true},
-		{LevelConfig(FatalLevel), false},
-		{LevelConfig(ErrorLevel), false},
-		{LevelConfig(PanicLevel + FatalLevel), true},
-		{LevelConfig(FatalLevel + ErrorLevel), false},
-		{maxLevelConfig + 1, false},
-		{None, false},
-		{0, false},
-	}
-
-	for i, s := range tests {
-		if ok, _ := s.value.Panic(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-
-// TestLevelConfigFatal tests LevelConfig.Fatal method.
-func TestLevelConfigFatal(t *testing.T) {
-	type test struct {
-		value  LevelConfig
-		result bool
-	}
-
-	tests := []test{
-		{LevelConfig(PanicLevel), false},
-		{LevelConfig(FatalLevel), true},
-		{LevelConfig(ErrorLevel), false},
-		{LevelConfig(PanicLevel + FatalLevel), true},
-		{LevelConfig(FatalLevel + ErrorLevel), true},
-		{LevelConfig(PanicLevel + ErrorLevel), false},
-		{maxLevelConfig + 1, false},
-		{None, false},
-		{0, false},
-	}
-
-	for i, s := range tests {
-		if ok, _ := s.value.Fatal(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-
-// TestLevelConfigError tests LevelConfig.Error method.
-func TestLevelConfigError(t *testing.T) {
-	type test struct {
-		value  LevelConfig
-		result bool
-	}
-
-	tests := []test{
-		{LevelConfig(PanicLevel), false},
-		{LevelConfig(FatalLevel), false},
-		{LevelConfig(ErrorLevel), true},
-		{LevelConfig(PanicLevel + FatalLevel), false},
-		{LevelConfig(FatalLevel + ErrorLevel), true},
-		{LevelConfig(ErrorLevel + PanicLevel), true},
-		{maxLevelConfig + 1, false},
-		{None, false},
-		{0, false},
-	}
-
-	for i, s := range tests {
-		if ok, _ := s.value.Error(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-
-// TestLevelConfigInfo tests LevelConfig.Info method.
-func TestLevelConfigInfo(t *testing.T) {
-	type test struct {
-		value  LevelConfig
-		result bool
-	}
-
-	tests := []test{
-		{LevelConfig(InfoLevel), true},
-		{LevelConfig(FatalLevel), false},
-		{LevelConfig(DebugLevel), false},
-		{LevelConfig(PanicLevel + FatalLevel + DebugLevel), false},
-		{LevelConfig(FatalLevel + ErrorLevel + InfoLevel), true},
-		{LevelConfig(ErrorLevel + InfoLevel + PanicLevel), true},
-		{maxLevelConfig + 1, false},
-		{None, false},
-		{0, false},
-	}
-
-	for i, s := range tests {
-		if ok, _ := s.value.Info(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-
-// TestLevelConfigDebug tests LevelConfig.Debug method.
-func TestLevelConfigDebug(t *testing.T) {
-	type test struct {
-		value  LevelConfig
-		result bool
-	}
-
-	tests := []test{
-		{LevelConfig(InfoLevel), false},
-		{LevelConfig(FatalLevel), false},
-		{LevelConfig(DebugLevel), true},
-		{LevelConfig(PanicLevel + FatalLevel + DebugLevel), true},
-		{LevelConfig(FatalLevel + ErrorLevel + InfoLevel), false},
-		{LevelConfig(ErrorLevel + InfoLevel + PanicLevel + DebugLevel), true},
-		{maxLevelConfig + 1, false},
-		{None, false},
-		{0, false},
-	}
-
-	for i, s := range tests {
-		if ok, _ := s.value.Debug(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-
-// TestLevelConfigTrace tests LevelConfig.Trace method.
-func TestLevelConfigTrace(t *testing.T) {
-	type test struct {
-		value  LevelConfig
-		result bool
-	}
-
-	tests := []test{
-		{LevelConfig(InfoLevel), false},
-		{LevelConfig(FatalLevel), false},
-		{LevelConfig(TraceLevel), true},
-		{LevelConfig(TraceLevel + FatalLevel + DebugLevel), true},
-		{LevelConfig(FatalLevel + ErrorLevel + InfoLevel), false},
-		{LevelConfig(ErrorLevel + TraceLevel + PanicLevel + DebugLevel), true},
-		{maxLevelConfig + 1, false},
-		{None, false},
-		{0, false},
-	}
-
-	for i, s := range tests {
-		if ok, _ := s.value.Trace(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-*/
