@@ -96,7 +96,7 @@ func textMessage(
 
 	// Level name.
 	labels := level.Labels
-	if o.WithColor > 0 && runtime.GOOS != "windows" {
+	if o.WithColor.IsTrue() && runtime.GOOS != "windows" {
 		labels = level.ColorLabels
 	}
 
