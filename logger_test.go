@@ -36,10 +36,10 @@ func TestEcho(t *testing.T) {
 	// As JSON.
 	r, w, _ = os.Pipe()
 	logger.SetOutputs(Output{
-		Name:   "test",
-		Writer: w,
-		Levels: level.Default,
-		Text:   trit.False,
+		Name:      "test",
+		Writer:    w,
+		Levels:    level.Default,
+		TextStyle: trit.False,
 	})
 
 	logger.echo(nil, level.Debug, "test %s", "message")
