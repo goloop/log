@@ -109,10 +109,14 @@ var (
 type Output struct {
 	// Name is the name of the output. It is used to identify
 	// the output in the list of outputs.
+	//
+	// Mandatory parameter, cannot be empty.
 	Name string
 
 	// Writer is the point where the login data will be output,
 	// for example os.Stdout or text file descriptor.
+	//
+	// Mandatory parameter, cannot be empty.
 	Writer io.Writer
 
 	// Layouts is the flag-holder where flags responsible for
@@ -142,6 +146,9 @@ type Output struct {
 	//  - values greater than zero are considered true;
 	//  - the value set to 0 is considered the default value
 	//    (or don't change, for edit mode).
+	//
+	// We can also use the github.com/goloop/trit package and
+	// the value trit.True or trit.False.
 	WithPrefix trit.Trit
 
 	// WithColor is the flag that determines whether to use color for the
@@ -155,6 +162,9 @@ type Output struct {
 	//  - values greater than zero are considered true;
 	//  - the value set to 0 is considered the default value
 	//    (or don't change, for edit mode).
+	//
+	// We can also use the github.com/goloop/trit package and
+	// the value trit.True or trit.False.
 	//
 	// The color scheme works only for UNIX-like systems.
 	// The color scheme works for flat format only (i.e. display of log
@@ -170,6 +180,9 @@ type Output struct {
 	//  - values greater than zero are considered true;
 	//  - the value set to 0 is considered the default value
 	//    (or don't change, for edit mode).
+	//
+	// We can also use the github.com/goloop/trit package and
+	// the value trit.True or trit.False.
 	Enabled trit.Trit
 
 	// TextStyle is the flag that determines whether to use text style for
@@ -182,6 +195,9 @@ type Output struct {
 	//  - values greater than zero are considered true;
 	//  - the value set to 0 is considered the default value
 	//    (or don't change, for edit mode).
+	//
+	// We can also use the github.com/goloop/trit package and
+	// the value trit.True or trit.False.
 	TextStyle trit.Trit
 
 	// TimestampFormat is the format of the timestamp in the log-message.
@@ -386,7 +402,7 @@ func (logger *Logger) SetOutputs(outputs ...Output) error {
 		}
 
 		// The writer must be specified.
-		if o.Writer == nil {
+		if g.IsEmpty(o.Writer) {
 			return fmt.Errorf("the %d output has nil writer", i)
 		}
 
@@ -396,6 +412,11 @@ func (logger *Logger) SetOutputs(outputs ...Output) error {
 		}
 
 		// Set the new value if it is specified, otherwise set the default one.
+		//
+		// Note: g.Value returns the first non-empty value.
+		o.Layouts = g.Value(o.Layouts, layout.Default)
+		o.Levels = g.Value(o.Levels, level.Default)
+
 		o.Space = g.Value(o.Space, outSpace)
 		o.WithPrefix = g.Value(o.WithPrefix, outWithPrefix)
 		o.WithColor = g.Value(o.WithColor, outWithColor)
@@ -448,6 +469,8 @@ func (logger *Logger) EditOutputs(outputs ...Output) error {
 		}
 
 		// Set the new value if it is specified, otherwise leave the old one.
+		//
+		// Note: g.Value returns the first non-empty value.
 		out.Writer = g.Value(o.Writer, out.Writer)
 		out.Layouts = g.Value(o.Layouts, out.Layouts)
 		out.Levels = g.Value(o.Levels, out.Levels)
