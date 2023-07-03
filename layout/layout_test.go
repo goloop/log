@@ -1,492 +1,204 @@
 package layout
 
-/*
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
-// TestFormatFlagIsValid tests FormatFlag.IsValid method.
-func TestFormatFlagIsValid(t *testing.T) {
-	type test struct {
-		value  FormatFlag
-		result bool
+func TestIsValid(t *testing.T) {
+	tests := []struct {
+		name   string
+		Layout Layout
+		expect bool
+	}{
+		{name: "FullFilePath Layout", Layout: FullFilePath, expect: true},
+		{name: "ShortFilePath Layout", Layout: ShortFilePath, expect: true},
+		{name: "FuncName Layout", Layout: FuncName, expect: true},
+		{name: "Overflow Layout", Layout: overflowLayoutValue + 1, expect: false},
 	}
 
-	tests := []test{
-		{FullPathFormat, true},
-		{FuncNameFormat, true},
-		{LineNumberFormat, true},
-		{FullPathFormat + FullPathFormat, true}, // FilePath + FilePath == FuncName
-		{FullPathFormat + FuncNameFormat, false},
-		{FormatFlag(maxFormatConfig + 1), false},
-		{None, false},
-		{0, false},
-	}
-
-	for i, s := range tests {
-		if ok := s.value.IsValid(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.Layout.IsValid(); got != test.expect {
+				t.Errorf("IsValid = %v; want %v", got, test.expect)
+			}
+		})
 	}
 }
 
-// TestFormatConfigIsValid tests FormatConfig.IsValid method.
-func TestFormatConfigIsValid(t *testing.T) {
-	type test struct {
-		value  FormatConfig
-		result bool
+func TestIsSingle(t *testing.T) {
+	tests := []struct {
+		name   string
+		Layout Layout
+		expect bool
+	}{
+		{name: "FullFilePath Layout", Layout: FullFilePath, expect: true},
+		{name: "Combined Layout", Layout: FullFilePath | ShortFilePath, expect: false},
+		// add more tests as needed
 	}
 
-	tests := []test{
-		{FormatConfig(FullPathFormat), true},
-		{FormatConfig(FuncNameFormat), true},
-		{FormatConfig(LineNumberFormat), true},
-		{FormatConfig(FullPathFormat + FullPathFormat), true},
-		{FormatConfig(FullPathFormat + FullPathFormat + LineNumberFormat), true},
-		{maxFormatConfig + 1, false},
-		{None, true},
-		{0, true},
-	}
-
-	for i, s := range tests {
-		if ok := s.value.IsValid(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.Layout.IsSingle(); got != test.expect {
+				t.Errorf("IsSingle = %v; want %v", got, test.expect)
+			}
+		})
 	}
 }
 
-// TestFormatConfigPrivateHas tests FormatConfig.Has method.
-func TestFormatConfigPrivateHas(t *testing.T) {
-	type test struct {
-		value  FormatConfig
-		target FormatFlag
-		result bool
+func TestContains(t *testing.T) {
+	tests := []struct {
+		name   string
+		Layout Layout
+		flag   Layout
+		expect bool
+		err    error
+	}{
+		{name: "FullFilePath Layout contains FullFilePath", Layout: FullFilePath, flag: FullFilePath, expect: true, err: nil},
+		{name: "FullFilePath Layout contains FuncName", Layout: FullFilePath, flag: FuncName, expect: false, err: nil},
+		// add more tests as needed
 	}
 
-	tests := []test{
-		{FormatConfig(FullPathFormat), FullPathFormat, true},
-		{FormatConfig(FullPathFormat), FuncNameFormat, false},
-		{FormatConfig(FuncNameFormat), FuncNameFormat, true},
-		{FormatConfig(FuncNameFormat), LineNumberFormat, false},
-		{FormatConfig(LineNumberFormat), LineNumberFormat, true},
-		{FormatConfig(LineNumberFormat), FullPathFormat, false},
-		{FormatConfig(FullPathFormat + FuncNameFormat), FullPathFormat, true},
-		{FormatConfig(FullPathFormat + FuncNameFormat), FuncNameFormat, true},
-		{FormatConfig(FullPathFormat + FuncNameFormat), LineNumberFormat, false},
-		{FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat), FullPathFormat, true},
-		{FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat), FuncNameFormat, true},
-		{FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat), LineNumberFormat, true},
-		{FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat), 0, false},
-		{FormatConfig(FullPathFormat + LineNumberFormat), FuncNameFormat, false},
-		{FormatConfig(FullPathFormat + LineNumberFormat), LineNumberFormat, true},
-		{FormatConfig(FullPathFormat + LineNumberFormat), FullPathFormat, true},
-		{FormatConfig(FullPathFormat + LineNumberFormat), None, false},
-	}
-
-	for i, s := range tests {
-		if ok, _ := s.value.Has(s.target); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.Layout.Contains(test.flag)
+			if err != test.err || got != test.expect {
+				t.Errorf("Contains = %v, FuncName = %v; want %v, FuncName = %v", got, err, test.expect, test.err)
+			}
+		})
 	}
 }
 
-// TestFormatConfigSet tests FormatConfig.Set method.
-func TestFormatConfigSet(t *testing.T) {
-	type test struct {
-		value  []FormatFlag
-		result FormatConfig
+func TestLayoutFlags(t *testing.T) {
+	tests := []struct {
+		name    string
+		Layout  Layout
+		method  func(*Layout) bool
+		contain bool
+	}{
+		{name: "FullFilePath Flag in FullFilePath Layout", Layout: FullFilePath, method: (*Layout).FullFilePath, contain: true},
+		{name: "FullFilePath Flag in FuncName Layout", Layout: FuncName, method: (*Layout).FullFilePath, contain: false},
+		{name: "ShortFilePath Flag in ShortFilePath Layout", Layout: ShortFilePath, method: (*Layout).ShortFilePath, contain: true},
+		{name: "ShortFilePath Flag in FuncName Layout", Layout: FuncName, method: (*Layout).ShortFilePath, contain: false},
+		{name: "FuncName Flag in FuncName Layout", Layout: FuncName, method: (*Layout).FuncName, contain: true},
+		{name: "FuncName Flag in FuncAddress Layout", Layout: FuncAddress, method: (*Layout).FuncName, contain: false},
+		{name: "FuncAddress Flag in FuncAddress Layout", Layout: FuncAddress, method: (*Layout).FuncAddress, contain: true},
 	}
 
-	tests := []test{
-		{[]FormatFlag{FullPathFormat}, FormatConfig(FullPathFormat)},
-		{[]FormatFlag{FullPathFormat, FuncNameFormat}, FormatConfig(FullPathFormat + FuncNameFormat)},
-		{[]FormatFlag{FuncNameFormat, LineNumberFormat}, FormatConfig(FuncNameFormat + LineNumberFormat)},
-		{
-			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat},
-			FormatConfig(FuncNameFormat + LineNumberFormat),
-		},
-	}
-
-	for i, s := range tests {
-		var f FormatConfig
-		f.Set(s.value...)
-		if f != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %d but %d", i, s.result, f)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.method(&test.Layout); got != test.contain {
+				t.Errorf("%s got = %v; want %v", test.name, got, test.contain)
+			}
+		})
 	}
 }
 
-// TestFormatConfigSetError tests FormatConfig.Set method with invalid flag values.
-func TestFormatConfigSetError(t *testing.T) {
-	type test struct {
-		value  []FormatFlag
-		result bool
+func TestSet(t *testing.T) {
+	tests := []struct {
+		name   string
+		Layout Layout
+		flags  []Layout
+		expect Layout
+		err    error
+	}{
+		{name: "Set FullFilePath and FuncName flags", Layout: Default, flags: []Layout{FullFilePath, FuncName}, expect: FullFilePath | FuncName, err: nil},
+		// add more tests as needed
 	}
 
-	tests := []test{
-		{[]FormatFlag{FullPathFormat}, true},
-		{[]FormatFlag{FullPathFormat, FuncNameFormat}, true},
-		{[]FormatFlag{FuncNameFormat, LineNumberFormat}, true},
-		{[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat}, true},
-		{[]FormatFlag{FormatFlag(maxFormatConfig) + 1}, false},
-		{[]FormatFlag{FuncNameFormat, None}, false},
-	}
-
-	for i, s := range tests {
-		var f FormatConfig
-		_, err := f.Set(s.value...)
-		if (err == nil) != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, err == nil)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.Layout.Set(test.flags...)
+			if err != test.err || got != test.expect {
+				t.Errorf("Set = %v, FuncName = %v; want %v, FuncName = %v", got, err, test.expect, test.err)
+			}
+		})
 	}
 }
 
-// TestFormatConfigAdd tests Add method.
-func TestFormatConfigAdd(t *testing.T) {
-	type test struct {
-		def    []FormatFlag
-		value  []FormatFlag
-		result FormatConfig
+func TestLayoutAdd(t *testing.T) {
+	tests := []struct {
+		name  string
+		start Layout
+		add   []Layout
+		want  Layout
+		err   error
+	}{
+		{name: "Add FullFilePath to Empty Layout", start: 0, add: []Layout{FullFilePath}, want: FullFilePath, err: nil},
+		{name: "Add FullFilePath to FullFilePath Layout", start: FullFilePath, add: []Layout{FullFilePath}, want: FullFilePath, err: nil},
+		{name: "Add FuncName to FullFilePath Layout", start: FullFilePath, add: []Layout{FuncName}, want: FullFilePath | FuncName, err: nil},
+		//{name: "Add Invalid Flag", start: FullFilePath, add: []Layout{overflowLayoutValue}, want: FullFilePath, err: fmt.Errorf("the %d is invalid flag value", overflowLayoutValue)},
 	}
 
-	tests := []test{
-		{
-			[]FormatFlag{FullPathFormat},
-			[]FormatFlag{FullPathFormat},
-			FormatConfig(FullPathFormat),
-		},
-		{
-			[]FormatFlag{FuncNameFormat},
-			[]FormatFlag{FullPathFormat, FuncNameFormat},
-			FormatConfig(FullPathFormat + FuncNameFormat),
-		},
-		{
-			[]FormatFlag{FullPathFormat, FuncNameFormat},
-			[]FormatFlag{FuncNameFormat, LineNumberFormat},
-			FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat),
-		},
-		{
-			[]FormatFlag{LineNumberFormat, FullPathFormat},
-			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat},
-			FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat),
-		},
-		{
-			[]FormatFlag{LineNumberFormat, FullPathFormat},
-			[]FormatFlag{FuncNameFormat, LineNumberFormat, FullPathFormat},
-			FormatConfig(FullPathFormat + FuncNameFormat + LineNumberFormat),
-		},
-	}
-
-	for i, s := range tests {
-		var f FormatConfig
-		f.Set(s.def...)
-		f.Add(s.value...)
-		if f != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %d but %d", i, s.result, f)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.start.Add(test.add...)
+			if got != test.want || !errors.Is(err, test.err) {
+				t.Errorf("%s got = %v, err = %v; want %v, %v", test.name, got, err, test.want, test.err)
+			}
+		})
 	}
 }
 
-// TestFormatConfigAddError tests Add method with invalid flag values.
-func TestFormatConfigAddError(t *testing.T) {
-	type test struct {
-		value  []FormatFlag
-		result bool
+func TestLayoutDelete(t *testing.T) {
+	tests := []struct {
+		name   string
+		start  Layout
+		delete []Layout
+		want   Layout
+		err    error
+	}{
+		{name: "Delete FullFilePath from FullFilePath Layout", start: FullFilePath, delete: []Layout{FullFilePath}, want: 0, err: nil},
+		{name: "Delete FullFilePath from FuncName Layout", start: FuncName, delete: []Layout{FullFilePath}, want: FuncName, err: nil},
+		//{name: "Delete Invalid Flag", start: FullFilePath, delete: []Layout{overflowLayoutValue}, want: FullFilePath, err: fmt.Errorf("the %d is invalid flag value", overflowLayoutValue)},
 	}
 
-	tests := []test{
-		{[]FormatFlag{FullPathFormat}, true},
-		{[]FormatFlag{FullPathFormat, FuncNameFormat}, true},
-		{[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat}, true},
-		{[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat, FuncNameFormat}, true},
-		{[]FormatFlag{FuncNameFormat, FormatFlag(maxFormatConfig) + 1, FuncNameFormat}, false},
-		{[]FormatFlag{FuncNameFormat, None, FuncNameFormat}, false},
-		{[]FormatFlag{None}, false},
-	}
-
-	for i, s := range tests {
-		var f FormatConfig
-		_, err := f.Add(s.value...)
-		if (err == nil) != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, (err == nil))
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.start.Delete(test.delete...)
+			if got != test.want || !errors.Is(err, test.err) {
+				t.Errorf("%s got = %v, err = %v; want %v, %v", test.name, got, err, test.want, test.err)
+			}
+		})
 	}
 }
 
-// TestFormatConfigDelete tests Delete method.
-func TestFormatConfigDelete(t *testing.T) {
-	type test struct {
-		def    []FormatFlag
-		value  []FormatFlag
-		result FormatConfig
+func TestLayoutAll(t *testing.T) {
+	tests := []struct {
+		name  string
+		start Layout
+		all   []Layout
+		want  bool
+	}{
+		{name: "All FullFilePath and FuncName in FullFilePath Layout", start: FullFilePath, all: []Layout{FullFilePath, FuncName}, want: false},
+		{name: "All FullFilePath and FuncName in FullFilePath and FuncName Layout", start: FullFilePath | FuncName, all: []Layout{FullFilePath, FuncName}, want: true},
 	}
 
-	tests := []test{
-		{
-			[]FormatFlag{FullPathFormat},
-			[]FormatFlag{FullPathFormat},
-			FormatConfig(None),
-		},
-		{
-			[]FormatFlag{FullPathFormat, FuncNameFormat},
-			[]FormatFlag{FuncNameFormat},
-			FormatConfig(FullPathFormat),
-		},
-		{
-			[]FormatFlag{FullPathFormat, FuncNameFormat},
-			[]FormatFlag{FuncNameFormat, LineNumberFormat},
-			FormatConfig(FullPathFormat),
-		},
-		{
-			[]FormatFlag{LineNumberFormat, FullPathFormat},
-			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat},
-			FormatConfig(FullPathFormat),
-		},
-		{
-			[]FormatFlag{FuncNameFormat, LineNumberFormat},
-			[]FormatFlag{LineNumberFormat, FullPathFormat, LineNumberFormat},
-			FormatConfig(FuncNameFormat),
-		},
-		{
-			[]FormatFlag{LineNumberFormat, FullPathFormat},
-			[]FormatFlag{FuncNameFormat, LineNumberFormat, FullPathFormat},
-			FormatConfig(None),
-		},
-		{
-			[]FormatFlag{FuncNameFormat, LineNumberFormat, FullPathFormat},
-			[]FormatFlag{},
-			FormatConfig(FuncNameFormat + LineNumberFormat + FullPathFormat),
-		},
-		{
-			[]FormatFlag{FuncNameFormat, LineNumberFormat, FullPathFormat},
-			[]FormatFlag{FuncNameFormat},
-			FormatConfig(LineNumberFormat + FullPathFormat),
-		},
-	}
-
-	for i, s := range tests {
-		var f FormatConfig
-		f.Set(s.def...)
-		f.Delete(s.value...)
-		if f != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %d but %d", i, s.result, f)
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.start.All(test.all...); got != test.want {
+				t.Errorf("%s got = %v; want %v", test.name, got, test.want)
+			}
+		})
 	}
 }
 
-// TestFormatConfigDeleteError tests Delete method with invalid flag values.
-func TestFormatConfigDeleteError(t *testing.T) {
-	type test struct {
-		value  []FormatFlag
-		result bool
+func TestLayoutAny(t *testing.T) {
+	tests := []struct {
+		name  string
+		start Layout
+		any   []Layout
+		want  bool
+	}{
+		{name: "Any FullFilePath and FuncName in FullFilePath Layout", start: FullFilePath, any: []Layout{FullFilePath, FuncName}, want: true},
+		{name: "Any FullFilePath and FuncName in FuncAddress Layout", start: FuncAddress, any: []Layout{FullFilePath, FuncName}, want: false},
 	}
 
-	tests := []test{
-		{[]FormatFlag{FullPathFormat}, true},
-		{[]FormatFlag{FullPathFormat, FuncNameFormat}, true},
-		{[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat}, true},
-		{[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat, FuncNameFormat}, true},
-		{
-			[]FormatFlag{
-				FuncNameFormat,
-				FormatFlag(maxFormatConfig + 1),
-				FuncNameFormat,
-			},
-			false,
-		},
-		{[]FormatFlag{None}, false},
-	}
-
-	for i, s := range tests {
-		var f FormatConfig
-		_, err := f.Delete(s.value...)
-		if (err == nil) != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, (err == nil))
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.start.Any(test.any...); got != test.want {
+				t.Errorf("%s got = %v; want %v", test.name, got, test.want)
+			}
+		})
 	}
 }
-
-// TestFormatConfigAll tests All method.
-func TestFormatConfigAll(t *testing.T) {
-	type test struct {
-		def    []FormatFlag
-		value  []FormatFlag
-		result bool
-	}
-
-	tests := []test{
-		{
-			[]FormatFlag{FullPathFormat},
-			[]FormatFlag{FullPathFormat},
-			true,
-		},
-		{
-			[]FormatFlag{FullPathFormat, FuncNameFormat},
-			[]FormatFlag{FuncNameFormat},
-			true,
-		},
-		{
-			[]FormatFlag{FullPathFormat, FuncNameFormat},
-			[]FormatFlag{LineNumberFormat},
-			false,
-		},
-		{
-			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat},
-			[]FormatFlag{LineNumberFormat, FullPathFormat},
-			false,
-		},
-		{
-			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat, None},
-			[]FormatFlag{LineNumberFormat, FullPathFormat},
-			false,
-		},
-	}
-
-	for i, s := range tests {
-		var f FormatConfig
-		f.Set(s.def...)
-		if ok, _ := f.All(s.value...); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-
-// TestFormatConfigAny tests Any method.
-func TestFormatConfigAny(t *testing.T) {
-	type test struct {
-		def    []FormatFlag
-		value  []FormatFlag
-		result bool
-	}
-
-	tests := []test{
-		{
-			[]FormatFlag{FullPathFormat},
-			[]FormatFlag{FullPathFormat},
-			true,
-		},
-		{
-			[]FormatFlag{FullPathFormat, FuncNameFormat},
-			[]FormatFlag{FuncNameFormat},
-			true,
-		},
-		{
-			[]FormatFlag{FullPathFormat, FuncNameFormat},
-			[]FormatFlag{LineNumberFormat},
-			false,
-		},
-		{
-			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat},
-			[]FormatFlag{LineNumberFormat, FullPathFormat},
-			true,
-		},
-		{
-			[]FormatFlag{FuncNameFormat, LineNumberFormat, FuncNameFormat},
-			[]FormatFlag{FullPathFormat, FullPathFormat, LineNumberFormat, FullPathFormat},
-			true,
-		},
-		{
-			[]FormatFlag{FullPathFormat, FuncNameFormat},
-			[]FormatFlag{LineNumberFormat, FullPathFormat},
-			true,
-		},
-	}
-
-	for i, s := range tests {
-		var f FormatConfig
-		f.Set(s.def...)
-		if ok, _ := f.Any(s.value...); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-
-// TestFormatConfigFilePath tests FormatConfig.FilePath method.
-func TestFormatConfigFilePath(t *testing.T) {
-	type test struct {
-		value  FormatConfig
-		result bool
-	}
-
-	tests := []test{
-		{FormatConfig(FullPathFormat), true},
-		{FormatConfig(FuncNameFormat), false},
-		{FormatConfig(LineNumberFormat), false},
-		{FormatConfig(FullPathFormat + FuncNameFormat), true},
-		{FormatConfig(FuncNameFormat + LineNumberFormat), false},
-		{maxFormatConfig + 1, false},
-		{None, false},
-		{0, false},
-	}
-
-	for i, s := range tests {
-		if ok, _ := s.value.FilePath(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-
-// TestFormatConfigFuncName tests FormatConfig.FuncName method.
-func TestFormatConfigFuncName(t *testing.T) {
-	type test struct {
-		value  FormatConfig
-		result bool
-	}
-
-	tests := []test{
-		{FormatConfig(FullPathFormat), false},
-		{FormatConfig(FuncNameFormat), true},
-		{FormatConfig(LineNumberFormat), false},
-		{FormatConfig(FullPathFormat + FuncNameFormat), true},
-		{FormatConfig(FuncNameFormat + LineNumberFormat), true},
-		{FormatConfig(FullPathFormat + LineNumberFormat), false},
-		{maxFormatConfig + 1, false},
-		{None, false},
-		{0, false},
-	}
-
-	for i, s := range tests {
-		if ok, _ := s.value.FuncName(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-
-// TestFormatConfigLineNumber tests FormatConfig.LineNumber method.
-func TestFormatConfigLineNumber(t *testing.T) {
-	type test struct {
-		value  FormatConfig
-		result bool
-	}
-
-	tests := []test{
-		{FormatConfig(FullPathFormat), false},
-		{FormatConfig(FuncNameFormat), false},
-		{FormatConfig(LineNumberFormat), true},
-		{FormatConfig(FullPathFormat + FuncNameFormat), false},
-		{FormatConfig(FuncNameFormat + LineNumberFormat), true},
-		{FormatConfig(LineNumberFormat + FullPathFormat), true},
-		{maxFormatConfig + 1, false},
-		{None, false},
-		{0, false},
-	}
-
-	for i, s := range tests {
-		if ok, _ := s.value.LineNumber(); ok != s.result {
-			t.Errorf("test for %d is failed, "+
-				"expected %t but %t", i, s.result, ok)
-		}
-	}
-}
-*/

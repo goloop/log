@@ -1,8 +1,10 @@
 package log
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"runtime"
 	"strings"
 	"time"
@@ -18,6 +20,13 @@ type stackFrame struct {
 	FuncName    string  // function name
 	FuncAddress uintptr // address of the function
 	FilePath    string  // file path
+}
+
+// The ioCopy function is used to copy the output of a reader
+func ioCopy(r io.Reader, c chan string) {
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+	c <- buf.String()
 }
 
 // The getStackFrame returns the stack slice. The skip argument
@@ -99,7 +108,7 @@ func textMessage(
 	// File path.
 	// The FullPath takes precedence over ShortPath.
 	if o.Layouts.FilePath() {
-		if o.Layouts.FullPath() {
+		if o.Layouts.FullFilePath() {
 			sb.WriteString(sf.FilePath)
 		} else {
 			sb.WriteString(cutFilePath(shortPathSections, sf.FilePath))

@@ -28,12 +28,18 @@ func New(prefixes ...string) *Logger {
 			i := 0
 			sb := strings.Builder{}
 			for _, p := range prefixes {
-				v := g.Trim(p, ": \t\n\r")
+				v := g.Trim(p, " \t\n\r")
 				if v == "" {
 					continue
 				}
 
-				if i != 0 {
+				// If one character is installed, it is added without
+				// the separator '-' and is considered a marker of the
+				// end of the prefix.
+				// {"MYAPP:"} => "MYAPP:"
+				// {"MYAPP", ":"} => "MYAPP:"
+				// {"MY", "APP", ":"} => "MY-APP:"
+				if l := len(v); i != 0 && l > 1 {
 					sb.WriteString("-")
 				}
 				i++
@@ -43,7 +49,6 @@ func New(prefixes ...string) *Logger {
 
 			// If the prefix is not empty, add a marker at the end.
 			if sb.Len() > 0 {
-				sb.WriteString(":") // add marker at the end
 				prefix = sb.String()
 			}
 		}
@@ -77,9 +82,19 @@ func SetSkipStackFrames(skips int) {
 	self.SetSkipStackFrames(skips)
 }
 
-// SetPrefix returns the name of the log object.
-func SetPrefix(prefixes string) {
-	self.SetPrefix(prefixes)
+// SkipStackFrames returns skip stack frames level.
+func SkipStackFrames() int {
+	return self.SkipStackFrames()
+}
+
+// SetPrefix sets the name of the logger object.
+func SetPrefix(prefix string) string {
+	return self.SetPrefix(prefix)
+}
+
+// Prefix returns the name of the log object.
+func Prefix() string {
+	return self.Prefix()
 }
 
 // SetOutputs sets the outputs of the log object.
@@ -89,12 +104,17 @@ func SetOutputs(outputs ...Output) error {
 
 // EditOutputs edits the outputs of the log object.
 func EditOutputs(outputs ...Output) error {
-	return self.SetOutputs(outputs...)
+	return self.EditOutputs(outputs...)
 }
 
 // DeleteOutputs deletes the outputs of the log object.
 func DeleteOutputs(names ...string) {
 	self.DeleteOutputs(names...)
+}
+
+// Outputs returns a list of outputs.
+func Outputs() []Output {
+	return self.Outputs()
 }
 
 // Fpanic creates message with Panic level, using the default formats
