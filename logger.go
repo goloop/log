@@ -57,9 +57,9 @@ var (
 	Stdout = Output{
 		Name:            "stdout",
 		Writer:          os.Stdout,
-		Space:           outSpace,
 		Layouts:         layout.Default,
 		Levels:          level.Info | level.Debug | level.Trace,
+		Space:           outSpace,
 		WithPrefix:      outWithPrefix,
 		WithColor:       outWithColor,
 		Enabled:         outEnabled,
@@ -73,9 +73,9 @@ var (
 	Stderr = Output{
 		Name:            "stderr",
 		Writer:          os.Stderr,
-		Space:           outSpace,
 		Layouts:         layout.Default,
 		Levels:          level.Panic | level.Fatal | level.Error | level.Warn,
+		Space:           outSpace,
 		WithPrefix:      outWithPrefix,
 		WithColor:       outWithColor,
 		Enabled:         outEnabled,
@@ -88,9 +88,9 @@ var (
 	Default = Output{
 		Name:            "default",
 		Writer:          os.Stdout,
-		Space:           outSpace,
 		Layouts:         layout.Default,
 		Levels:          Stdout.Levels | Stderr.Levels,
+		Space:           outSpace,
 		WithPrefix:      outWithPrefix,
 		WithColor:       outWithColor,
 		Enabled:         outEnabled,
@@ -115,10 +115,6 @@ type Output struct {
 	// for example os.Stdout or text file descriptor.
 	Writer io.Writer
 
-	// Space is the space between the blocks of the
-	// output prefix.
-	Space string
-
 	// Layouts is the flag-holder where flags responsible for
 	// formatting the log message prefix.
 	Layouts layout.Layout
@@ -126,6 +122,10 @@ type Output struct {
 	// Levels is the flag-holder where flags responsible for
 	// levels of the logging: Panic, Fatal, Error, Warn, Info etc.
 	Levels level.Level
+
+	// Space is the space between the blocks of the
+	// output prefix.
+	Space string
 
 	// WithPrefix is the flag that determines whether to show the prefix
 	// in the log-message. I.e., if the prefix is set for the logger,
@@ -395,40 +395,14 @@ func (logger *Logger) SetOutputs(outputs ...Output) error {
 			return fmt.Errorf("output duplicate name '%s'", o.Name)
 		}
 
-		// Set default value for space.
-		if g.IsEmpty(o.Space) {
-			o.Space = outSpace
-		}
-
-		// Set default value for prefix.
-		if g.IsEmpty(o.WithPrefix) {
-			o.WithPrefix = outWithPrefix
-		}
-
-		// Set default value for color.
-		if g.IsEmpty(o.WithColor) {
-			o.WithColor = outWithColor
-		}
-
-		// Set default value for disabled.
-		if g.IsEmpty(o.Enabled) {
-			o.Enabled = outEnabled
-		}
-
-		// Set default value for text.
-		if g.IsEmpty(o.TextStyle) {
-			o.TextStyle = outTextStyle
-		}
-
-		// Set default value for timestamp.
-		if g.IsEmpty(o.TimestampFormat) {
-			o.TimestampFormat = outTimestampFormat
-		}
-
-		// Level format.
-		if g.IsEmpty(o.LevelFormat) {
-			o.LevelFormat = outLevelFormat
-		}
+		// Set the new value if it is specified, otherwise set the default one.
+		o.Space = g.Value(o.Space, outSpace)
+		o.WithPrefix = g.Value(o.WithPrefix, outWithPrefix)
+		o.WithColor = g.Value(o.WithColor, outWithColor)
+		o.Enabled = g.Value(o.Enabled, outEnabled)
+		o.TextStyle = g.Value(o.TextStyle, outTextStyle)
+		o.TimestampFormat = g.Value(o.TimestampFormat, outTimestampFormat)
+		o.LevelFormat = g.Value(o.LevelFormat, outLevelFormat)
 
 		result[o.Name] = o
 	}
@@ -473,51 +447,18 @@ func (logger *Logger) EditOutputs(outputs ...Output) error {
 			return fmt.Errorf("output not found '%s'", o.Name)
 		}
 
-		// Update the output fields.
-		// Only those values that are clearly indicated.
-		if !g.IsEmpty(o.Writer) {
-			out.Writer = o.Writer
-		}
+		// Set the new value if it is specified, otherwise leave the old one.
+		out.Writer = g.Value(o.Writer, out.Writer)
+		out.Layouts = g.Value(o.Layouts, out.Layouts)
+		out.Levels = g.Value(o.Levels, out.Levels)
 
-		if !g.IsEmpty(o.Space) {
-			out.Space = o.Space
-		}
-
-		if !g.IsEmpty(o.Layouts) {
-			out.Layouts = o.Layouts
-		}
-
-		if !g.IsEmpty(o.Levels) {
-			out.Levels = o.Levels
-		}
-
-		if !g.IsEmpty(o.WithPrefix) {
-			out.WithPrefix = o.WithPrefix
-		}
-
-		if !g.IsEmpty(o.WithColor) {
-			out.WithColor = o.WithColor
-		}
-
-		// Setvalue for disabled.
-		if !g.IsEmpty(o.Enabled) {
-			out.Enabled = o.Enabled
-		}
-
-		// Set value for text.
-		if !g.IsEmpty(o.TextStyle) {
-			out.TextStyle = o.TextStyle
-		}
-
-		// Set value for timestamp.
-		if !g.IsEmpty(o.TimestampFormat) {
-			out.TimestampFormat = o.TimestampFormat
-		}
-
-		// Level format.
-		if !g.IsEmpty(o.LevelFormat) {
-			out.LevelFormat = o.LevelFormat
-		}
+		out.Space = g.Value(o.Space, out.Space)
+		out.WithPrefix = g.Value(o.WithPrefix, out.WithPrefix)
+		out.WithColor = g.Value(o.WithColor, out.WithColor)
+		out.Enabled = g.Value(o.Enabled, out.Enabled)
+		out.TextStyle = g.Value(o.TextStyle, out.TextStyle)
+		out.TimestampFormat = g.Value(o.TimestampFormat, out.TimestampFormat)
+		out.LevelFormat = g.Value(o.LevelFormat, out.LevelFormat)
 
 		result[o.Name] = out
 	}
