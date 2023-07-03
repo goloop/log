@@ -556,7 +556,7 @@ func (logger *Logger) echo(w io.Writer, l level.Level, f string, a ...any) {
 			prefix = ""
 		}
 
-		if o.TextStyle > 0 {
+		if o.TextStyle.IsTrue() {
 			msg = textMessage(prefix, l, time.Now(), o, sf, f, a...)
 		} else {
 			msg = objectMessage(prefix, l, time.Now(), o, sf, f, a...)
