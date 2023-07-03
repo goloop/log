@@ -11,8 +11,10 @@ import (
 
 // TestEcho tests the echo method of the Logger.
 func TestEcho(t *testing.T) {
-	logger := New()
+	// Create a new logger.
+	logger := New("TEST-PREFIX:")
 
+	// Classical test.
 	r, w, _ := os.Pipe()
 	err := logger.SetOutputs(Output{
 		Name:   "test",
@@ -31,6 +33,25 @@ func TestEcho(t *testing.T) {
 
 	if !strings.Contains(out, "test message") {
 		t.Errorf("echo did not write the correct TEXT message: %s", out)
+	}
+
+	// As JSON.
+	r, w, _ = os.Pipe()
+	logger.SetOutputs(Output{
+		Name:       "test",
+		Writer:     w,
+		Levels:     level.Default,
+		WithPrefix: trit.False,
+	})
+
+	logger.echo(nil, level.Debug, "test %s", "message")
+	outC = make(chan string)
+	go ioCopy(r, outC)
+	w.Close()
+	out = <-outC
+
+	if strings.Contains(out, "TEST-PREFIX") {
+		t.Errorf("the prefix should not appear in this test: %s", out)
 	}
 
 	// As JSON.

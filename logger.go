@@ -550,10 +550,16 @@ func (logger *Logger) echo(w io.Writer, l level.Level, f string, a ...any) {
 			continue
 		}
 
+		// Hide or show the prefix.
+		prefix := logger.prefix
+		if !o.WithPrefix.IsTrue() {
+			prefix = ""
+		}
+
 		if o.TextStyle > 0 {
-			msg = textMessage(logger.prefix, l, time.Now(), o, sf, f, a...)
+			msg = textMessage(prefix, l, time.Now(), o, sf, f, a...)
 		} else {
-			msg = objectMessage(logger.prefix, l, time.Now(), o, sf, f, a...)
+			msg = objectMessage(prefix, l, time.Now(), o, sf, f, a...)
 		}
 
 		fmt.Fprint(o.Writer, msg)
