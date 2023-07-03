@@ -401,22 +401,22 @@ func (logger *Logger) SetOutputs(outputs ...Output) error {
 		}
 
 		// Set default value for prefix.
-		if o.WithPrefix.IsUnknown() {
+		if g.IsEmpty(o.WithPrefix) {
 			o.WithPrefix = outWithPrefix
 		}
 
 		// Set default value for color.
-		if o.WithColor.IsUnknown() {
+		if g.IsEmpty(o.WithColor) {
 			o.WithColor = outWithColor
 		}
 
 		// Set default value for disabled.
-		if o.Enabled.IsUnknown() {
+		if g.IsEmpty(o.Enabled) {
 			o.Enabled = outEnabled
 		}
 
 		// Set default value for text.
-		if o.TextStyle.IsUnknown() {
+		if g.IsEmpty(o.TextStyle) {
 			o.TextStyle = outTextStyle
 		}
 
@@ -500,12 +500,12 @@ func (logger *Logger) EditOutputs(outputs ...Output) error {
 		}
 
 		// Setvalue for disabled.
-		if !o.Enabled.IsUnknown() {
+		if !g.IsEmpty(o.Enabled) {
 			out.Enabled = o.Enabled
 		}
 
 		// Set value for text.
-		if !o.TextStyle.IsUnknown() {
+		if !g.IsEmpty(o.TextStyle) {
 			out.TextStyle = o.TextStyle
 		}
 
@@ -558,10 +558,23 @@ func (logger *Logger) DeleteOutputs(names ...string) {
 //
 //	// Set new outputs.
 //	logger.SetOutputs(outputs...)
-func (logger *Logger) Outputs() []Output {
+func (logger *Logger) Outputs(names ...string) []Output {
 	logger.mu.RLock()
 	defer logger.mu.RUnlock()
 
+	// If the list of names is not empty, then we return only those outputs
+	// that are specified in the list of names.
+	if len(names) > 0 {
+		result := make([]Output, 0, len(names))
+		for _, name := range names {
+			if o, ok := logger.outputs[name]; ok {
+				result = append(result, *o)
+			}
+		}
+		return result
+	}
+
+	// If the list of names is empty, then we return all outputs.
 	result := make([]Output, 0, len(logger.outputs))
 	for _, o := range logger.outputs {
 		result = append(result, *o)

@@ -359,6 +359,7 @@ func TestOutputs(t *testing.T) {
 	outputs := Outputs()
 	defer SetOutputs(outputs...)
 
+	// All outputs.
 	output := Output{
 		Name:   "test",
 		Writer: os.Stdout,
@@ -376,6 +377,13 @@ func TestOutputs(t *testing.T) {
 
 	if out[0].Name != output.Name {
 		t.Errorf("Outputs did not return the correct output")
+	}
+
+	// Only std*.
+	SetOutputs(output, Stdout, Stderr)
+	out = Outputs(Stdout.Name, Stderr.Name)
+	if len(out) != 2 {
+		t.Errorf("Outputs did not return the correct number of outputs")
 	}
 }
 

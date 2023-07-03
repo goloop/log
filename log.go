@@ -137,8 +137,8 @@ func DeleteOutputs(names ...string) {
 }
 
 // Outputs returns a list of outputs.
-func Outputs() []Output {
-	return self.Outputs()
+func Outputs(names ...string) []Output {
+	return self.Outputs(names...)
 }
 
 // Fpanic creates message with Panic level, using the default formats
