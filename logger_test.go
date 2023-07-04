@@ -92,6 +92,121 @@ func TestEcho(t *testing.T) {
 	}
 }
 
+// TestEchoWithTextFormatting tests the echo method with Text formatting.
+func TestEchoWithTextFormatting(t *testing.T) {
+	tests := []struct {
+		name   string
+		format string
+		in     []interface{}
+		want   string
+	}{
+		{
+			name:   "Empty format",
+			format: "",
+			in:     []interface{}{"hello", "world"},
+			want:   "helloworld", // used fmt.Print
+		},
+		{
+			name:   "System formatStr",
+			format: formatStr,
+			in:     []interface{}{"hello", "world"},
+			want:   " helloworld ", // ads space of the end, used fmt.Print
+		},
+		{
+			name:   "System formatStrLn",
+			format: formatStrLn,
+			in:     []interface{}{"hello", "world"},
+			want:   " hello world\n", // used fmt.Println
+		},
+		{
+			name:   "Custom formats",
+			format: "[%d]-%s is %v",
+			in:     []interface{}{777, "message", true},
+			want:   "[777]-message is true", // used fmt.Printf
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logger := New()
+			logger.SetSkipStackFrames(2)
+			r, w, _ := os.Pipe()
+			logger.SetOutputs(Output{
+				Name:   "test",
+				Writer: w,
+				Levels: level.Default,
+			})
+
+			logger.echo(nil, level.Debug, tt.format, tt.in...)
+			outC := make(chan string)
+			go ioCopy(r, outC)
+			w.Close()
+			out := <-outC
+			if !strings.Contains(out, tt.want) {
+				t.Errorf("Expression `%v` does not contain `%v`", out, tt.want)
+			}
+		})
+	}
+}
+
+// TestEchoWithJSONFormatting tests the echo method with JSON formatting.
+func TestEchoWithJSONFormatting(t *testing.T) {
+	tests := []struct {
+		name   string
+		format string
+		in     []interface{}
+		want   string
+	}{
+		{
+			name:   "Empty format",
+			format: "",
+			in:     []interface{}{"hello", "world"},
+			want:   "helloworld", // used fmt.Print
+		},
+		{
+			name:   "System formatStr",
+			format: formatStr,
+			in:     []interface{}{"hello", "world"},
+			want:   "helloworld", // used fmt.Print
+		},
+		{
+			name:   "System formatStrLn",
+			format: formatStrLn,
+			in:     []interface{}{"hello", "world"},
+			want:   "hello world", // used fmt.Println with Trim
+		},
+		{
+			name:   "Custom formats",
+			format: "[%d]-%s is %v",
+			in:     []interface{}{777, "message", true},
+			want:   "[777]-message is true", // used fmt.Printf
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logger := New()
+			logger.SetSkipStackFrames(2)
+			r, w, _ := os.Pipe()
+			logger.SetOutputs(Output{
+				Name:      "test",
+				Writer:    w,
+				Levels:    level.Default,
+				TextStyle: trit.False,
+			})
+
+			logger.echo(nil, level.Debug, tt.format, tt.in...)
+			outC := make(chan string)
+			go ioCopy(r, outC)
+			w.Close()
+			out := <-outC
+			if !strings.Contains(out, tt.want) {
+				t.Errorf("Expression `%v` does not contain `%v`", out, tt.want)
+			}
+		})
+	}
+}
+
 //
 // The others of the method is rolled through global function, see log_test.go
 //

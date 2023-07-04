@@ -47,6 +47,11 @@ import (
 	"github.com/goloop/log"
 	"github.com/goloop/log/layout"
 	"github.com/goloop/log/level"
+
+	// It is not necessary to import this module, the three-valued logic
+	// constants can be represented using integers where: -1 is False,
+	// 0 is Unknown, and 1 is True.
+	"github.com/goloop/trit"
 )
 
 func main() {
@@ -68,7 +73,7 @@ func main() {
 	// Set the outputs of the log to our file.
 	// We can set many different outputs to record
 	// individual errors, debug or mixed data.
-	log.SetOutputs(
+	err = log.SetOutputs(
 		log.Output{
 			Name:      "stdout",
 			Writer:    os.Stdout,
@@ -77,15 +82,24 @@ func main() {
 			WithColor: 1, // or trit.True, see github.com/goloop/trit
 		},
 		log.Output{
-			Name:    "file-errors",
-			Writer:  file,
-			Levels:  level.Warn | level.Error, // only errors and warnings
-			Layouts: layout.Default,
+			Name:      "errorsJSONFile",
+			Writer:    file,
+			Levels:    level.Warn | level.Error, // only errors and warnings
+			Layouts:   layout.Default,
+			TextStyle: trit.False, // or just -1
 		},
 	)
 
-	// Now, any log messages will be written to the file.
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// A message will be output to a file and to the console.
+	// * stdout and errorsJSONFile has Error level.
 	log.Errorln("This is a test log message with ERROR.")
+
+	// A message will be output to the console only.
+	// * stdout has Debug level, but errorsJSONFile has not.
 	log.Debugln("This is a test log message with DEBUG.")
 }
 ```
