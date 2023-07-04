@@ -3,6 +3,7 @@
 
 # log
 
+
 The log module implements methods for logging code including various levels of
 logging:
 
