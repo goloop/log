@@ -110,7 +110,7 @@ func TestEchoWithTextFormatting(t *testing.T) {
 			name:   "System formatStr",
 			format: formatStr,
 			in:     []interface{}{"hello", "world"},
-			want:   " helloworld ", // ads space of the end, used fmt.Print
+			want:   "helloworld", // used fmt.Print
 		},
 		{
 			name:   "System formatStrLn",
