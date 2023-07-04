@@ -148,7 +148,11 @@ func textMessage(
 	case f == "":
 		fallthrough
 	case f == formatStr:
-		msg = fmt.Sprintf("%s%s%s", sb.String(), fmt.Sprint(a...), o.Space)
+		// For messages that are output on the same line, the task of
+		// separating the messages falls on the user. We don't need to
+		// add extra characters to user messages.
+		// msg = fmt.Sprintf("%s%s%s", sb.String(), fmt.Sprint(a...), o.Space)
+		msg = fmt.Sprintf("%s%s", sb.String(), fmt.Sprint(a...))
 	case f == formatStrLn:
 		msg = fmt.Sprintf("%s%s", sb.String(), fmt.Sprintln(a...))
 	default:
