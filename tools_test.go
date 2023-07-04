@@ -175,6 +175,46 @@ func TestTextMessage(t *testing.T) {
 			}
 		})
 	}
+
+	// Change layouts.
+	output.Layouts = layout.FullFilePath
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := textMessage(
+				prefix,
+				level,
+				timestamp,
+				output,
+				stackframe,
+				test.f,
+				test.a...,
+			)
+
+			if !strings.Contains(result, test.e) {
+				t.Errorf("Message '%s' doesn't contains '%s'", result, test.e)
+			}
+		})
+	}
+
+	// Change layouts.
+	output.Layouts = layout.LineNumber | layout.FuncAddress
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := textMessage(
+				prefix,
+				level,
+				timestamp,
+				output,
+				stackframe,
+				test.f,
+				test.a...,
+			)
+
+			if !strings.Contains(result, test.e) {
+				t.Errorf("Message '%s' doesn't contains '%s'", result, test.e)
+			}
+		})
+	}
 }
 
 // TestObjectMessage tests objectMessage function.
