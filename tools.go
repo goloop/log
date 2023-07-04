@@ -207,11 +207,7 @@ func objectMessage(
 	}
 
 	jsonData, err := json.Marshal(obj)
-	if err != nil {
-		return ""
-	}
-
-	return fmt.Sprintf("%s", jsonData)
+	return g.If(err != nil, "", fmt.Sprintf("%s", jsonData))
 }
 
 /*

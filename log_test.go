@@ -180,6 +180,29 @@ func TestSetOutputs(t *testing.T) {
 			hasErr: true,
 		},
 		{
+			name: "Wrong output name",
+			in: []Output{
+				{
+					Name:   "incorrect name",
+					Writer: os.Stdout,
+				},
+			},
+			names:  []string{"test"},
+			hasErr: true,
+		},
+		{
+			name: "Wrong output name, but is system output",
+			in: []Output{
+				{
+					Name:     "*",
+					Writer:   os.Stdout,
+					isSystem: true,
+				},
+			},
+			names:  []string{"*"},
+			hasErr: false,
+		},
+		{
 			name: "One short output",
 			in: []Output{
 				{

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/goloop/g"
+	"github.com/goloop/is"
 	"github.com/goloop/log/layout"
 	"github.com/goloop/log/level"
 	"github.com/goloop/trit"
@@ -111,6 +112,9 @@ type Output struct {
 	// the output in the list of outputs.
 	//
 	// Mandatory parameter, cannot be empty.
+	// The name must sound like a variable name in most programming languages:
+	// it must have special characters, not start with a number, etc.
+	// But the name can be a reserved word like return, for, if ... any.
 	Name string
 
 	// Writer is the point where the login data will be output,
@@ -210,6 +214,11 @@ type Output struct {
 	// square brackets: [LEVEL_NAME] - we need to specify the
 	// format as "[%s]".
 	LevelFormat string
+
+	// The isSystem is the flag that determines whether the output is system.
+	// For example, this can be for all F* functions (Ferror, Finfo etc.) that
+	// accept a target writer. Package generates a unique Output for them.
+	isSystem bool
 }
 
 // Logger is a structure that encapsulates logging functionality.
@@ -399,6 +408,9 @@ func (logger *Logger) SetOutputs(outputs ...Output) error {
 		// The name must be specified.
 		if g.IsEmpty(o.Name) {
 			return fmt.Errorf("the %d output has empty name", i)
+		} else if !o.isSystem && !is.Var(o.Name) {
+			return fmt.Errorf("the %d output has incorrect name '%s'",
+				i, o.Name)
 		}
 
 		// The writer must be specified.
@@ -562,7 +574,8 @@ func (logger *Logger) echo(w io.Writer, l level.Level, f string, a ...any) {
 	if w != nil {
 		output := Default
 		output.Writer = w
-		outputs["*"] = &output
+		output.isSystem = true
+		outputs["*"] = &output // this name can be used for system names
 	}
 
 	// Output message.
@@ -579,12 +592,14 @@ func (logger *Logger) echo(w io.Writer, l level.Level, f string, a ...any) {
 			prefix = ""
 		}
 
+		// Text or JSON representation of the message.
 		if o.TextStyle.IsTrue() {
 			msg = textMessage(prefix, l, time.Now(), o, sf, f, a...)
 		} else {
 			msg = objectMessage(prefix, l, time.Now(), o, sf, f, a...)
 		}
 
+		// Print message.
 		fmt.Fprint(o.Writer, msg)
 	}
 }
