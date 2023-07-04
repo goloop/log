@@ -13,7 +13,7 @@ import (
 	"github.com/goloop/log/level"
 )
 
-// stackFrame contains the top-level trace information
+// The stackFrame contains the top-level trace information
 // where the logging method was called.
 type stackFrame struct {
 	FileLine    int     // line number
@@ -23,6 +23,7 @@ type stackFrame struct {
 }
 
 // The ioCopy function is used to copy the output of a reader
+// to a channel.
 func ioCopy(r io.Reader, c chan string) {
 	var buf bytes.Buffer
 	io.Copy(&buf, r)
@@ -140,12 +141,21 @@ func textMessage(
 		sb.WriteString(fmt.Sprintf("%#x%s", sf.FuncAddress, o.Space))
 	}
 
-	// Add custom formatting.
-	if f != "" {
-		return fmt.Sprintf("%s%s", sb.String(), fmt.Sprintf(f, a...))
+	// Add message formatting.
+	var msg string
+
+	switch {
+	case f == "":
+		fallthrough
+	case f == formatStr:
+		msg = fmt.Sprintf("%s%s%s", sb.String(), fmt.Sprint(a...), o.Space)
+	case f == formatStrLn:
+		msg = fmt.Sprintf("%s%s", sb.String(), fmt.Sprintln(a...))
+	default:
+		msg = fmt.Sprintf("%s%s", sb.String(), fmt.Sprintf(f, a...))
 	}
 
-	return fmt.Sprintf("%s%s", sb.String(), fmt.Sprint(a...))
+	return msg
 }
 
 // The objectMessage creates a JSON message.
@@ -169,9 +179,7 @@ func objectMessage(
 		LineNumber  int    `json:"lineNumber,omitempty"`
 		FuncName    string `json:"funcName,omitempty"`
 		FuncAddress string `json:"funcAddress,omitempty"`
-	}{
-		Message: g.If(f != "", fmt.Sprintf(f, a...), fmt.Sprint(a...)),
-	}
+	}{}
 
 	// Logger prefix.
 	if p != "" {
@@ -206,8 +214,36 @@ func objectMessage(
 		obj.LineNumber = sf.FileLine
 	}
 
-	jsonData, err := json.Marshal(obj)
-	return g.If(err != nil, "", fmt.Sprintf("%s", jsonData))
+	// Clean message for default -ln format.
+	// Add message formatting.
+	switch {
+	case f == "":
+		fallthrough
+	case f == formatStr:
+		obj.Message = fmt.Sprint(a...)
+	case f == formatStrLn:
+		obj.Message = strings.TrimSuffix(fmt.Sprintln(a...), "\n")
+	default:
+		obj.Message = fmt.Sprintf(f, a...)
+	}
+
+	// Marshal object to JSON.
+	data, err := json.Marshal(obj)
+	data = g.If(err != nil, []byte{}, data)
+
+	// Add JSON formatting.
+	var msg string
+
+	switch {
+	case f == "":
+		fallthrough
+	case f == formatStr:
+		msg = fmt.Sprintf("%s%s", data, o.Space)
+	default: // for formatStrLn and others
+		msg = fmt.Sprintf("%s\n", data)
+	}
+
+	return msg
 }
 
 /*

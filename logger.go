@@ -50,6 +50,36 @@ const (
 
 	// The outLevelFormat is the default level format for the output.
 	outLevelFormat = "%s"
+
+	// There is a difference between text-style message formatting
+	// and JSON-style formatting.
+	//
+	// So, in text style: print simply prints all elements, pasting
+	// them together without separators; println - adds spaces between
+	// elements and adds \n at the end of the formed line; and printf -
+	// outputs according to a special format template.
+	//
+	// At the same time, for JSON: print should insert all elements
+	// without delimiters (as in text style), but all JSON blocks* don't
+	// contain \n at the end; but println inserts all message elements
+	// with a space added, and does not add \n to the end of the message,
+	// instead, each new JSON block* is printed on a new line (\n is appended
+	// to the JSON block); printf - \n is appended to the JSON block* and the
+	// message format matches the specified user format.
+	//
+	// So, to determine if a custom format pattern is specified, we use two
+	// constants formatStr and formatStrLn, which help determine the type of
+	// function (print, println, or printf) that renders the message, and the
+	// formatting methods for text or JSON style.
+	//
+	//  * JSON block is the final text representation of the logger in
+	//   JSON format written as text.
+
+	// The formatStr is the system format string for print-type functions.
+	formatStr = "format: string-without-a-newline-character"
+
+	// The formatStrLn is the system format string for println-type functions.
+	formatStrLn = "format: string-with-a-newline-character"
 )
 
 var (
@@ -85,7 +115,8 @@ var (
 		LevelFormat:     outLevelFormat,
 	}
 
-	// Default ...
+	// Default is output that processes all types of levels
+	// and outputs the result to stdout.
 	Default = Output{
 		Name:            "default",
 		Writer:          os.Stdout,
@@ -100,7 +131,8 @@ var (
 		LevelFormat:     outLevelFormat,
 	}
 
-	// The exit is ...
+	// The exit causes the current program to exit with the given status code.
+	// Redefined this function to be able to test *fatal* methods.
 	exit = os.Exit
 )
 
@@ -152,7 +184,7 @@ type Output struct {
 	//    (or don't change, for edit mode).
 	//
 	// We can also use the github.com/goloop/trit package and
-	// the value trit.True or trit.False.
+	// the trit.True or trit.False value.
 	WithPrefix trit.Trit
 
 	// WithColor is the flag that determines whether to use color for the
@@ -168,7 +200,7 @@ type Output struct {
 	//    (or don't change, for edit mode).
 	//
 	// We can also use the github.com/goloop/trit package and
-	// the value trit.True or trit.False.
+	// the trit.True or trit.False value.
 	//
 	// The color scheme works only for UNIX-like systems.
 	// The color scheme works for flat format only (i.e. display of log
@@ -186,7 +218,7 @@ type Output struct {
 	//    (or don't change, for edit mode).
 	//
 	// We can also use the github.com/goloop/trit package and
-	// the value trit.True or trit.False.
+	// the trit.True or trit.False value.
 	Enabled trit.Trit
 
 	// TextStyle is the flag that determines whether to use text style for
@@ -201,7 +233,7 @@ type Output struct {
 	//    (or don't change, for edit mode).
 	//
 	// We can also use the github.com/goloop/trit package and
-	// the value trit.True or trit.False.
+	// the trit.True or trit.False value.
 	TextStyle trit.Trit
 
 	// TimestampFormat is the format of the timestamp in the log-message.
@@ -608,7 +640,7 @@ func (logger *Logger) echo(w io.Writer, l level.Level, f string, a ...any) {
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func (logger *Logger) Fpanic(w io.Writer, a ...any) {
-	logger.echo(w, level.Panic, "%s", a...)
+	logger.echo(w, level.Panic, formatStr, a...)
 	panic(fmt.Sprint(a...))
 }
 
@@ -623,7 +655,7 @@ func (logger *Logger) Fpanicf(w io.Writer, format string, a ...any) {
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended.
 func (logger *Logger) Fpanicln(w io.Writer, a ...any) {
-	logger.echo(w, level.Panic, "%s\n", a...)
+	logger.echo(w, level.Panic, formatStrLn, a...)
 	panic(fmt.Sprintln(a...))
 }
 
@@ -631,7 +663,7 @@ func (logger *Logger) Fpanicln(w io.Writer, a ...any) {
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string.
 func (logger *Logger) Panic(a ...any) {
-	logger.echo(nil, level.Panic, "%s", a...)
+	logger.echo(nil, level.Panic, formatStr, a...)
 	panic(fmt.Sprint(a...))
 }
 
@@ -646,7 +678,7 @@ func (logger *Logger) Panicf(format string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func (logger *Logger) Panicln(a ...any) (int, error) {
-	logger.echo(nil, level.Panic, "%s\n", a...)
+	logger.echo(nil, level.Panic, formatStrLn, a...)
 	panic(fmt.Sprintln(a...))
 }
 
@@ -654,7 +686,7 @@ func (logger *Logger) Panicln(a ...any) (int, error) {
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func (logger *Logger) Ffatal(w io.Writer, a ...any) {
-	logger.echo(w, level.Fatal, "%s", a...)
+	logger.echo(w, level.Fatal, formatStr, a...)
 	exit(logger.fatalStatusCode)
 }
 
@@ -669,7 +701,7 @@ func (logger *Logger) Ffatalf(w io.Writer, format string, a ...any) {
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended.
 func (logger *Logger) Ffatalln(w io.Writer, a ...any) {
-	logger.echo(w, level.Fatal, "%s\n", a...)
+	logger.echo(w, level.Fatal, formatStrLn, a...)
 	exit(logger.fatalStatusCode)
 }
 
@@ -677,7 +709,7 @@ func (logger *Logger) Ffatalln(w io.Writer, a ...any) {
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string.
 func (logger *Logger) Fatal(a ...any) {
-	logger.echo(nil, level.Fatal, "%s", a...)
+	logger.echo(nil, level.Fatal, formatStr, a...)
 	exit(logger.fatalStatusCode)
 }
 
@@ -692,7 +724,7 @@ func (logger *Logger) Fatalf(format string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func (logger *Logger) Fatalln(a ...any) {
-	logger.echo(nil, level.Fatal, "%s\n", a...)
+	logger.echo(nil, level.Fatal, formatStrLn, a...)
 	exit(logger.fatalStatusCode)
 }
 
@@ -700,7 +732,7 @@ func (logger *Logger) Fatalln(a ...any) {
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func (logger *Logger) Ferror(w io.Writer, a ...any) {
-	logger.echo(w, level.Error, "%s", a...)
+	logger.echo(w, level.Error, formatStr, a...)
 }
 
 // Ferrorf creates message with Error level, according to a format
@@ -713,14 +745,14 @@ func (logger *Logger) Ferrorf(w io.Writer, f string, a ...any) {
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended.
 func (logger *Logger) Ferrorln(w io.Writer, a ...any) {
-	logger.echo(w, level.Error, "%s\n", a...)
+	logger.echo(w, level.Error, formatStrLn, a...)
 }
 
 // Error creates message with Error level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string.
 func (logger *Logger) Error(a ...any) {
-	logger.echo(nil, level.Error, "%s", a...)
+	logger.echo(nil, level.Error, formatStr, a...)
 }
 
 // Errorf creates message with Error level, according to a format specifier
@@ -733,14 +765,14 @@ func (logger *Logger) Errorf(f string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func (logger *Logger) Errorln(a ...any) {
-	logger.echo(nil, level.Error, "%s\n", a...)
+	logger.echo(nil, level.Error, formatStrLn, a...)
 }
 
 // Fwarn creates message with Warn level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func (logger *Logger) Fwarn(w io.Writer, a ...any) {
-	logger.echo(w, level.Warn, "%s", a...)
+	logger.echo(w, level.Warn, formatStr, a...)
 }
 
 // Fwarnf creates message with Warn level, according to a format
@@ -753,14 +785,14 @@ func (logger *Logger) Fwarnf(w io.Writer, format string, a ...any) {
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended.
 func (logger *Logger) Fwarnln(w io.Writer, a ...any) {
-	logger.echo(w, level.Warn, "%s\n", a...)
+	logger.echo(w, level.Warn, formatStrLn, a...)
 }
 
 // Warn creates message with Warn level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string.
 func (logger *Logger) Warn(a ...any) {
-	logger.echo(nil, level.Warn, "%s", a...)
+	logger.echo(nil, level.Warn, formatStr, a...)
 }
 
 // Warnf creates message with Warn level, according to a format specifier
@@ -773,14 +805,14 @@ func (logger *Logger) Warnf(format string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func (logger *Logger) Warnln(a ...any) {
-	logger.echo(nil, level.Warn, "%s\n", a...)
+	logger.echo(nil, level.Warn, formatStrLn, a...)
 }
 
 // Finfo creates message with Info level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func (logger *Logger) Finfo(w io.Writer, a ...any) {
-	logger.echo(w, level.Info, "%s", a...)
+	logger.echo(w, level.Info, formatStr, a...)
 }
 
 // Finfof creates message with Info level, according to a format
@@ -793,14 +825,14 @@ func (logger *Logger) Finfof(w io.Writer, format string, a ...any) {
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended.
 func (logger *Logger) Finfoln(w io.Writer, a ...any) {
-	logger.echo(w, level.Info, "%s\n", a...)
+	logger.echo(w, level.Info, formatStrLn, a...)
 }
 
 // Info creates message with Info level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string.
 func (logger *Logger) Info(a ...any) {
-	logger.echo(nil, level.Info, "%s", a...)
+	logger.echo(nil, level.Info, formatStr, a...)
 }
 
 // Infof creates message with Info level, according to a format specifier
@@ -813,14 +845,14 @@ func (logger *Logger) Infof(format string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func (logger *Logger) Infoln(a ...any) {
-	logger.echo(nil, level.Info, "%s\n", a...)
+	logger.echo(nil, level.Info, formatStrLn, a...)
 }
 
 // Fdebug creates message with Debug level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func (logger *Logger) Fdebug(w io.Writer, a ...any) {
-	logger.echo(w, level.Debug, "%s", a...)
+	logger.echo(w, level.Debug, formatStr, a...)
 }
 
 // Fdebugf creates message with Debug level, according to a format
@@ -833,14 +865,14 @@ func (logger *Logger) Fdebugf(w io.Writer, format string, a ...any) {
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended.
 func (logger *Logger) Fdebugln(w io.Writer, a ...any) {
-	logger.echo(w, level.Debug, "%s\n", a...)
+	logger.echo(w, level.Debug, formatStrLn, a...)
 }
 
 // Debug creates message with Debug level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string.
 func (logger *Logger) Debug(a ...any) {
-	logger.echo(nil, level.Debug, "%s", a...)
+	logger.echo(nil, level.Debug, formatStr, a...)
 }
 
 // Debugf creates message with Debug level, according to a format specifier
@@ -854,14 +886,14 @@ func (logger *Logger) Debugf(format string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func (logger *Logger) Debugln(a ...any) {
-	logger.echo(nil, level.Debug, "%s\n", a...)
+	logger.echo(nil, level.Debug, formatStrLn, a...)
 }
 
 // Ftrace creates message with Trace level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func (logger *Logger) Ftrace(w io.Writer, a ...any) {
-	logger.echo(w, level.Trace, "%s", a...)
+	logger.echo(w, level.Trace, formatStr, a...)
 }
 
 // Ftracef creates message with Trace level, according to a format
@@ -874,14 +906,14 @@ func (logger *Logger) Ftracef(w io.Writer, format string, a ...any) {
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended.
 func (logger *Logger) Ftraceln(w io.Writer, a ...any) {
-	logger.echo(w, level.Trace, "%s\n", a...)
+	logger.echo(w, level.Trace, formatStrLn, a...)
 }
 
 // Trace creates message with Trace level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string.
 func (logger *Logger) Trace(a ...any) {
-	logger.echo(nil, level.Trace, "%s", a...)
+	logger.echo(nil, level.Trace, formatStr, a...)
 }
 
 // Tracef creates message with Trace level, according to a format specifier
@@ -894,5 +926,5 @@ func (logger *Logger) Tracef(format string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func (logger *Logger) Traceln(a ...any) {
-	logger.echo(nil, level.Trace, "%s\n", a...)
+	logger.echo(nil, level.Trace, formatStrLn, a...)
 }
