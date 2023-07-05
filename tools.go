@@ -147,13 +147,13 @@ func textMessage(
 	switch {
 	case f == "":
 		fallthrough
-	case f == formatStr:
+	case f == formatPrint:
 		// For messages that are output on the same line, the task of
 		// separating the messages falls on the user. We don't need to
 		// add extra characters to user messages.
 		// msg = fmt.Sprintf("%s%s%s", sb.String(), fmt.Sprint(a...), o.Space)
 		msg = fmt.Sprintf("%s%s", sb.String(), fmt.Sprint(a...))
-	case f == formatStrLn:
+	case f == formatPrintln:
 		msg = fmt.Sprintf("%s%s", sb.String(), fmt.Sprintln(a...))
 	default:
 		msg = fmt.Sprintf("%s%s", sb.String(), fmt.Sprintf(f, a...))
@@ -223,9 +223,9 @@ func objectMessage(
 	switch {
 	case f == "":
 		fallthrough
-	case f == formatStr:
+	case f == formatPrint:
 		obj.Message = fmt.Sprint(a...)
-	case f == formatStrLn:
+	case f == formatPrintln:
 		obj.Message = strings.TrimSuffix(fmt.Sprintln(a...), "\n")
 	default:
 		obj.Message = fmt.Sprintf(f, a...)
@@ -241,7 +241,7 @@ func objectMessage(
 	switch {
 	case f == "":
 		fallthrough
-	case f == formatStr:
+	case f == formatPrint:
 		msg = fmt.Sprintf("%s%s", data, o.Space)
 	default: // for formatStrLn and others
 		msg = fmt.Sprintf("%s\n", data)

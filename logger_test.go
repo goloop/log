@@ -108,13 +108,13 @@ func TestEchoWithTextFormatting(t *testing.T) {
 		},
 		{
 			name:   "System formatStr",
-			format: formatStr,
+			format: formatPrint,
 			in:     []interface{}{"hello", "world"},
 			want:   "helloworld", // used fmt.Print
 		},
 		{
 			name:   "System formatStrLn",
-			format: formatStrLn,
+			format: formatPrintln,
 			in:     []interface{}{"hello", "world"},
 			want:   " hello world\n", // used fmt.Println
 		},
@@ -165,13 +165,13 @@ func TestEchoWithJSONFormatting(t *testing.T) {
 		},
 		{
 			name:   "System formatStr",
-			format: formatStr,
+			format: formatPrint,
 			in:     []interface{}{"hello", "world"},
 			want:   "helloworld", // used fmt.Print
 		},
 		{
 			name:   "System formatStrLn",
-			format: formatStrLn,
+			format: formatPrintln,
 			in:     []interface{}{"hello", "world"},
 			want:   "hello world", // used fmt.Println with Trim
 		},

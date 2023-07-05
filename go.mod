@@ -7,4 +7,4 @@ require (
 	github.com/goloop/trit v1.7.1
 )
 
-require github.com/goloop/is v1.3.0
+require github.com/goloop/is v1.4.0

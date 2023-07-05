@@ -187,11 +187,22 @@ func TestSetOutputs(t *testing.T) {
 					Writer: os.Stdout,
 				},
 			},
-			names:  []string{"test"},
+			names:  []string{},
 			hasErr: true,
 		},
 		{
-			name: "Wrong output name, but is system output",
+			name: "CSS-style output name",
+			in: []Output{
+				{
+					Name:   "file-name",
+					Writer: os.Stdout,
+				},
+			},
+			names:  []string{"file-name"},
+			hasErr: false,
+		},
+		{
+			name: "Wrong output name, but it is system output",
 			in: []Output{
 				{
 					Name:     "*",
