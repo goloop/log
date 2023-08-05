@@ -30,7 +30,7 @@ const (
 
 	// The overflowLevelValue is a exceeding the limit of permissible
 	// values for the Level.
-	overflowLevelValue Level = (1 << iota) - 1
+	overflowLevelValue Level = (1 << iota)
 
 	// Default is the default logging level.
 	Default = Panic | Fatal | Error | Warn | Info | Debug | Trace
@@ -85,7 +85,25 @@ func (l *Level) Contains(flag Level) (bool, error) {
 // IsValid returns true if value contains zero, one or an
 // unique sum of valid LevelFlag flags. The zero value is a valid value.
 func (l *Level) IsValid() bool {
-	return *l <= overflowLevelValue
+	// Check if object is zero, which is a valid value.
+	if *l == 0 {
+		return true
+	}
+
+	copy := *l
+	// Iterate over all possible values of the constants and
+	// check whether they are part of object.
+	for level := Level(1); level < overflowLevelValue; level <<= 1 {
+		// If layout is part of the object, remove it from object.
+		if copy&level == level {
+			copy ^= level
+		}
+	}
+
+	// Check whether all bits of t were "turned off".
+	// If t is zero, it means that all bits were matched values
+	// of constants, and therefore t is valid.
+	return copy == 0
 }
 
 // Panic returns true if value contains the Panic flag.

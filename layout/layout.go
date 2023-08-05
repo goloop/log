@@ -29,7 +29,7 @@ const (
 
 	// The overflowLayoutValue is a exceeding the limit of permissible
 	// values for the Layout.
-	overflowLayoutValue Layout = (1 << iota) - 1
+	overflowLayoutValue Layout = (1 << iota)
 
 	// Default is the default format for the log message.
 	Default = ShortFilePath | FuncName | LineNumber
@@ -41,40 +41,58 @@ type Layout uint8
 // IsSingle returns true if value contains single of the available flag.
 // The custom flags cannot be valid since they should not affect the
 // formatting settings. The zero value is an invalid flag too.
-func (f *Layout) IsSingle() bool {
-	return bits.OnesCount(uint(*f)) == 1 &&
-		*f <= Layout(overflowLayoutValue+1)>>1
+func (l *Layout) IsSingle() bool {
+	return bits.OnesCount(uint(*l)) == 1 &&
+		*l <= Layout(overflowLayoutValue+1)>>1
 }
 
 // Contains method returns true if value contains the specified flag.
 // Returns false and an error if the value is invalid or an
 // invalid flag is specified.
-func (f *Layout) Contains(flag Layout) (bool, error) {
+func (l *Layout) Contains(flag Layout) (bool, error) {
 	switch {
 	case !flag.IsValid():
 		return false, errors.New("incorrect flag value")
-	case !f.IsValid():
+	case !l.IsValid():
 		return false, errors.New("the object is damaged")
 	}
 
-	return *f&Layout(flag) == Layout(flag), nil
+	return *l&Layout(flag) == Layout(flag), nil
 }
 
 // IsValid returns true if value contains zero, one or an
 // unique sum of valid FormatFlag flags. The zero value is a valid value.
-func (f *Layout) IsValid() bool {
-	return *f <= overflowLayoutValue
+func (l *Layout) IsValid() bool {
+	// Check if object is zero, which is a valid value.
+	if *l == 0 {
+		return true
+	}
+
+	copy := *l
+	// Iterate over all possible values of the constants and
+	// check whether they are part of object.
+	for layout := Layout(1); layout < overflowLayoutValue; layout <<= 1 {
+		// If layout is part of the object, remove it from object.
+		if copy&layout == layout {
+			copy ^= layout
+		}
+	}
+
+	// Check whether all bits of t were "turned off".
+	// If t is zero, it means that all bits were matched values
+	// of constants, and therefore t is valid.
+	return copy == 0
 }
 
 // FilePath returns true if value contains the FullPath or ShortPath flags.
 // Returns false and an error if the value is invalid.
-func (f *Layout) FilePath() bool {
-	ffp, err := f.Contains(FullFilePath)
+func (l *Layout) FilePath() bool {
+	ffp, err := l.Contains(FullFilePath)
 	if err == nil && ffp {
 		return true
 	}
 
-	sfp, err := f.Contains(ShortFilePath)
+	sfp, err := l.Contains(ShortFilePath)
 	if err == nil && sfp {
 		return true
 	}
@@ -83,32 +101,32 @@ func (f *Layout) FilePath() bool {
 }
 
 // FullFilePath returns true if value contains the FullPath flag.
-func (f *Layout) FullFilePath() bool {
-	v, _ := f.Contains(FullFilePath)
+func (l *Layout) FullFilePath() bool {
+	v, _ := l.Contains(FullFilePath)
 	return v
 }
 
 // ShortFilePath returns true if value contains the ShortPath flag.
-func (f *Layout) ShortFilePath() bool {
-	v, _ := f.Contains(ShortFilePath)
+func (l *Layout) ShortFilePath() bool {
+	v, _ := l.Contains(ShortFilePath)
 	return v
 }
 
 // FuncName returns true if value contains the FuncName flag.
-func (f *Layout) FuncName() bool {
-	v, _ := f.Contains(FuncName)
+func (l *Layout) FuncName() bool {
+	v, _ := l.Contains(FuncName)
 	return v
 }
 
 // FuncAddress returns true if value contains the FuncAddress flag.
-func (f *Layout) FuncAddress() bool {
-	v, _ := f.Contains(FuncAddress)
+func (l *Layout) FuncAddress() bool {
+	v, _ := l.Contains(FuncAddress)
 	return v
 }
 
 // LineNumber returns true if value contains the LineNumber flag.
-func (f *Layout) LineNumber() bool {
-	v, _ := f.Contains(LineNumber)
+func (l *Layout) LineNumber() bool {
+	v, _ := l.Contains(LineNumber)
 	return v
 }
 
@@ -116,12 +134,12 @@ func (f *Layout) LineNumber() bool {
 // The flags that were set previously will be discarded.
 // Returns a new value if all is well or old value and an
 // error if one or more invalid flags are specified.
-func (f *Layout) Set(flags ...Layout) (Layout, error) {
+func (l *Layout) Set(flags ...Layout) (Layout, error) {
 	var r Layout
 
 	for _, flag := range flags {
 		if !flag.IsValid() {
-			return *f, fmt.Errorf("the %d is invalid flag value", flag)
+			return *l, fmt.Errorf("the %d is invalid flag value", flag)
 		}
 
 		if ok, _ := r.Contains(flag); !ok {
@@ -129,19 +147,19 @@ func (f *Layout) Set(flags ...Layout) (Layout, error) {
 		}
 	}
 
-	*f = r
-	return *f, nil
+	*l = r
+	return *l, nil
 }
 
 // Add adds the specified flags ignores duplicates or flags that value
 // already contains. Returns a new value if all is well or old value and
 // an error if one or more invalid flags are specified.
-func (f *Layout) Add(flags ...Layout) (Layout, error) {
-	r := *f
+func (l *Layout) Add(flags ...Layout) (Layout, error) {
+	r := *l
 
 	for _, flag := range flags {
 		if !flag.IsValid() {
-			return *f, fmt.Errorf("the %d is invalid flag value", flag)
+			return *l, fmt.Errorf("the %d is invalid flag value", flag)
 		}
 
 		if ok, _ := r.Contains(flag); !ok {
@@ -149,19 +167,19 @@ func (f *Layout) Add(flags ...Layout) (Layout, error) {
 		}
 	}
 
-	*f = r
-	return *f, nil
+	*l = r
+	return *l, nil
 }
 
 // Delete deletes the specified flags ignores duplicates or
 // flags that were not set. Returns a new value if all is well or
 // old value and an error if one or more invalid flags are specified.
-func (f *Layout) Delete(flags ...Layout) (Layout, error) {
-	r := *f
+func (l *Layout) Delete(flags ...Layout) (Layout, error) {
+	r := *l
 
 	for _, flag := range flags {
 		if !flag.IsValid() {
-			return *f, fmt.Errorf("the %d is invalid flag value", flag)
+			return *l, fmt.Errorf("the %d is invalid flag value", flag)
 		}
 
 		if ok, _ := r.Contains(flag); ok {
@@ -169,14 +187,14 @@ func (f *Layout) Delete(flags ...Layout) (Layout, error) {
 		}
 	}
 
-	*f = r
-	return *f, nil
+	*l = r
+	return *l, nil
 }
 
 // All returns true if all of the specified flags are set.
-func (f *Layout) All(flags ...Layout) bool {
+func (l *Layout) All(flags ...Layout) bool {
 	for _, flag := range flags {
-		if ok, _ := f.Contains(flag); !ok {
+		if ok, _ := l.Contains(flag); !ok {
 			return false
 		}
 	}
@@ -185,9 +203,9 @@ func (f *Layout) All(flags ...Layout) bool {
 }
 
 // Any returns true if at least one of the specified flags is set.
-func (f *Layout) Any(flags ...Layout) bool {
+func (l *Layout) Any(flags ...Layout) bool {
 	for _, flag := range flags {
-		if ok, _ := f.Contains(flag); ok {
+		if ok, _ := l.Contains(flag); ok {
 			return true
 		}
 	}
