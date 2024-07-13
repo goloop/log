@@ -13,31 +13,40 @@ var (
 	mu   sync.Mutex
 )
 
-// New returns a new Logger object. We can optionally provide one or more
-// prefixes that will be prepended to each log message. If multiple prefixes
-// are provided, they will be joined with hyphens. Additionally, prefixes
-// are stripped of leading and trailing whitespace characters.
+// New returns a new Logger object with optional prefixes for log messages.
+// If one or more prefixes are provided, they will be concatenated with
+// hyphens and prepended to each log message. Leading and trailing whitespace
+// characters are stripped from each prefix before concatenation.
 //
 // Example usage:
 //
-//	// The simplest use-case is to create a new logger without any prefixes.
+//	// Create a logger without any prefixes.
 //	logger := log.New()
 //	logger.Info("Hello, World!")
 //
-//	// We can also add a prefix for our logger. Here, 'MYAPP' will be
-//	// prepended to each log message.
+//	// Create a logger with a single prefix 'MYAPP'.
 //	loggerWithPrefix := log.New("MYAPP")
 //	loggerWithPrefix.Info("Hello, World!")
 //
-//	// If multiple prefixes are provided, they will be joined with hyphens.
-//	// Here, 'MYAPP-PREFIX' will be prepended to each log message.
+//	// Create a logger with multiple prefixes 'MYAPP' and 'PREFIX'.
+//	// The prefixes will be joined as 'MYAPP-PREFIX'.
 //	loggerWithMultiplePrefixes := log.New("MYAPP", "PREFIX")
 //	loggerWithMultiplePrefixes.Info("Hello, World!")
 //
-//	// Any leading and trailing whitespace characters are removed from
-//	// prefixes. 'MYAPP-PREFIX' will be prepended to each log message.
+//	// Create a logger with prefixes containing leading/trailing whitespace.
+//	// The whitespace is removed and prefixes are joined as 'MYAPP-PREFIX'.
 //	loggerWithWhitespace := log.New(" MYAPP ", " PREFIX ")
 //	loggerWithWhitespace.Info("Hello, World!")
+//
+// Parameters:
+//
+//	prefixes: Optional string values to prepend to each log message.
+//	          If multiple prefixes are provided, they will be concatenated
+//	          with hyphens.
+//
+// Returns:
+//
+//	A new Logger instance configured with the provided prefixes.
 func New(prefixes ...string) *Logger {
 	// Generate prefix.
 	prefix := ""
