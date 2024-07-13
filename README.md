@@ -26,6 +26,7 @@ The log module encompasses methods for comprehensive logging, which comprises a 
 - Trace
   This level offers incredibly detailed information, even more so than DEBUG. At this level, every possible detail about the application's behavior should be captured.
 
+
 ## Installation
 
 To install this module use `go get` as:
