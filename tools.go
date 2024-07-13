@@ -173,7 +173,7 @@ func objectMessage(
 	a ...any,
 ) string {
 	// Output object.
-	// A general structure for outputting a logo in JSON format.
+	// A general structure for outputting a log in JSON format.
 	obj := struct {
 		Prefix      string `json:"prefix,omitempty"`
 		Level       string `json:"level,omitempty"`
@@ -210,7 +210,7 @@ func objectMessage(
 
 	// Function address.
 	if o.Layouts.FuncAddress() {
-		obj.FuncName = fmt.Sprintf("%#x", sf.FuncAddress)
+		obj.FuncAddress = fmt.Sprintf("%#x", sf.FuncAddress)
 	}
 
 	// Line number.
@@ -237,14 +237,18 @@ func objectMessage(
 
 	// Add JSON formatting.
 	var msg string
-
 	switch {
 	case f == "":
 		fallthrough
 	case f == formatPrint:
-		msg = fmt.Sprintf("%s%s", data, o.Space)
+		msg = string(data)
 	default: // for formatStrLn and others
 		msg = fmt.Sprintf("%s\n", data)
+	}
+
+	// Add space if necessary.
+	if o.Space != "" {
+		msg += o.Space
 	}
 
 	return msg
