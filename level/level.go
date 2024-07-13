@@ -64,8 +64,7 @@ type Level uint8
 
 // IsSingle returns true if value contains single of the available flag.
 func (l *Level) IsSingle() bool {
-	return bits.OnesCount(uint(*l)) == 1 &&
-		*l <= Level(overflowLevelValue+1)>>1
+	return *l > 0 && bits.OnesCount(uint(*l)) == 1
 }
 
 // Contains method returns true if value contains the specified flag.
@@ -151,12 +150,9 @@ func (l *Level) Set(flags ...Level) (Level, error) {
 
 	for _, flag := range flags {
 		if !flag.IsValid() {
-			return *l, fmt.Errorf("the %d is invalid flag value", flag)
+			return *l, fmt.Errorf("the %d is an invalid flag value", flag)
 		}
-
-		if ok, _ := r.Contains(flag); !ok {
-			r += Level(flag)
-		}
+		r |= flag
 	}
 
 	*l = r
@@ -171,12 +167,9 @@ func (l *Level) Add(flags ...Level) (Level, error) {
 
 	for _, flag := range flags {
 		if !flag.IsValid() {
-			return *l, fmt.Errorf("the %d is invalid flag value", flag)
+			return *l, fmt.Errorf("the %d is an invalid flag value", flag)
 		}
-
-		if ok, _ := r.Contains(flag); !ok {
-			r += Level(flag)
-		}
+		r |= flag
 	}
 
 	*l = r
@@ -191,12 +184,9 @@ func (l *Level) Delete(flags ...Level) (Level, error) {
 
 	for _, flag := range flags {
 		if !flag.IsValid() {
-			return *l, fmt.Errorf("the %d is invalid flag value", flag)
+			return *l, fmt.Errorf("the %d is an invalid flag value", flag)
 		}
-
-		if ok, _ := r.Contains(flag); ok {
-			r -= Level(flag)
-		}
+		r &^= flag
 	}
 
 	*l = r
