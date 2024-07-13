@@ -164,7 +164,6 @@ func (l *Level) Set(flags ...Level) (Level, error) {
 // an error if one or more invalid flags are specified.
 func (l *Level) Add(flags ...Level) (Level, error) {
 	r := *l
-
 	for _, flag := range flags {
 		if !flag.IsValid() {
 			return *l, fmt.Errorf("the %d is an invalid flag value", flag)
@@ -181,7 +180,6 @@ func (l *Level) Add(flags ...Level) (Level, error) {
 // old value and an error if one or more invalid flags are specified.
 func (l *Level) Delete(flags ...Level) (Level, error) {
 	r := *l
-
 	for _, flag := range flags {
 		if !flag.IsValid() {
 			return *l, fmt.Errorf("the %d is an invalid flag value", flag)

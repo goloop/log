@@ -139,12 +139,9 @@ func (l *Layout) Set(flags ...Layout) (Layout, error) {
 
 	for _, flag := range flags {
 		if !flag.IsValid() {
-			return *l, fmt.Errorf("the %d is invalid flag value", flag)
+			return *l, fmt.Errorf("the %d is an invalid flag value", flag)
 		}
-
-		if ok, _ := r.Contains(flag); !ok {
-			r += Layout(flag)
-		}
+		r |= flag
 	}
 
 	*l = r
@@ -156,15 +153,11 @@ func (l *Layout) Set(flags ...Layout) (Layout, error) {
 // an error if one or more invalid flags are specified.
 func (l *Layout) Add(flags ...Layout) (Layout, error) {
 	r := *l
-
 	for _, flag := range flags {
 		if !flag.IsValid() {
-			return *l, fmt.Errorf("the %d is invalid flag value", flag)
+			return *l, fmt.Errorf("the %d is an invalid flag value", flag)
 		}
-
-		if ok, _ := r.Contains(flag); !ok {
-			r += Layout(flag)
-		}
+		r |= flag
 	}
 
 	*l = r
@@ -176,15 +169,11 @@ func (l *Layout) Add(flags ...Layout) (Layout, error) {
 // old value and an error if one or more invalid flags are specified.
 func (l *Layout) Delete(flags ...Layout) (Layout, error) {
 	r := *l
-
 	for _, flag := range flags {
 		if !flag.IsValid() {
-			return *l, fmt.Errorf("the %d is invalid flag value", flag)
+			return *l, fmt.Errorf("the %d is an invalid flag value", flag)
 		}
-
-		if ok, _ := r.Contains(flag); ok {
-			r -= Layout(flag)
-		}
+		r &^= flag
 	}
 
 	*l = r
