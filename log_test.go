@@ -9,6 +9,26 @@ import (
 	"github.com/goloop/log/level"
 )
 
+// TestLog tests the Log function.
+func TestLog(t *testing.T) {
+	// Clear the logger instance.
+	self = nil
+
+	// Ensure that the logger instance is initialized.
+	InitializeDefaultLogger()
+
+	// Check that Log() returns a logger instance.
+	if logger := Log(); logger == nil {
+		t.Error("expected logger instance, got nil")
+	}
+
+	// Check that Log() returns the same logger instance.
+	a, b := Log(), Log()
+	if a != b {
+		t.Errorf("expected the same logger instance, got different instances")
+	}
+}
+
 // TestNew tests the New function.
 func TestNew(t *testing.T) {
 	tests := []struct {

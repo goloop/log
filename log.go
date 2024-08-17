@@ -13,6 +13,11 @@ var (
 	mu   sync.Mutex
 )
 
+// Log returns the default logger instance.
+func Log() *Logger {
+	return self
+}
+
 // New returns a new Logger object with optional prefixes for log messages.
 // If one or more prefixes are provided, they will be concatenated with
 // hyphens and prepended to each log message. Leading and trailing whitespace
@@ -101,8 +106,10 @@ func New(prefixes ...string) *Logger {
 	return logger
 }
 
-// Initializes the logger.
-func init() {
+// InitializeDefaultLogger initializes the default logger instance.
+// The function is called when the module is initialized.
+// Calling the function again has no result.
+func InitializeDefaultLogger() {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -113,17 +120,18 @@ func init() {
 	}
 }
 
+// Initializes the logger.
+func init() {
+	InitializeDefaultLogger()
+}
+
 // Copy returns copy of the log object.
 func Copy() *Logger {
-	mu.Lock()
-	defer mu.Unlock()
 	return self.Copy()
 }
 
 // SetSkipStackFrames sets skip stack frames level.
 func SetSkipStackFrames(skips int) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.SetSkipStackFrames(skips)
 }
 
@@ -134,43 +142,31 @@ func SkipStackFrames() int {
 
 // SetPrefix sets the name of the logger object.
 func SetPrefix(prefix string) string {
-	mu.Lock()
-	defer mu.Unlock()
 	return self.SetPrefix(prefix)
 }
 
 // Prefix returns the name of the log object.
 func Prefix() string {
-	mu.Lock()
-	defer mu.Unlock()
 	return self.Prefix()
 }
 
 // SetOutputs sets the outputs of the log object.
 func SetOutputs(outputs ...Output) error {
-	mu.Lock()
-	defer mu.Unlock()
 	return self.SetOutputs(outputs...)
 }
 
 // EditOutputs edits the outputs of the log object.
 func EditOutputs(outputs ...Output) error {
-	mu.Lock()
-	defer mu.Unlock()
 	return self.EditOutputs(outputs...)
 }
 
 // DeleteOutputs deletes the outputs of the log object.
 func DeleteOutputs(names ...string) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.DeleteOutputs(names...)
 }
 
 // Outputs returns a list of outputs.
 func Outputs(names ...string) []Output {
-	mu.Lock()
-	defer mu.Unlock()
 	return self.Outputs(names...)
 }
 
@@ -178,16 +174,12 @@ func Outputs(names ...string) []Output {
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Fpanic(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Fpanic(w, a...)
 }
 
 // Fpanicf creates message with Panic level, according to a format
 // specifier and writes to w.
 func Fpanicf(w io.Writer, format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Fpanicf(w, format, a...)
 }
 
@@ -195,8 +187,6 @@ func Fpanicf(w io.Writer, format string, a ...any) {
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended.
 func Fpanicln(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Fpanicln(w, a...)
 }
 
@@ -204,16 +194,12 @@ func Fpanicln(w io.Writer, a ...any) {
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string.
 func Panic(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Panic(a...)
 }
 
 // Panicf creates message with Panic level, according to a format specifier
 // and writes to log.Writer.
 func Panicf(format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Panicf(format, a...)
 }
 
@@ -221,8 +207,6 @@ func Panicf(format string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Panicln(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Panicln(a...)
 }
 
@@ -230,16 +214,12 @@ func Panicln(a ...any) {
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Ffatal(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Ffatal(w, a...)
 }
 
 // Ffatalf creates message with Fatal level, according to a format
 // specifier and writes to w.
 func Ffatalf(w io.Writer, format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Ffatalf(w, format, a...)
 }
 
@@ -248,8 +228,6 @@ func Ffatalf(w io.Writer, format string, a ...any) {
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func Ffatalln(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Ffatalln(w, a...)
 }
 
@@ -258,8 +236,6 @@ func Ffatalln(w io.Writer, a ...any) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func Fatal(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Fatal(a...)
 }
 
@@ -267,8 +243,6 @@ func Fatal(a ...any) {
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func Fatalf(format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Fatalf(format, a...)
 }
 
@@ -276,8 +250,6 @@ func Fatalf(format string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Fatalln(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Fatalln(a...)
 }
 
@@ -285,16 +257,12 @@ func Fatalln(a ...any) {
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Ferror(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Ferror(w, a...)
 }
 
 // Ferrorf creates message with Error level, according to a format
 // specifier and writes to w.
 func Ferrorf(w io.Writer, format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Ferrorf(w, format, a...)
 }
 
@@ -303,8 +271,6 @@ func Ferrorf(w io.Writer, format string, a ...any) {
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func Ferrorln(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Ferrorln(w, a...)
 }
 
@@ -313,8 +279,6 @@ func Ferrorln(w io.Writer, a ...any) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func Error(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Error(a...)
 }
 
@@ -322,8 +286,6 @@ func Error(a ...any) {
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func Errorf(format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Errorf(format, a...)
 }
 
@@ -331,8 +293,6 @@ func Errorf(format string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Errorln(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Errorln(a...)
 }
 
@@ -340,16 +300,12 @@ func Errorln(a ...any) {
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Fwarn(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Fwarn(w, a...)
 }
 
 // Fwarnf creates message with Warn level, according to a format
 // specifier and writes to w.
 func Fwarnf(w io.Writer, format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Fwarnf(w, format, a...)
 }
 
@@ -358,8 +314,6 @@ func Fwarnf(w io.Writer, format string, a ...any) {
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func Fwarnln(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Fwarnln(w, a...)
 }
 
@@ -368,8 +322,6 @@ func Fwarnln(w io.Writer, a ...any) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func Warn(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Warn(a...)
 }
 
@@ -377,8 +329,6 @@ func Warn(a ...any) {
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func Warnf(format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Warnf(format, a...)
 }
 
@@ -386,8 +336,6 @@ func Warnf(format string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Warnln(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Warnln(a...)
 }
 
@@ -395,16 +343,12 @@ func Warnln(a ...any) {
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Finfo(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Finfo(w, a...)
 }
 
 // Finfof creates message with Info level, according to a format
 // specifier and writes to w.
 func Finfof(w io.Writer, format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Finfof(w, format, a...)
 }
 
@@ -413,8 +357,6 @@ func Finfof(w io.Writer, format string, a ...any) {
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func Finfoln(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Finfoln(w, a...)
 }
 
@@ -423,8 +365,6 @@ func Finfoln(w io.Writer, a ...any) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func Info(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Info(a...)
 }
 
@@ -432,8 +372,7 @@ func Info(a ...any) {
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func Infof(format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
+
 	self.Infof(format, a...)
 }
 
@@ -441,8 +380,6 @@ func Infof(format string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Infoln(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Infoln(a...)
 }
 
@@ -450,16 +387,12 @@ func Infoln(a ...any) {
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Fdebug(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Fdebug(w, a...)
 }
 
 // Fdebugf creates message with Debug level, according to a format
 // specifier and writes to w.
 func Fdebugf(w io.Writer, format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Fdebugf(w, format, a...)
 }
 
@@ -468,8 +401,6 @@ func Fdebugf(w io.Writer, format string, a ...any) {
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func Fdebugln(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Fdebugln(w, a...)
 }
 
@@ -478,8 +409,6 @@ func Fdebugln(w io.Writer, a ...any) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func Debug(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Debug(a...)
 }
 
@@ -487,8 +416,6 @@ func Debug(a ...any) {
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func Debugf(format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Debugf(format, a...)
 }
 
@@ -496,8 +423,6 @@ func Debugf(format string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Debugln(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Debugln(a...)
 }
 
@@ -505,16 +430,12 @@ func Debugln(a ...any) {
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Ftrace(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Ftrace(w, a...)
 }
 
 // Ftracef creates message with Trace level, according to a format
 // specifier and writes to w.
 func Ftracef(w io.Writer, format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Ftracef(w, format, a...)
 }
 
@@ -523,8 +444,6 @@ func Ftracef(w io.Writer, format string, a ...any) {
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func Ftraceln(w io.Writer, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Ftraceln(w, a...)
 }
 
@@ -533,8 +452,6 @@ func Ftraceln(w io.Writer, a ...any) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func Trace(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Trace(a...)
 }
 
@@ -542,8 +459,6 @@ func Trace(a ...any) {
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func Tracef(format string, a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Tracef(format, a...)
 }
 
@@ -551,7 +466,5 @@ func Tracef(format string, a ...any) {
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Traceln(a ...any) {
-	mu.Lock()
-	defer mu.Unlock()
 	self.Traceln(a...)
 }
