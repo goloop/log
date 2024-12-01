@@ -1,0 +1,30 @@
+goos: linux
+goarch: arm64
+pkg: github.com/goloop/log
+BenchmarkLoggerInfo-6             	  625500	      1893 ns/op	     709 B/op	      18 allocs/op
+BenchmarkLoggerInfof-6            	  681650	      1700 ns/op	     744 B/op	      19 allocs/op
+BenchmarkLoggerInfoln-6           	  596611	      2017 ns/op	     728 B/op	      18 allocs/op
+BenchmarkLogLevels/Trace-6        	  606598	      1850 ns/op	     728 B/op	      18 allocs/op
+BenchmarkLogLevels/Debug-6        	  607576	      1895 ns/op	     728 B/op	      18 allocs/op
+BenchmarkLogLevels/Info-6         	  625413	      1812 ns/op	     709 B/op	      18 allocs/op
+BenchmarkLogLevels/Warn-6         	  657546	      1802 ns/op	     736 B/op	      18 allocs/op
+BenchmarkLogLevels/Error-6        	  612373	      1814 ns/op	     728 B/op	      18 allocs/op
+BenchmarkOutputConfigurations/WithPrefix-6         	  581556	      1891 ns/op	     736 B/op	      19 allocs/op
+BenchmarkOutputConfigurations/WithColor-6          	  660820	      1762 ns/op	     744 B/op	      18 allocs/op
+BenchmarkOutputConfigurations/JSONStyle-6          	  703910	      1613 ns/op	     872 B/op	      10 allocs/op
+BenchmarkConcurrentLogging-6                       	 2047242	       513.1 ns/op	     725 B/op	      18 allocs/op
+BenchmarkMessageSizes/TinyMessage-6                	  621877	      1867 ns/op	     712 B/op	      18 allocs/op
+BenchmarkMessageSizes/SmallMessage-6               	  608064	      1965 ns/op	     741 B/op	      19 allocs/op
+BenchmarkMessageSizes/MediumMessage-6              	  589362	      1966 ns/op	     840 B/op	      19 allocs/op
+BenchmarkMessageSizes/LargeMessage-6               	  526723	      2279 ns/op	    2810 B/op	      19 allocs/op
+BenchmarkWriters/NopWriter-6                       	  570663	      1963 ns/op	     725 B/op	      18 allocs/op
+BenchmarkWriters/BufferWriter-6                    	  552914	      1913 ns/op	     907 B/op	      18 allocs/op
+BenchmarkWriters/MultipleWriters-6                 	  396843	      3112 ns/op	    1291 B/op	      33 allocs/op
+BenchmarkLoggerCreation/NewLogger-6                	  643651	      2122 ns/op	    1088 B/op	      31 allocs/op
+BenchmarkLoggerCreation/NewLoggerWithPrefix-6      	  620702	      1869 ns/op	    1088 B/op	      31 allocs/op
+BenchmarkLoggerCreation/NewLoggerWithSetup-6       	  381578	      3067 ns/op	    1712 B/op	      47 allocs/op
+BenchmarkLayoutConfigurations/DefaultLayout-6      	  607266	      1951 ns/op	     752 B/op	      20 allocs/op
+BenchmarkLayoutConfigurations/FullFilePath-6       	  797916	      1460 ns/op	     544 B/op	      15 allocs/op
+BenchmarkLayoutConfigurations/AllLayouts-6         	  668887	      1744 ns/op	     608 B/op	      19 allocs/op
+PASS
+ok  	github.com/goloop/log	30.202s
