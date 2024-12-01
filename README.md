@@ -3,105 +3,275 @@
 
 # log
 
-The log module encompasses methods for comprehensive logging, which comprises a variety of logging levels:
+A flexible, high-performance logging package for Go applications with support for multiple output formats, logging levels, and concurrent operations.
 
-- Panic
-  Panic typically signifies that something has gone unexpectedly awry. It's primarily utilized to swiftly halt on errors that shouldn't surface during regular operation, or those we aren't equipped to handle smoothly.
+## Features
 
-- Fatal
-  Fatal corresponds to situations that are immensely disastrous for the application. The application is on the verge of terminating to avert any sort of corruption or severe problem, if feasible. Exit code is 1.
+- **Multiple Log Levels** with clear semantics:
+  - `Panic`: For unrecoverable errors that require immediate attention (calls `panic()`)
+  - `Fatal`: For critical errors that prevent application startup/operation (calls `os.Exit(1)`)
+  - `Error`: For runtime errors that need investigation but don't stop the application
+  - `Warn`: For potentially harmful situations
+  - `Info`: For general operational information
+  - `Debug`: For detailed system state information
+  - `Trace`: For ultra-detailed debugging information
 
-- Error
-  An error represents a significant issue and depicts the failure of something crucial within an application. Contrary to FATAL, the application itself is not doomed.
+- **Flexible Output Configuration**:
+  - Multiple simultaneous outputs (console, files, custom writers)
+  - Per-output level filtering
+  - Text and JSON formats
+  - ANSI color support for terminal output
+  - Custom prefix support
+  - Configurable timestamps and layouts
 
-- Warn
-  This log level implies that an application might be experiencing a problem and an unusual situation has been detected. It's an unexpected and unusual issue, but no real damage is done, and it's uncertain whether the problem will persist or happen again.
+- **Thread-Safe Operations**:
+  - Safe for concurrent use across goroutines
+  - Mutex-protected logging operations
 
-- Info
-  The messages at this level relate to standard application behavior and milestones. They offer a framework of the events that took place.
-
-- Debug
-  This level is meant to provide more detailed, diagnostic information than the INFO level.
-
-- Trace
-  This level offers incredibly detailed information, even more so than DEBUG. At this level, every possible detail about the application's behavior should be captured.
-
+- **Performance Optimized**:
+  - Minimal allocations
+  - Efficient formatting
+  - Level-based filtering at source
 
 ## Installation
 
-To install this module use `go get` as:
-
-```
-$ go get -u github.com/goloop/log
+```bash
+go get -u github.com/goloop/log
 ```
 
 ## Quick Start
 
-To use this module import it as:
+### Basic Usage
+
+```go
+package main
+
+import "github.com/goloop/log"
+
+func main() {
+    // Create logger with prefix.
+    logger := log.New("APP")
+
+    // Basic logging.
+    logger.Info("Application started")
+    logger.Debug("Debug information")
+    logger.Error("Something went wrong")
+
+    // Formatted logging.
+    logger.Infof("User %s logged in", username)
+
+    // With newline.
+    logger.Errorln("Failed to connect to database")
+}
+```
+
+### Advanced Configuration
 
 ```go
 package main
 
 import (
-	"os"
-
-	"github.com/goloop/log"
-	"github.com/goloop/log/layout"
-	"github.com/goloop/log/level"
-
-	// It is not necessary to import this module, the three-valued logic
-	// constants can be represented using integers where: -1 is False,
-	// 0 is Unknown, and 1 is True.
-	"github.com/goloop/trit"
+    "os"
+    "github.com/goloop/log"
+    "github.com/goloop/log/layout"
+    "github.com/goloop/log/level"
 )
 
 func main() {
-	// Open the file in append mode. Create the file if it doesn't exist.
-	// Use appropriate permissions in a production setting.
-	file, err := os.OpenFile(
-		"errors.log",
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-		0644,
-	)
+    // Open log file.
+    file, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer file.Close()
 
-	if err != nil {
-		log.Fatal(err)
-	}
+    // Configure multiple outputs.
+    log.SetOutputs(
+        // Console output with colors.
+        log.Output{
+            Name:      "console",
+            Writer:    os.Stdout,
+            Levels:    level.Info | level.Warn | level.Error,
+            Layouts:   layout.Default,
+            WithColor: 1,
+            TextStyle: 1,
+        },
+        // File output in JSON format.
+        log.Output{
+            Name:      "file",
+            Writer:    file,
+            Levels:    level.Error | level.Fatal,
+            TextStyle: -1, // JSON format
+            WithPrefix: 1,
+        },
+    )
 
-	// Defer the closing of the file until the function ends.
-	defer file.Close()
-
-	// Set the outputs of the log to our file.
-	// We can set many different outputs to record
-	// individual errors, debug or mixed data.
-	err = log.SetOutputs(
-		log.Output{
-			Name:      "stdout",
-			Writer:    os.Stdout,
-			Levels:    level.Debug | level.Info | level.Warn | level.Error,
-			Layouts:   layout.Default,
-			WithColor: 1, // or trit.True, see github.com/goloop/trit
-		},
-		log.Output{
-			Name:      "errorsJSONFile",
-			Writer:    file,
-			Levels:    level.Warn | level.Error, // only errors and warnings
-			Layouts:   layout.Default,
-			TextStyle: trit.False, // or just -1
-		},
-	)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// A message will be output to a file and to the console.
-	// * stdout and errorsJSONFile has Error level.
-	log.Errorln("This is a test log message with ERROR.")
-
-	// A message will be output to the console only.
-	// * stdout has Debug level, but errorsJSONFile has not.
-	log.Debugln("This is a test log message with DEBUG.")
+    // Use the logger
+    log.Info("System initialized")
+    log.Error("Database connection failed")
 }
 ```
+
+### Custom Layout Configuration
+
+```go
+package main
+
+import (
+    "github.com/goloop/log"
+    "github.com/goloop/log/layout"
+)
+
+func main() {
+    logger := log.New("APP")
+
+    // Configure custom layout.
+    logger.SetOutputs(log.Output{
+        Name:    "custom",
+        Writer:  os.Stdout,
+        Layouts: layout.FullFilePath | layout.FuncName | layout.LineNumber,
+    })
+
+    logger.Info("Custom layout message")
+}
+```
+
+## Output Formats
+
+### Text Format (Default)
+```
+APP: 2023/12/02 15:04:05 INFO main.go:42 Starting application
+```
+
+### JSON Format
+```json
+{
+    "prefix": "APP",
+    "timestamp": "2023/12/02 15:04:05",
+    "level": "INFO",
+    "file": "main.go",
+    "line": 42,
+    "message": "Starting application"
+}
+```
+
+## Performance Considerations
+
+- Use appropriate log levels in production (typically Info and above)
+- Consider using JSON format only when structured logging is required
+- Disable debug/trace levels in production for optimal performance
+- Use formatted logging (`Infof`, etc.) only when necessary
+
+## Advanced Features
+
+### Stack Frame Skipping
+
+```go
+logger := log.New("APP")
+logger.SetSkipStackFrames(2) // skip wrapper functions
+```
+
+### Multiple Prefix Support
+
+```go
+logger := log.New("APP", "SERVICE", "API")  // Results in "APP-SERVICE-API"
+```
+
+### Custom Writers
+
+```go
+type CustomWriter struct {
+    // implementation
+}
+
+func (w *CustomWriter) Write(p []byte) (n int, err error) {
+    // custom write logic.
+    return len(p), nil
+}
+
+logger.SetOutputs(log.Output{
+    Name: "custom",
+    Writer: &CustomWriter{},
+    Levels: level.Info,
+})
+```
+
+## Managing Outputs
+
+The logger provides several methods to manage outputs:
+
+### Get Current Outputs
+```go
+// Get all outputs.
+outputs := logger.Outputs()
+
+// Get specific outputs by name.
+stdoutOutput := logger.Outputs("stdout")
+```
+
+### Edit Outputs
+```go
+// Change output configuration.
+logger.EditOutputs(log.Output{
+    Name:    "stdout",
+    Levels:  level.Error | level.Fatal,  // change levels
+    WithColor: 1,                        // enable colors
+})
+
+// Disable specific output.
+logger.EditOutputs(log.Output{
+    Name:    "stdout",
+    Enabled: -1,  // or trit.False
+})
+```
+
+### Delete Outputs
+```go
+// Remove specific outputs,
+logger.DeleteOutputs("stdout", "file")
+
+// Or disable all logging by removing all outputs.
+logger.DeleteOutputs(logger.Outputs()...)
+```
+
+### Set New Outputs
+```go
+// Replace all outputs with new ones.
+logger.SetOutputs(
+    log.Output{
+        Name:    "console",
+        Writer:  os.Stdout,
+        Levels:  level.Info | level.Warn,
+    },
+    log.Output{
+        Name:    "errors",
+        Writer:  errorFile,
+        Levels:  level.Error | level.Fatal,
+    },
+)
+```
+
+## Why use this logger?
+
+- Flexible configuration
+- High performance
+- Multiple output support
+- Structured logging support
+- Thread safety
+- Comprehensive logging levels
+
+## Related Projects
+
+- [goloop/g](https://github.com/goloop/g) - Common utilities
+- [goloop/trit](https://github.com/goloop/trit) - Three-valued logic
+
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 
