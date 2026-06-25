@@ -25,7 +25,7 @@ func TestEcho(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	logger.echo(nil, level.Debug, "test %s", "message")
+	logger.echo(nil, level.Debug, kindPrint, "test message")
 	outC := make(chan string)
 	go ioCopy(r, outC)
 	w.Close()
@@ -44,7 +44,7 @@ func TestEcho(t *testing.T) {
 		WithPrefix: trit.False,
 	})
 
-	logger.echo(nil, level.Debug, "test %s", "message")
+	logger.echo(nil, level.Debug, kindPrint, "test message")
 	outC = make(chan string)
 	go ioCopy(r, outC)
 	w.Close()
@@ -63,7 +63,7 @@ func TestEcho(t *testing.T) {
 		TextStyle: trit.False,
 	})
 
-	logger.echo(nil, level.Debug, "test %s", "message")
+	logger.echo(nil, level.Debug, kindPrint, "test message")
 	outC = make(chan string)
 	go ioCopy(r, outC)
 	w.Close()
@@ -81,7 +81,7 @@ func TestEcho(t *testing.T) {
 		Enabled: trit.False,
 	})
 
-	logger.echo(nil, level.Debug, "test %s", "message")
+	logger.echo(nil, level.Debug, kindPrint, "test message")
 	outC = make(chan string)
 	go ioCopy(r, outC)
 	w.Close()
@@ -95,34 +95,28 @@ func TestEcho(t *testing.T) {
 // TestEchoWithTextFormatting tests the echo method with Text formatting.
 func TestEchoWithTextFormatting(t *testing.T) {
 	tests := []struct {
-		name   string
-		format string
-		in     []interface{}
-		want   string
+		name string
+		kind emitKind
+		body string
+		want string
 	}{
 		{
-			name:   "Empty format",
-			format: "",
-			in:     []interface{}{"hello", "world"},
-			want:   "helloworld", // used fmt.Print
+			name: "Print kind",
+			kind: kindPrint,
+			body: "helloworld",
+			want: "helloworld", // fmt.Sprint body
 		},
 		{
-			name:   "System formatStr",
-			format: formatPrint,
-			in:     []interface{}{"hello", "world"},
-			want:   "helloworld", // used fmt.Print
+			name: "Println kind",
+			kind: kindPrintln,
+			body: "hello world\n",
+			want: " hello world\n", // fmt.Sprintln body (header adds leading space)
 		},
 		{
-			name:   "System formatStrLn",
-			format: formatPrintln,
-			in:     []interface{}{"hello", "world"},
-			want:   " hello world\n", // used fmt.Println
-		},
-		{
-			name:   "Custom formats",
-			format: "[%d]-%s is %v",
-			in:     []interface{}{777, "message", true},
-			want:   "[777]-message is true", // used fmt.Printf
+			name: "Printf kind",
+			kind: kindPrintf,
+			body: "[777]-message is true",
+			want: "[777]-message is true", // fmt.Sprintf body
 		},
 	}
 
@@ -137,7 +131,7 @@ func TestEchoWithTextFormatting(t *testing.T) {
 				Levels: level.Default,
 			})
 
-			logger.echo(nil, level.Debug, tt.format, tt.in...)
+			logger.echo(nil, level.Debug, tt.kind, tt.body)
 			outC := make(chan string)
 			go ioCopy(r, outC)
 			w.Close()
@@ -152,34 +146,28 @@ func TestEchoWithTextFormatting(t *testing.T) {
 // TestEchoWithJSONFormatting tests the echo method with JSON formatting.
 func TestEchoWithJSONFormatting(t *testing.T) {
 	tests := []struct {
-		name   string
-		format string
-		in     []interface{}
-		want   string
+		name string
+		kind emitKind
+		body string
+		want string
 	}{
 		{
-			name:   "Empty format",
-			format: "",
-			in:     []interface{}{"hello", "world"},
-			want:   "helloworld", // used fmt.Print
+			name: "Print kind",
+			kind: kindPrint,
+			body: "helloworld",
+			want: "helloworld", // fmt.Sprint body
 		},
 		{
-			name:   "System formatStr",
-			format: formatPrint,
-			in:     []interface{}{"hello", "world"},
-			want:   "helloworld", // used fmt.Print
+			name: "Println kind",
+			kind: kindPrintln,
+			body: "hello world\n",
+			want: "hello world", // fmt.Sprintln body, trailing newline trimmed
 		},
 		{
-			name:   "System formatStrLn",
-			format: formatPrintln,
-			in:     []interface{}{"hello", "world"},
-			want:   "hello world", // used fmt.Println with Trim
-		},
-		{
-			name:   "Custom formats",
-			format: "[%d]-%s is %v",
-			in:     []interface{}{777, "message", true},
-			want:   "[777]-message is true", // used fmt.Printf
+			name: "Printf kind",
+			kind: kindPrintf,
+			body: "[777]-message is true",
+			want: "[777]-message is true", // fmt.Sprintf body
 		},
 	}
 
@@ -195,7 +183,7 @@ func TestEchoWithJSONFormatting(t *testing.T) {
 				TextStyle: trit.False,
 			})
 
-			logger.echo(nil, level.Debug, tt.format, tt.in...)
+			logger.echo(nil, level.Debug, tt.kind, tt.body)
 			outC := make(chan string)
 			go ioCopy(r, outC)
 			w.Close()

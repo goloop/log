@@ -134,26 +134,22 @@ func TestTextMessage(t *testing.T) {
 
 	tests := []struct {
 		name string
-		f    string
-		a    []any
+		body string
 		e    string
 	}{
 		{
 			name: "Text message with formatted string",
-			f:    "formatted string %s",
-			a:    []any{"value"},
+			body: "formatted string value",
 			e:    "formatted string value",
 		},
 		{
 			name: "Text message with multiple formatted values",
-			f:    "formatted string with multiple values %s %d",
-			a:    []any{"value", 1},
+			body: "formatted string with multiple values value 1",
 			e:    "formatted string with multiple values value 1",
 		},
 		{
 			name: "Text message with no formatting",
-			f:    "",
-			a:    []any{"value"},
+			body: "value",
 			e:    "value",
 		},
 	}
@@ -166,8 +162,7 @@ func TestTextMessage(t *testing.T) {
 				timestamp,
 				output,
 				stackframe,
-				test.f,
-				test.a...,
+				test.body,
 			)
 
 			if !strings.Contains(result, test.e) {
@@ -186,8 +181,7 @@ func TestTextMessage(t *testing.T) {
 				timestamp,
 				output,
 				stackframe,
-				test.f,
-				test.a...,
+				test.body,
 			)
 
 			if !strings.Contains(result, test.e) {
@@ -206,8 +200,7 @@ func TestTextMessage(t *testing.T) {
 				timestamp,
 				output,
 				stackframe,
-				test.f,
-				test.a...,
+				test.body,
 			)
 
 			if !strings.Contains(result, test.e) {
@@ -227,14 +220,14 @@ func TestObjectMessage(t *testing.T) {
 
 	tests := []struct {
 		name string
-		f    string
-		a    []any
+		kind emitKind
+		body string
 		e    map[string]interface{}
 	}{
 		{
 			name: "Object message with formatted string",
-			f:    "formatted string %s",
-			a:    []any{"value"},
+			kind: kindPrintf,
+			body: "formatted string value",
 			e: map[string]interface{}{
 				"prefix":      prefix,
 				"level":       "INFO",
@@ -248,8 +241,8 @@ func TestObjectMessage(t *testing.T) {
 		},
 		{
 			name: "Object message with multiple formatted values",
-			f:    "formatted string with multiple values %s %d",
-			a:    []any{"value", 1},
+			kind: kindPrintf,
+			body: "formatted string with multiple values value 1",
 			e: map[string]interface{}{
 				"prefix":      prefix,
 				"level":       "INFO",
@@ -263,8 +256,8 @@ func TestObjectMessage(t *testing.T) {
 		},
 		{
 			name: "Object message with no formatting",
-			f:    "",
-			a:    []any{"value"},
+			kind: kindPrint,
+			body: "value",
 			e: map[string]interface{}{
 				"prefix":      prefix,
 				"level":       "INFO",
@@ -286,8 +279,8 @@ func TestObjectMessage(t *testing.T) {
 				timestamp,
 				output,
 				stackframe,
-				test.f,
-				test.a...,
+				test.kind,
+				test.body,
 			)
 
 			// Unmarshal the JSON result into a map

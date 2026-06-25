@@ -76,8 +76,7 @@ func textMessage(
 	t time.Time,
 	o *Output,
 	sf *stackFrame,
-	f string,
-	a ...any,
+	body string,
 ) string {
 	// Generate log header.
 	// The text before of the user's message, which includes the
@@ -141,25 +140,12 @@ func textMessage(
 		sb.WriteString(fmt.Sprintf("%#x%s", sf.FuncAddress, o.Space))
 	}
 
-	// Add message formatting.
-	var msg string
+	// Append the pre-rendered message body. The body already encodes the
+	// operand separators and any trailing newline (for the println kind),
+	// so the header is simply prefixed to it.
+	sb.WriteString(body)
 
-	switch {
-	case f == "":
-		fallthrough
-	case f == formatPrint:
-		// For messages that are output on the same line, the task of
-		// separating the messages falls on the user. We don't need to
-		// add extra characters to user messages.
-		// msg = fmt.Sprintf("%s%s%s", sb.String(), fmt.Sprint(a...), o.Space)
-		msg = fmt.Sprintf("%s%s", sb.String(), fmt.Sprint(a...))
-	case f == formatPrintln:
-		msg = fmt.Sprintf("%s%s", sb.String(), fmt.Sprintln(a...))
-	default:
-		msg = fmt.Sprintf("%s%s", sb.String(), fmt.Sprintf(f, a...))
-	}
-
-	return msg
+	return sb.String()
 }
 
 // The objectMessage creates a JSON message.
@@ -169,8 +155,8 @@ func objectMessage(
 	t time.Time,
 	o *Output,
 	sf *stackFrame,
-	f string,
-	a ...any,
+	kind emitKind,
+	body string,
 ) string {
 	// Output object.
 	// A general structure for outputting a log in JSON format.
@@ -218,31 +204,25 @@ func objectMessage(
 		obj.LineNumber = sf.FileLine
 	}
 
-	// Clean message for default -ln format.
-	// Add message formatting.
-	switch {
-	case f == "":
-		fallthrough
-	case f == formatPrint:
-		obj.Message = fmt.Sprint(a...)
-	case f == formatPrintln:
-		obj.Message = strings.TrimSuffix(fmt.Sprintln(a...), "\n")
-	default:
-		obj.Message = fmt.Sprintf(f, a...)
+	// The pre-rendered body already carries the operand separators. For the
+	// println kind it ends with a newline that the JSON message field does
+	// not need, so it is trimmed.
+	if kind == kindPrintln {
+		obj.Message = strings.TrimSuffix(body, "\n")
+	} else {
+		obj.Message = body
 	}
 
 	// Marshal object to JSON.
 	data, err := json.Marshal(obj)
 	data = g.If(err != nil, []byte{}, data)
 
-	// Add JSON formatting.
+	// Add JSON formatting. The print kind keeps JSON blocks on a single
+	// line; println and printf terminate each block with a newline.
 	var msg string
-	switch {
-	case f == "":
-		fallthrough
-	case f == formatPrint:
+	if kind == kindPrint {
 		msg = string(data)
-	default: // for formatStrLn and others
+	} else {
 		msg = fmt.Sprintf("%s\n", data)
 	}
 
