@@ -30,19 +30,27 @@ func ioCopy(r io.Reader, c chan string) {
 	c <- buf.String()
 }
 
-// The getStackFrame returns the stack slice. The skip argument
-// is the number of stack frames to skip before taking a slice.
-func getStackFrame(skip int) *stackFrame {
+// The getStackFrame returns the top stack frame after skipping skip frames.
+// The boolean result is false when no valid frame can be captured (for
+// example, when skip is larger than the call stack); in that case the
+// returned frame is empty rather than causing a panic.
+func getStackFrame(skip int) (*stackFrame, bool) {
 	sf := &stackFrame{}
 
 	// Return program counters of function invocations on
 	// the calling goroutine's stack and skipping function
 	// call frames inside *Log.
 	pc := make([]uintptr, skip+1) // program counters
-	runtime.Callers(skip, pc)
+	if n := runtime.Callers(skip, pc); n == 0 {
+		return sf, false
+	}
 
-	// Get a function at an address on the stack.
+	// Get a function at an address on the stack. A nil result means the
+	// program counter does not map to a known function (skip too large).
 	fn := runtime.FuncForPC(pc[0])
+	if fn == nil {
+		return sf, false
+	}
 
 	// Get name, path and line of the file.
 	sf.FuncName = fn.Name()
@@ -52,7 +60,7 @@ func getStackFrame(skip int) *stackFrame {
 		sf.FuncName = r[len(r)-1]
 	}
 
-	return sf
+	return sf, true
 }
 
 // The cutFilePath cuts the path to the file to the

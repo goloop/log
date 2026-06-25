@@ -293,29 +293,16 @@ func (logger *Logger) SetSkipStackFrames(skip int) int {
 		return logger.skipStackFrames
 	}
 
-	// Too big a skip can cause panic in the getStackFrame.
-	// Take the highest possible value.
-	for {
-		func() {
-			// If panic, reduce the skip value by one.
-			defer func() {
-				if r := recover(); r != nil {
-					skip--
-				}
-			}()
-
-			// If the skip is too large, it can cause panic.
-			logger.skipStackFrames = skip
-			getStackFrame(skip + 1) // plus 1 because we in inner func
-		}()
-
-		// If the subtraction is already nowhere or
-		// the skip didn't cause panic (was not reduced).
-		if skip <= 0 || logger.skipStackFrames == skip {
+	// Too big a skip cannot capture a stack frame. Reduce it until a valid
+	// frame is available (or we reach zero).
+	for skip > 0 {
+		if _, ok := getStackFrame(skip + 1); ok {
 			break
 		}
+		skip--
 	}
 
+	logger.skipStackFrames = skip
 	return logger.skipStackFrames
 }
 
@@ -603,7 +590,7 @@ func (logger *Logger) echo(w io.Writer, l level.Level, kind emitKind, body strin
 
 	// One timestamp and one stack frame per call, shared by all outputs.
 	now := time.Now()
-	sf := getStackFrame(logger.skipStackFrames)
+	sf, _ := getStackFrame(logger.skipStackFrames)
 
 	// Output message.
 	for _, o := range outputs {

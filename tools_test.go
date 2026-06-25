@@ -29,7 +29,11 @@ func TestIoCopy(t *testing.T) {
 
 // TestGetStackFrame tests getStackFrame function.
 func TestGetStackFrame(t *testing.T) {
-	frame := getStackFrame(2) // cuerrent function is TestGetStackFrame
+	frame, ok := getStackFrame(2) // current function is TestGetStackFrame
+
+	if !ok {
+		t.Fatal("Expected ok to be true")
+	}
 
 	if frame == nil {
 		t.Fatal("Expected frame to not be nil")
@@ -66,15 +70,17 @@ func TestGetStackFrame(t *testing.T) {
 	}
 }
 
-// TestGetStackFramePanicsOnNegativeSkip tests getStackFrame for panic.
-func TestGetStackFramePanicsOnLargeSkip(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("The code did not panic")
-		}
-	}()
+// TestGetStackFrameLargeSkip verifies that an oversized skip yields an
+// invalid (empty) frame instead of panicking.
+func TestGetStackFrameLargeSkip(t *testing.T) {
+	frame, ok := getStackFrame(1024)
+	if ok {
+		t.Error("Expected ok to be false for an oversized skip")
+	}
 
-	getStackFrame(1024)
+	if frame == nil {
+		t.Fatal("Expected a non-nil (empty) frame")
+	}
 }
 
 // TestCutFilePath tests cutFilePath function.
@@ -130,7 +136,7 @@ func TestTextMessage(t *testing.T) {
 	output := &Stdout
 	output.WithColor = trit.True
 	output.Layouts = output.Layouts | layout.LineNumber | layout.FuncAddress
-	stackframe := getStackFrame(2)
+	stackframe, _ := getStackFrame(2)
 
 	tests := []struct {
 		name string
@@ -216,7 +222,7 @@ func TestObjectMessage(t *testing.T) {
 	level := level.Info
 	timestamp := time.Now()
 	output := &Stdout
-	stackframe := getStackFrame(2)
+	stackframe, _ := getStackFrame(2)
 
 	tests := []struct {
 		name string
