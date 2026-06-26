@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/goloop/g"
+	"github.com/goloop/log/v2/level"
 )
 
 var (
@@ -168,6 +169,12 @@ func DeleteOutputs(names ...string) {
 // Outputs returns a list of outputs.
 func Outputs(names ...string) []Output {
 	return self.Outputs(names...)
+}
+
+// Enabled reports whether at least one enabled output of the default logger
+// would emit a message at level l.
+func Enabled(l level.Level) bool {
+	return self.Enabled(l)
 }
 
 // Fpanic creates message with Panic level, using the default formats

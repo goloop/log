@@ -1,15 +1,25 @@
 package log
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"runtime"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/goloop/g"
 	"github.com/goloop/log/v2/level"
 )
+
+// The bufPool recycles the byte buffers used to assemble a single log
+// message, keeping the hot path allocation-free across calls.
+var bufPool = sync.Pool{New: func() any { return new(bytes.Buffer) }}
+
+// The emptyFrame is a shared, read-only zero frame used when no output
+// requests stack-frame information, so the builders never see a nil sf.
+var emptyFrame = &stackFrame{}
 
 // The stackFrame contains the top-level trace information
 // where the logging method was called.
@@ -52,44 +62,49 @@ func getStackFrame(skip int) (*stackFrame, bool) {
 	return sf, true
 }
 
-// The cutFilePath cuts the path to the file to the
-// specified number of sections.
+// The cutFilePath keeps the last n sections of the path. It walks the
+// string from the end counting separators, so no intermediate slice is
+// allocated. The path is returned unchanged when it has n or fewer
+// sections (i.e. n or fewer separators).
 func cutFilePath(n int, path string) string {
-	sections := strings.Split(path, "/")
+	count, cut := 0, -1
+	for i := len(path) - 1; i >= 0; i-- {
+		if path[i] != '/' {
+			continue
+		}
 
-	// If there are fewer or equal sections than n,
-	// return the path unmodified.
-	if len(sections) <= n+1 {
-		return path
+		count++
+		if count == n {
+			cut = i // start of the last n sections
+		} else if count > n {
+			return ".../" + path[cut+1:]
+		}
 	}
 
-	return ".../" + strings.Join(sections[len(sections)-n:], "/")
+	return path
 }
 
-// The textMessage creates a text message.
-func textMessage(
+// The appendText writes a text-style message into buf: the header
+// (prefix, timestamp, level, and the requested file/function/line layout)
+// followed by the pre-rendered body.
+func appendText(
+	buf *bytes.Buffer,
 	p string,
 	l level.Level,
 	t time.Time,
 	o *Output,
 	sf *stackFrame,
 	body string,
-) string {
-	// Generate log header.
-	// The text before of the user's message, which includes the
-	// prefix, the date and time of the event, the message level,
-	// and additional format data (file, function, line etc.).
-	sb := strings.Builder{}
-
+) {
 	// Logger prefix.
 	if p != "" {
-		sb.WriteString(p)
-		sb.WriteString(o.Space)
+		buf.WriteString(p)
+		buf.WriteString(o.Space)
 	}
 
 	// Timestamp.
-	sb.WriteString(t.Format(o.TimestampFormat))
-	sb.WriteString(o.Space)
+	buf.WriteString(t.Format(o.TimestampFormat))
+	buf.WriteString(o.Space)
 
 	// Level name.
 	labels := level.Labels
@@ -98,55 +113,71 @@ func textMessage(
 	}
 
 	if v, ok := labels[l]; ok {
-		sb.WriteString(fmt.Sprintf(o.LevelFormat, v))
-		sb.WriteString(o.Space)
+		if o.LevelFormat == "%s" { // common case: no formatting needed
+			buf.WriteString(v)
+		} else {
+			fmt.Fprintf(buf, o.LevelFormat, v)
+		}
+		buf.WriteString(o.Space)
 	}
 
 	// File path.
 	// The FullPath takes precedence over ShortPath.
 	if o.Layouts.FilePath() {
 		if o.Layouts.FullFilePath() {
-			sb.WriteString(sf.FilePath)
+			buf.WriteString(sf.FilePath)
 		} else {
-			sb.WriteString(cutFilePath(shortPathSections, sf.FilePath))
+			buf.WriteString(cutFilePath(shortPathSections, sf.FilePath))
 		}
 
 		if o.Layouts.LineNumber() {
-			sb.WriteString(fmt.Sprintf(":%d", sf.FileLine))
+			buf.WriteByte(':')
+			buf.WriteString(strconv.Itoa(sf.FileLine))
 		}
 
-		sb.WriteString(o.Space)
+		buf.WriteString(o.Space)
 	}
 
 	// Line number.
 	if o.Layouts.LineNumber() && !o.Layouts.FilePath() {
-		sb.WriteString(fmt.Sprintf("%d%s", sf.FileLine, o.Space))
+		buf.WriteString(strconv.Itoa(sf.FileLine))
+		buf.WriteString(o.Space)
 	}
 
 	// Function name.
 	if o.Layouts.FuncName() {
-		sb.WriteString(sf.FuncName)
+		buf.WriteString(sf.FuncName)
 		if o.Layouts.FuncAddress() {
-			sb.WriteString(fmt.Sprintf(":%#x", sf.FuncAddress))
+			buf.WriteByte(':')
+			writeHex(buf, sf.FuncAddress)
 		}
-		sb.WriteString(o.Space)
+		buf.WriteString(o.Space)
 	}
 
 	// Function address.
 	if o.Layouts.FuncAddress() && !o.Layouts.FuncName() {
-		sb.WriteString(fmt.Sprintf("%#x%s", sf.FuncAddress, o.Space))
+		writeHex(buf, sf.FuncAddress)
+		buf.WriteString(o.Space)
 	}
 
 	// Append the pre-rendered message body. The body already encodes the
 	// operand separators and any trailing newline (for the println kind),
 	// so the header is simply prefixed to it.
-	sb.WriteString(body)
-
-	return sb.String()
+	buf.WriteString(body)
 }
 
-// The objectMessage creates a JSON message.
-func objectMessage(
+// The writeHex writes v as a "0x"-prefixed lowercase hexadecimal number,
+// matching the %#x verb without allocating an intermediate string.
+func writeHex(buf *bytes.Buffer, v uintptr) {
+	buf.WriteString("0x")
+	buf.WriteString(strconv.FormatUint(uint64(v), 16))
+}
+
+// The appendObject writes a JSON-style message into buf. On a marshal
+// failure it falls back to a minimal text line so the message is never
+// silently lost.
+func appendObject(
+	buf *bytes.Buffer,
 	p string,
 	l level.Level,
 	t time.Time,
@@ -154,7 +185,7 @@ func objectMessage(
 	sf *stackFrame,
 	kind emitKind,
 	body string,
-) string {
+) {
 	// Output object.
 	// A general structure for outputting a log in JSON format.
 	obj := struct {
@@ -210,23 +241,30 @@ func objectMessage(
 		obj.Message = body
 	}
 
-	// Marshal object to JSON.
+	// Marshal object to JSON straight into the buffer. If marshalling ever
+	// fails, fall back to a minimal text line (timestamp, level, message)
+	// rather than dropping the log entry.
 	data, err := json.Marshal(obj)
-	data = g.If(err != nil, []byte{}, data)
+	if err != nil {
+		buf.WriteString(obj.Timestamp)
+		buf.WriteByte(' ')
+		if obj.Level != "" {
+			buf.WriteString(obj.Level)
+			buf.WriteByte(' ')
+		}
+		buf.WriteString(obj.Message)
+	} else {
+		buf.Write(data)
+	}
 
 	// Add JSON formatting. The print kind keeps JSON blocks on a single
 	// line; println and printf terminate each block with a newline.
-	var msg string
-	if kind == kindPrint {
-		msg = string(data)
-	} else {
-		msg = fmt.Sprintf("%s\n", data)
+	if kind != kindPrint {
+		buf.WriteByte('\n')
 	}
 
 	// Add space if necessary.
 	if o.Space != "" {
-		msg += o.Space
+		buf.WriteString(o.Space)
 	}
-
-	return msg
 }

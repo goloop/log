@@ -310,3 +310,36 @@ func BenchmarkLayoutConfigurations(b *testing.B) {
 		}
 	})
 }
+
+// Benchmark the v2 fast paths: a level no output is interested in (the call
+// returns before any formatting) and an output that needs no stack frame.
+func BenchmarkGating(b *testing.B) {
+	b.Run("LevelDisabled", func(b *testing.B) {
+		logger := New()
+		logger.SetOutputs(Output{
+			Name:   "benchmark",
+			Writer: &nopWriter{},
+			Levels: level.Error, // Debug is never emitted here
+		})
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			logger.Debug("test message")
+		}
+	})
+
+	b.Run("StackDisabled", func(b *testing.B) {
+		logger := New()
+		logger.SetOutputs(Output{
+			Name:    "benchmark",
+			Writer:  &nopWriter{},
+			Levels:  level.Default,
+			Layouts: 0, // no file/func/line → stack frame is skipped
+		})
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			logger.Info("test message")
+		}
+	})
+}

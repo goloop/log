@@ -164,14 +164,10 @@ func TestTextMessage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := textMessage(
-				prefix,
-				level,
-				timestamp,
-				output,
-				stackframe,
-				test.body,
-			)
+			var buf bytes.Buffer
+			appendText(&buf, prefix, level, timestamp, output, stackframe,
+				test.body)
+			result := buf.String()
 
 			if !strings.Contains(result, test.e) {
 				t.Errorf("Message '%s' doesn't contains '%s'", result, test.e)
@@ -183,14 +179,10 @@ func TestTextMessage(t *testing.T) {
 	output.Layouts = layout.FullFilePath
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := textMessage(
-				prefix,
-				level,
-				timestamp,
-				output,
-				stackframe,
-				test.body,
-			)
+			var buf bytes.Buffer
+			appendText(&buf, prefix, level, timestamp, output, stackframe,
+				test.body)
+			result := buf.String()
 
 			if !strings.Contains(result, test.e) {
 				t.Errorf("Message '%s' doesn't contains '%s'", result, test.e)
@@ -202,14 +194,10 @@ func TestTextMessage(t *testing.T) {
 	output.Layouts = layout.LineNumber | layout.FuncAddress
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := textMessage(
-				prefix,
-				level,
-				timestamp,
-				output,
-				stackframe,
-				test.body,
-			)
+			var buf bytes.Buffer
+			appendText(&buf, prefix, level, timestamp, output, stackframe,
+				test.body)
+			result := buf.String()
 
 			if !strings.Contains(result, test.e) {
 				t.Errorf("Message '%s' doesn't contains '%s'", result, test.e)
@@ -281,15 +269,10 @@ func TestObjectMessage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := objectMessage(
-				prefix,
-				level,
-				timestamp,
-				output,
-				stackframe,
-				test.kind,
-				test.body,
-			)
+			var buf bytes.Buffer
+			appendObject(&buf, prefix, level, timestamp, output, stackframe,
+				test.kind, test.body)
+			result := buf.String()
 
 			// Unmarshal the JSON result into a map
 			var resultObj map[string]interface{}

@@ -1,6 +1,7 @@
 package log
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -588,14 +589,36 @@ func (logger *Logger) echo(w io.Writer, l level.Level, kind emitKind, body strin
 		outputs["*"] = &adhoc // this name can be used for system names
 	}
 
-	// One timestamp and one stack frame per call, shared by all outputs.
-	now := time.Now()
-	sf, _ := getStackFrame(logger.skipStackFrames)
-
-	// Output message.
+	// First pass: find out whether any output is interested in this level
+	// and whether any of them needs stack-frame information. Both the time
+	// and the (relatively expensive) stack frame are skipped entirely when
+	// no output would emit the message.
+	var interested, needFrame bool
 	for _, o := range outputs {
-		has, err := o.Levels.Contains(l)
-		if !has || err != nil || !o.Enabled.IsTrue() {
+		if o.Levels&l == l && o.Enabled.IsTrue() {
+			interested = true
+			if o.Layouts != 0 { // every layout flag is derived from the frame
+				needFrame = true
+				break
+			}
+		}
+	}
+
+	if !interested {
+		return
+	}
+
+	// One timestamp (and at most one stack frame) shared by all outputs.
+	now := time.Now()
+	sf := emptyFrame
+	if needFrame {
+		sf, _ = getStackFrame(logger.skipStackFrames)
+	}
+
+	// Second pass: render each interested message into a pooled buffer and
+	// write the raw bytes, avoiding an intermediate string per output.
+	for _, o := range outputs {
+		if o.Levels&l != l || !o.Enabled.IsTrue() {
 			continue
 		}
 
@@ -605,17 +628,36 @@ func (logger *Logger) echo(w io.Writer, l level.Level, kind emitKind, body strin
 			prefix = ""
 		}
 
-		// Text or JSON representation of the message.
-		var msg string
+		buf := bufPool.Get().(*bytes.Buffer)
+		buf.Reset()
 		if o.TextStyle.IsTrue() {
-			msg = textMessage(prefix, l, now, o, sf, body)
+			appendText(buf, prefix, l, now, o, sf, body)
 		} else {
-			msg = objectMessage(prefix, l, now, o, sf, kind, body)
+			appendObject(buf, prefix, l, now, o, sf, kind, body)
 		}
-
-		// Print message.
-		fmt.Fprint(o.Writer, msg)
+		o.Writer.Write(buf.Bytes())
+		bufPool.Put(buf)
 	}
+}
+
+// Enabled reports whether at least one enabled output would emit a message
+// at level l. Use it to guard the preparation of expensive log arguments
+// that should be skipped when no output is interested in the level:
+//
+//	if logger.Enabled(level.Debug) {
+//		logger.Debug(expensiveDump())
+//	}
+func (logger *Logger) Enabled(l level.Level) bool {
+	logger.mu.RLock()
+	defer logger.mu.RUnlock()
+
+	for _, o := range logger.outputs {
+		if o.Levels&l == l && o.Enabled.IsTrue() {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Fpanic creates message with Panic level, using the default formats
