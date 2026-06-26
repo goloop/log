@@ -1,6 +1,6 @@
-module github.com/goloop/log
+module github.com/goloop/log/v2
 
-go 1.20
+go 1.24
 
 require (
 	github.com/goloop/g v1.12.1

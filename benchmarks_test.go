@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/goloop/log/level"
+	"github.com/goloop/log/v2/level"
 )
 
 // Implement test writer that does nothing to avoid I/O overhead in benchmarks

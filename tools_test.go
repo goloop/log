@@ -1,15 +1,17 @@
 package log
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"runtime"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/goloop/log/layout"
-	"github.com/goloop/log/level"
+	"github.com/goloop/log/v2/layout"
+	"github.com/goloop/log/v2/level"
 	"github.com/goloop/trit"
 )
 
@@ -305,49 +307,10 @@ func TestObjectMessage(t *testing.T) {
 	}
 }
 
-/*
-// TestGetWriterID tests getWriterID function.
-func TestGetWriterID(t *testing.T) {
-	// Create several types that satisfy the io.Writer interface
-	file, err := os.Create("test.txt")
-	if err != nil {
-		t.Fatalf("Failed to create file: %v", err)
-	}
-	defer os.Remove("test.txt")
-	defer file.Close()
-
-	buffer := &bytes.Buffer{}
-	builder := &strings.Builder{}
-	writer := bufio.NewWriter(buffer)
-	gzipWriter := gzip.NewWriter(buffer)
-	pipeReader, pipeWriter := io.Pipe()
-	defer pipeReader.Close()
-	defer pipeWriter.Close()
-
-	tests := []struct {
-		name  string
-		input io.Writer
-	}{
-		{"os.File", file},
-		{"bytes.Buffer", buffer},
-		{"strings.Builder", builder},
-		{"bufio.Writer", writer},
-		{"gzip.Writer", gzipWriter},
-		{"io.PipeWriter", pipeWriter},
-	}
-
-	// Map to store the IDs of the writers
-	writerIDs := make(map[uintptr]bool)
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			id := getWriterID(test.input)
-			if _, exists := writerIDs[id]; exists {
-				t.Errorf("Non-unique writer ID returned for type: %s",
-					test.name)
-			}
-			writerIDs[id] = true
-		})
-	}
+// The ioCopy reads everything from r and sends it as a single string on c.
+// It is a helper used by the package tests to drain os.Pipe / io.Pipe ends.
+func ioCopy(r io.Reader, c chan string) {
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+	c <- buf.String()
 }
-*/

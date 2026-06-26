@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goloop/log/level"
+	"github.com/goloop/log/v2/level"
 )
 
 // TestLog tests the Log function.

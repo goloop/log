@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goloop/log/level"
+	"github.com/goloop/log/v2/level"
 	"github.com/goloop/trit"
 )
 

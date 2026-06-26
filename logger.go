@@ -9,8 +9,8 @@ import (
 
 	"github.com/goloop/g"
 	"github.com/goloop/is"
-	"github.com/goloop/log/layout"
-	"github.com/goloop/log/level"
+	"github.com/goloop/log/v2/layout"
+	"github.com/goloop/log/v2/level"
 	"github.com/goloop/trit"
 )
 
@@ -659,7 +659,7 @@ func (logger *Logger) Panicf(format string, a ...any) {
 // Panicln creates message with Panic, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
-func (logger *Logger) Panicln(a ...any) (int, error) {
+func (logger *Logger) Panicln(a ...any) {
 	logger.echo(nil, level.Panic, kindPrintln, fmt.Sprintln(a...))
 	panic(fmt.Sprintln(a...))
 }

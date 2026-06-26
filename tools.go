@@ -1,16 +1,14 @@
 package log
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"runtime"
 	"strings"
 	"time"
 
 	"github.com/goloop/g"
-	"github.com/goloop/log/level"
+	"github.com/goloop/log/v2/level"
 )
 
 // The stackFrame contains the top-level trace information
@@ -22,14 +20,6 @@ type stackFrame struct {
 	FilePath    string  // file path
 }
 
-// The ioCopy function is used to copy the output of a reader
-// to a channel.
-func ioCopy(r io.Reader, c chan string) {
-	var buf bytes.Buffer
-	io.Copy(&buf, r)
-	c <- buf.String()
-}
-
 // The getStackFrame returns the top stack frame after skipping skip frames.
 // The boolean result is false when no valid frame can be captured (for
 // example, when skip is larger than the call stack); in that case the
@@ -37,10 +27,9 @@ func ioCopy(r io.Reader, c chan string) {
 func getStackFrame(skip int) (*stackFrame, bool) {
 	sf := &stackFrame{}
 
-	// Return program counters of function invocations on
-	// the calling goroutine's stack and skipping function
-	// call frames inside *Log.
-	pc := make([]uintptr, skip+1) // program counters
+	// Return the single program counter at the requested depth. Only pc[0]
+	// is ever read, so a one-element buffer is enough regardless of skip.
+	pc := make([]uintptr, 1)
 	if n := runtime.Callers(skip, pc); n == 0 {
 		return sf, false
 	}
@@ -241,40 +230,3 @@ func objectMessage(
 
 	return msg
 }
-
-/*
-// The getWriterID returns the unique ID of the object
-// in the io.Writer interface.
-//
-// To identify duplicate objects of the os.Writer interface, the actual
-// address of the object in memory is used. This does not guarantee 100%
-// verification of uniqueness, but there is no need for it.
-//
-// Usually, these are 2-3 files for logging, which are added almost
-// simultaneously, which guarantees a stable address of the object at
-// the time of adding it to the list of outputs. And the issue of
-// duplicates must be monitored by the developer who uses the logger.
-//
-// Therefore, checking for duplicates is a useful auxiliary function
-// for detecting "stupid" logger creation errors.
-func getWriterID(w io.Writer) uintptr {
-	switch v := w.(type) {
-	case *os.File:
-		return reflect.ValueOf(v).Pointer()
-	case *bytes.Buffer:
-		return reflect.ValueOf(v).Pointer()
-	case *strings.Builder:
-		return reflect.ValueOf(v).Pointer()
-	case *bufio.Writer:
-		return reflect.ValueOf(v).Pointer()
-	case *gzip.Writer:
-		return reflect.ValueOf(v).Pointer()
-	case *io.PipeWriter:
-		return reflect.ValueOf(v).Pointer()
-	}
-
-	// Unknown type.
-	// Get the address of the interface itself.
-	return reflect.ValueOf(w).Pointer()
-}
-*/
