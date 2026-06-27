@@ -30,19 +30,82 @@ type stackFrame struct {
 	FilePath    string  // file path
 }
 
-// The getStackFrame returns the top stack frame after skipping skip frames.
-// The boolean result is false when no valid frame can be captured (for
-// example, when skip is larger than the call stack); in that case the
-// returned frame is empty rather than causing a panic.
-func getStackFrame(skip int) (*stackFrame, bool) {
-	// Return the single program counter at the requested depth. Only pc[0]
-	// is ever read, so a one-element buffer is enough regardless of skip.
-	pc := make([]uintptr, 1)
-	if n := runtime.Callers(skip, pc); n == 0 {
+// logPackage is the import path of this package. Frames whose function
+// belongs to it are part of the logger's own call chain and are skipped
+// when locating the caller's stack frame.
+const logPackage = "github.com/goloop/log/v2"
+
+// The captureFrame returns the first stack frame outside this package — the
+// code that called into the logger — skipping skip additional frames for
+// user wrapper layers. The boolean result is false when no such frame can be
+// found. Unlike a fixed skip count it is immune to changes in the depth of
+// the logger's internal call chain.
+func captureFrame(skip int) (*stackFrame, bool) {
+	var pcs [64]uintptr
+	n := runtime.Callers(2, pcs[:]) // skip runtime.Callers and captureFrame
+	if n == 0 {
 		return &stackFrame{}, false
 	}
 
-	return frameFromPC(pc[0])
+	frames := runtime.CallersFrames(pcs[:n])
+	insideLog := true
+	for {
+		frame, more := frames.Next()
+		if frame.Function == "" && frame.PC == 0 {
+			break
+		}
+
+		// Skip the logger's own frames (echo, emit, the level methods and
+		// the package-level wrappers) until the first caller frame.
+		if insideLog {
+			if inLogPackage(frame.Function) {
+				if !more {
+					break
+				}
+				continue
+			}
+			insideLog = false
+		}
+
+		// Then skip the requested number of user wrapper frames.
+		if skip > 0 {
+			skip--
+			if !more {
+				break
+			}
+			continue
+		}
+
+		return frameOf(frame), true
+	}
+
+	return &stackFrame{}, false
+}
+
+// The inLogPackage reports whether fn is a function declared in this package
+// (e.g. "github.com/goloop/log/v2.(*Logger).Info"), as opposed to a caller,
+// a subpackage (".../v2/level.…") or the external test package
+// (".../v2_test.…").
+func inLogPackage(fn string) bool {
+	return len(fn) > len(logPackage) &&
+		fn[:len(logPackage)] == logPackage &&
+		fn[len(logPackage)] == '.'
+}
+
+// The frameOf converts a runtime.Frame into a stackFrame with a short
+// function name.
+func frameOf(f runtime.Frame) *stackFrame {
+	sf := &stackFrame{
+		FileLine:    f.Line,
+		FuncName:    f.Function,
+		FuncAddress: f.Entry,
+		FilePath:    f.File,
+	}
+	if i := strings.LastIndexByte(sf.FuncName, '.'); i >= 0 {
+		sf.FuncName = sf.FuncName[i+1:]
+	}
+
+	return sf
 }
 
 // The frameFromPC builds a stackFrame from a single program counter. The

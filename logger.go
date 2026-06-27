@@ -16,9 +16,14 @@ import (
 )
 
 const (
-	// The skipStackFrames specifies the default number of stack frames to
-	// skip before the program counter stack is collected.
-	skipStackFrames = 4
+	// The skipStackFrames is the default number of additional caller frames
+	// to skip when capturing the call site (0 means the direct caller). The
+	// logger's own internal frames are skipped automatically.
+	skipStackFrames = 0
+
+	// The maxSkipStackFrames caps SetSkipStackFrames to a sane upper bound;
+	// captureFrame walks a bounded number of frames anyway.
+	maxSkipStackFrames = 32
 
 	// The shortPathSections is the number of sections in the short path
 	// of the file. I.e. if it is set to display the path to the file as
@@ -294,13 +299,11 @@ func (logger *Logger) SetSkipStackFrames(skip int) int {
 		return logger.skipStackFrames
 	}
 
-	// Too big a skip cannot capture a stack frame. Reduce it until a valid
-	// frame is available (or we reach zero).
-	for skip > 0 {
-		if _, ok := getStackFrame(skip + 1); ok {
-			break
-		}
-		skip--
+	// Store the value as given, capped at a sane upper bound. The call site
+	// is located by skipping the logger's own frames automatically, so this
+	// is purely the number of extra user wrapper frames to skip.
+	if skip > maxSkipStackFrames {
+		skip = maxSkipStackFrames
 	}
 
 	logger.skipStackFrames = skip
@@ -628,7 +631,7 @@ func (logger *Logger) emit(
 		if frame != nil {
 			sf = frame
 		} else {
-			sf, _ = getStackFrame(logger.skipStackFrames)
+			sf, _ = captureFrame(logger.skipStackFrames)
 		}
 	}
 

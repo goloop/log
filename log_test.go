@@ -132,8 +132,8 @@ func TestSetSkipStackFrames(t *testing.T) {
 		},
 		{
 			name: "Very high value",
-			skip: 32,
-			want: -1, // does not have to match
+			skip: 100,
+			want: -1, // capped, does not have to match the input
 		},
 	}
 

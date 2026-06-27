@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -26,62 +25,6 @@ func TestIoCopy(t *testing.T) {
 
 	if result != input {
 		t.Errorf("ioCopy failed, expected %v, got %v", input, result)
-	}
-}
-
-// TestGetStackFrame tests getStackFrame function.
-func TestGetStackFrame(t *testing.T) {
-	frame, ok := getStackFrame(2) // current function is TestGetStackFrame
-
-	if !ok {
-		t.Fatal("Expected ok to be true")
-	}
-
-	if frame == nil {
-		t.Fatal("Expected frame to not be nil")
-	}
-
-	if frame.FuncName == "" {
-		t.Errorf("Expected FuncName to not be empty")
-	}
-
-	if frame.FilePath == "" {
-		t.Errorf("Expected FilePath to not be empty")
-	}
-
-	if frame.FileLine == 0 {
-		t.Errorf("Expected FileLine to not be zero")
-	}
-
-	if frame.FuncAddress == 0 {
-		t.Errorf("Expected FuncAddress to not be zero")
-	}
-
-	// Verify the function name
-	expectedFuncName := "TestGetStackFrame"
-	if frame.FuncName != expectedFuncName {
-		t.Errorf("Expected function name to be '%s', got '%s'",
-			expectedFuncName, frame.FuncName)
-	}
-
-	// Verify the file path
-	_, fileName, _, _ := runtime.Caller(0)
-	if !strings.Contains(frame.FilePath, fileName) {
-		t.Errorf("Expected file path '%s' to contain '%s'",
-			frame.FilePath, fileName)
-	}
-}
-
-// TestGetStackFrameLargeSkip verifies that an oversized skip yields an
-// invalid (empty) frame instead of panicking.
-func TestGetStackFrameLargeSkip(t *testing.T) {
-	frame, ok := getStackFrame(1024)
-	if ok {
-		t.Error("Expected ok to be false for an oversized skip")
-	}
-
-	if frame == nil {
-		t.Fatal("Expected a non-nil (empty) frame")
 	}
 }
 
@@ -138,7 +81,12 @@ func TestTextMessage(t *testing.T) {
 	output := &Stdout
 	output.WithColor = trit.True
 	output.Layouts = output.Layouts | layout.LineNumber | layout.FuncAddress
-	stackframe, _ := getStackFrame(2)
+	stackframe := &stackFrame{
+		FilePath:    "/tmp/example/main.go",
+		FileLine:    42,
+		FuncName:    "main",
+		FuncAddress: 0x1234,
+	}
 
 	tests := []struct {
 		name string
@@ -212,7 +160,12 @@ func TestObjectMessage(t *testing.T) {
 	level := level.Info
 	timestamp := time.Now()
 	output := &Stdout
-	stackframe, _ := getStackFrame(2)
+	stackframe := &stackFrame{
+		FilePath:    "/tmp/example/main.go",
+		FileLine:    42,
+		FuncName:    "main",
+		FuncAddress: 0x1234,
+	}
 
 	tests := []struct {
 		name string

@@ -115,9 +115,9 @@ func InitializeDefaultLogger() {
 	defer mu.Unlock()
 
 	if self == nil {
+		// The package-level wrappers are themselves skipped automatically
+		// when capturing the call site, so no extra skip is needed here.
 		self = New()
-		skip := skipStackFrames + 1 // self works at the imported package level
-		self.SetSkipStackFrames(skip)
 	}
 }
 
