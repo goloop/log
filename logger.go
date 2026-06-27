@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/goloop/g"
@@ -262,6 +263,11 @@ type Logger struct {
 	// output fails. When nil the logger is best-effort (errors are ignored).
 	errorHandler func(o Output, n int, err error)
 
+	// The levelMask is the cached union of all enabled outputs' level masks.
+	// It is read lock-free at the start of emit to skip, without taking the
+	// lock, any level that no configured output is interested in.
+	levelMask atomic.Uint32
+
 	// The mu is the mutex for the log object.
 	mu sync.RWMutex
 }
@@ -315,6 +321,18 @@ func (logger *Logger) SetErrorHandler(handler func(o Output, n int, err error)) 
 	logger.mu.Lock()
 	defer logger.mu.Unlock()
 	logger.errorHandler = handler
+}
+
+// The recomputeLevelMask refreshes the cached union of all enabled outputs'
+// level masks. Callers must hold the write lock.
+func (logger *Logger) recomputeLevelMask() {
+	var mask level.Level
+	for _, o := range logger.outputs {
+		if o.Enabled.IsTrue() {
+			mask |= o.Levels
+		}
+	}
+	logger.levelMask.Store(uint32(mask))
 }
 
 // SetSkipStackFrames sets the number of stack frames to skip before
@@ -469,6 +487,7 @@ func (logger *Logger) SetOutputs(outputs ...Output) error {
 	}
 
 	logger.outputs = result
+	logger.recomputeLevelMask()
 	return nil
 }
 
@@ -533,6 +552,7 @@ func (logger *Logger) EditOutputs(outputs ...Output) error {
 	}
 
 	logger.outputs = next
+	logger.recomputeLevelMask()
 	return nil
 }
 
@@ -562,6 +582,7 @@ func (logger *Logger) DeleteOutputs(names ...string) {
 	}
 
 	logger.outputs = next
+	logger.recomputeLevelMask()
 }
 
 // Outputs returns a list of outputs.
@@ -641,6 +662,13 @@ func (logger *Logger) emit(
 	frame *stackFrame,
 	fields []logField,
 ) {
+	// Fast path: when logging only to the configured outputs (w == nil), skip
+	// the whole call — no lock, no snapshot — if no enabled output is
+	// interested in this level. levelMask is a lock-free cached union.
+	if w == nil && level.Level(logger.levelMask.Load())&l != l {
+		return
+	}
+
 	// Snapshot the immutable outputs map and config under the read lock,
 	// then release it and write outside the lock: a slow or re-entrant
 	// writer must not block configuration or hold the lock. The map and its

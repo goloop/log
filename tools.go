@@ -390,17 +390,83 @@ func writeObjectWithFields(buf *bytes.Buffer, data []byte, fields []logField) {
 		}
 		comma = true
 
-		if kb, err := json.Marshal(fields[i].key); err == nil {
-			buf.Write(kb)
-		} else {
-			buf.WriteString(`""`)
-		}
+		writeJSONString(buf, fields[i].key)
 		buf.WriteByte(':')
-		if vb, err := json.Marshal(fields[i].val); err == nil {
+		writeJSONValue(buf, fields[i].val)
+	}
+	buf.WriteByte('}')
+}
+
+// The writeJSONValue encodes v as a JSON value into buf. Common scalar types
+// are written directly with strconv (no allocation); strings are escaped;
+// any other type falls back to json.Marshal for correctness.
+func writeJSONValue(buf *bytes.Buffer, v any) {
+	switch x := v.(type) {
+	case nil:
+		buf.WriteString("null")
+	case string:
+		writeJSONString(buf, x)
+	case bool:
+		if x {
+			buf.WriteString("true")
+		} else {
+			buf.WriteString("false")
+		}
+	case int:
+		buf.WriteString(strconv.FormatInt(int64(x), 10))
+	case int64:
+		buf.WriteString(strconv.FormatInt(x, 10))
+	case time.Duration:
+		buf.WriteString(strconv.FormatInt(int64(x), 10))
+	case uint64:
+		buf.WriteString(strconv.FormatUint(x, 10))
+	case float64:
+		buf.WriteString(strconv.FormatFloat(x, 'g', -1, 64))
+	default:
+		if vb, err := json.Marshal(v); err == nil {
 			buf.Write(vb)
 		} else {
 			buf.WriteString("null")
 		}
 	}
-	buf.WriteByte('}')
+}
+
+// The writeJSONString writes s as a quoted, escaped JSON string into buf. The
+// common no-escape case writes the whole string at once without allocating.
+// Unlike encoding/json it does not HTML-escape '<', '>' and '&'; the result
+// is still valid JSON.
+func writeJSONString(buf *bytes.Buffer, s string) {
+	buf.WriteByte('"')
+	start := 0
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c >= 0x20 && c != '"' && c != '\\' {
+			continue
+		}
+		if start < i {
+			buf.WriteString(s[start:i])
+		}
+		switch c {
+		case '"':
+			buf.WriteString(`\"`)
+		case '\\':
+			buf.WriteString(`\\`)
+		case '\n':
+			buf.WriteString(`\n`)
+		case '\r':
+			buf.WriteString(`\r`)
+		case '\t':
+			buf.WriteString(`\t`)
+		default:
+			const hex = "0123456789abcdef"
+			buf.WriteString(`\u00`)
+			buf.WriteByte(hex[c>>4])
+			buf.WriteByte(hex[c&0xF])
+		}
+		start = i + 1
+	}
+	if start < len(s) {
+		buf.WriteString(s[start:])
+	}
+	buf.WriteByte('"')
 }

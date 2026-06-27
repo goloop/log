@@ -118,6 +118,51 @@ func FuzzNew(f *testing.F) {
 	})
 }
 
+// TestLevelMaskUpdatesOnEdit guards the lock-free level fast-gate: it must
+// track configuration changes made through EditOutputs.
+func TestLevelMaskUpdatesOnEdit(t *testing.T) {
+	var buf bytes.Buffer
+	logger := New()
+	if err := logger.SetOutputs(Output{
+		Name:   "t",
+		Writer: &buf,
+		Levels: level.Info,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Debug is not in any output's mask → gated out.
+	logger.Debug("x")
+	if buf.Len() != 0 {
+		t.Errorf("Debug should be gated, got: %q", buf.String())
+	}
+
+	// Enable Debug via EditOutputs → mask refreshed → now emitted.
+	if err := logger.EditOutputs(Output{
+		Name:   "t",
+		Levels: level.Info | level.Debug,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	logger.Debug("hello")
+	if !strings.Contains(buf.String(), "hello") {
+		t.Errorf("Debug should emit after EditOutputs, got: %q", buf.String())
+	}
+
+	// Disable the output → mask empties → gated out again.
+	buf.Reset()
+	if err := logger.EditOutputs(Output{
+		Name:    "t",
+		Enabled: trit.False,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	logger.Info("nope")
+	if buf.Len() != 0 {
+		t.Errorf("disabled output should emit nothing, got: %q", buf.String())
+	}
+}
+
 // TestSetDefault checks that the package-level default logger can be swapped.
 func TestSetDefault(t *testing.T) {
 	orig := Log()
