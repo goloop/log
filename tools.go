@@ -35,14 +35,24 @@ type stackFrame struct {
 // when locating the caller's stack frame.
 const logPackage = "github.com/goloop/log/v2"
 
+// The pcPool recycles the program-counter buffers used while locating the
+// call site, keeping captureFrame off the allocation path.
+var pcPool = sync.Pool{New: func() any {
+	pcs := make([]uintptr, 64)
+	return &pcs
+}}
+
 // The captureFrame returns the first stack frame outside this package — the
 // code that called into the logger — skipping skip additional frames for
 // user wrapper layers. The boolean result is false when no such frame can be
 // found. Unlike a fixed skip count it is immune to changes in the depth of
 // the logger's internal call chain.
 func captureFrame(skip int) (*stackFrame, bool) {
-	var pcs [64]uintptr
-	n := runtime.Callers(2, pcs[:]) // skip runtime.Callers and captureFrame
+	pcsp := pcPool.Get().(*[]uintptr)
+	defer pcPool.Put(pcsp)
+	pcs := *pcsp
+
+	n := runtime.Callers(2, pcs) // skip runtime.Callers and captureFrame
 	if n == 0 {
 		return &stackFrame{}, false
 	}

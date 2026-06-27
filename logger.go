@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"sync"
 	"time"
 
@@ -257,6 +258,10 @@ type Logger struct {
 	// at once, for example, to the console and to the log file.
 	outputs map[string]*Output
 
+	// The errorHandler, if set, is called when writing a log message to an
+	// output fails. When nil the logger is best-effort (errors are ignored).
+	errorHandler func(o Output, n int, err error)
+
 	// The mu is the mutex for the log object.
 	mu sync.RWMutex
 }
@@ -277,11 +282,39 @@ func (logger *Logger) Copy() *Logger {
 		skipStackFrames: logger.skipStackFrames,
 		fatalStatusCode: logger.fatalStatusCode,
 		prefix:          logger.prefix,
+		errorHandler:    logger.errorHandler,
 		outputs:         map[string]*Output{},
 	}
 
 	instance.SetOutputs(outputs...)
 	return instance
+}
+
+// The isNilWriter reports whether w is unusable: an untyped nil, or a typed
+// nil pointer/interface/map/slice/channel/func. A zero-size writer such as
+// io.Discard is a valid writer and is accepted.
+func isNilWriter(w io.Writer) bool {
+	if w == nil {
+		return true
+	}
+
+	switch v := reflect.ValueOf(w); v.Kind() {
+	case reflect.Pointer, reflect.Interface, reflect.Map,
+		reflect.Slice, reflect.Chan, reflect.Func:
+		return v.IsNil()
+	default:
+		return false
+	}
+}
+
+// SetErrorHandler sets a function that is called whenever writing a log
+// message to one of the outputs fails. Passing nil restores the default
+// best-effort behaviour (write errors are ignored). The handler is invoked
+// outside the logger's lock, so it may safely call back into the logger.
+func (logger *Logger) SetErrorHandler(handler func(o Output, n int, err error)) {
+	logger.mu.Lock()
+	defer logger.mu.Unlock()
+	logger.errorHandler = handler
 }
 
 // SetSkipStackFrames sets the number of stack frames to skip before
@@ -409,7 +442,7 @@ func (logger *Logger) SetOutputs(outputs ...Output) error {
 		}
 
 		// The writer must be specified.
-		if g.IsEmpty(o.Writer) {
+		if isNilWriter(o.Writer) {
 			return fmt.Errorf("the %d output has nil writer", i)
 		}
 
@@ -465,39 +498,41 @@ func (logger *Logger) EditOutputs(outputs ...Output) error {
 		return fmt.Errorf("the outputs list is empty")
 	}
 
-	// Check the correctness of the data and create a temporary map.
-	// If the data is not correct, we cannot change the data already
-	// set previously.
-	result := make(map[string]*Output, len(outputs))
-	for _, o := range outputs {
-		out, ok := logger.outputs[o.Name]
+	// Copy-on-write: build a new map and new Output values for the edited
+	// entries, so the previously published outputs are never mutated in
+	// place. This lets emit read them without holding the lock. On any error
+	// the new map is discarded and the current state is preserved.
+	next := make(map[string]*Output, len(logger.outputs))
+	for name, o := range logger.outputs {
+		next[name] = o
+	}
+
+	for _, in := range outputs {
+		old, ok := next[in.Name]
 		if !ok {
-			return fmt.Errorf("output not found '%s'", o.Name)
+			return fmt.Errorf("output not found '%s'", in.Name)
 		}
 
-		// Set the new value if it is specified, otherwise leave the old one.
+		// Set the new value if it is specified, otherwise keep the old one.
 		//
 		// Note: g.Value returns the first non-empty value.
-		out.Writer = g.Value(o.Writer, out.Writer)
-		out.Layouts = g.Value(o.Layouts, out.Layouts)
-		out.Levels = g.Value(o.Levels, out.Levels)
+		edited := *old
+		edited.Writer = g.Value(in.Writer, edited.Writer)
+		edited.Layouts = g.Value(in.Layouts, edited.Layouts)
+		edited.Levels = g.Value(in.Levels, edited.Levels)
 
-		out.Space = g.Value(o.Space, out.Space)
-		out.WithPrefix = g.Value(o.WithPrefix, out.WithPrefix)
-		out.WithColor = g.Value(o.WithColor, out.WithColor)
-		out.Enabled = g.Value(o.Enabled, out.Enabled)
-		out.TextStyle = g.Value(o.TextStyle, out.TextStyle)
-		out.TimestampFormat = g.Value(o.TimestampFormat, out.TimestampFormat)
-		out.LevelFormat = g.Value(o.LevelFormat, out.LevelFormat)
+		edited.Space = g.Value(in.Space, edited.Space)
+		edited.WithPrefix = g.Value(in.WithPrefix, edited.WithPrefix)
+		edited.WithColor = g.Value(in.WithColor, edited.WithColor)
+		edited.Enabled = g.Value(in.Enabled, edited.Enabled)
+		edited.TextStyle = g.Value(in.TextStyle, edited.TextStyle)
+		edited.TimestampFormat = g.Value(in.TimestampFormat, edited.TimestampFormat)
+		edited.LevelFormat = g.Value(in.LevelFormat, edited.LevelFormat)
 
-		result[o.Name] = out
+		next[in.Name] = &edited
 	}
 
-	// Update outputs.
-	for n, o := range result {
-		logger.outputs[n] = o
-	}
-
+	logger.outputs = next
 	return nil
 }
 
@@ -512,9 +547,21 @@ func (logger *Logger) DeleteOutputs(names ...string) {
 	logger.mu.Lock()
 	defer logger.mu.Unlock()
 
-	for _, name := range names {
-		delete(logger.outputs, name)
+	if len(names) == 0 {
+		return
 	}
+
+	// Copy-on-write so an unlocked read in emit is never affected by the
+	// deletion (the published map is replaced, not mutated in place).
+	next := make(map[string]*Output, len(logger.outputs))
+	for n, o := range logger.outputs {
+		next[n] = o
+	}
+	for _, name := range names {
+		delete(next, name)
+	}
+
+	logger.outputs = next
 }
 
 // Outputs returns a list of outputs.
@@ -585,39 +632,41 @@ func (logger *Logger) emit(
 	body string,
 	frame *stackFrame,
 ) {
+	// Snapshot the immutable outputs map and config under the read lock,
+	// then release it and write outside the lock: a slow or re-entrant
+	// writer must not block configuration or hold the lock. The map and its
+	// entries are never mutated after publication (SetOutputs, EditOutputs
+	// and DeleteOutputs replace them copy-on-write), so reading them without
+	// the lock is safe.
 	logger.mu.RLock()
-	defer logger.mu.RUnlock()
-
-	// The hot path (w == nil) iterates the configured outputs directly.
-	// For an ad-hoc writer, copy the map and append a temporary output so
-	// logger.outputs is never written to (which would also be a data race
-	// under the read lock).
 	outputs := logger.outputs
-	if w != nil {
-		outputs = make(map[string]*Output, len(logger.outputs)+1)
-		for name, o := range logger.outputs {
-			outputs[name] = o
-		}
+	prefix := logger.prefix
+	skip := logger.skipStackFrames
+	handler := logger.errorHandler
+	logger.mu.RUnlock()
 
-		adhoc := Default
-		adhoc.Writer = w
-		adhoc.isSystem = true
-		outputs["*"] = &adhoc // this name can be used for system names
+	// The ad-hoc writer (Fxxx) is an extra local target with the default
+	// settings; it never touches logger.outputs.
+	var adhoc *Output
+	if w != nil {
+		a := Default
+		a.Writer = w
+		a.isSystem = true
+		adhoc = &a
 	}
 
-	// First pass: find out whether any output is interested in this level
-	// and whether any of them needs stack-frame information. Both the time
-	// and the (relatively expensive) stack frame are skipped entirely when
-	// no output would emit the message.
-	var interested, needFrame bool
+	// First pass: is any output interested, and does any need a stack frame?
+	// Time and the stack frame are skipped entirely when nobody is interested.
+	interested, needFrame := false, false
 	for _, o := range outputs {
 		if o.Levels&l == l && o.Enabled.IsTrue() {
 			interested = true
-			if o.Layouts != 0 { // every layout flag is derived from the frame
-				needFrame = true
-				break
-			}
+			needFrame = needFrame || o.Layouts != 0
 		}
+	}
+	if adhoc != nil && adhoc.Levels&l == l && adhoc.Enabled.IsTrue() {
+		interested = true
+		needFrame = needFrame || adhoc.Layouts != 0
 	}
 
 	if !interested {
@@ -631,32 +680,54 @@ func (logger *Logger) emit(
 		if frame != nil {
 			sf = frame
 		} else {
-			sf, _ = captureFrame(logger.skipStackFrames)
+			sf, _ = captureFrame(skip)
 		}
 	}
 
-	// Second pass: render each interested message into a pooled buffer and
-	// write the raw bytes, avoiding an intermediate string per output.
+	// Second pass: render and write each message outside the lock.
 	for _, o := range outputs {
-		if o.Levels&l != l || !o.Enabled.IsTrue() {
-			continue
-		}
+		writeOutput(o, l, kind, prefix, now, sf, body, handler)
+	}
+	if adhoc != nil {
+		writeOutput(adhoc, l, kind, prefix, now, sf, body, handler)
+	}
+}
 
-		// Hide or show the prefix.
-		prefix := logger.prefix
-		if !o.WithPrefix.IsTrue() {
-			prefix = ""
-		}
+// The writeOutput renders the message for one output into a pooled buffer
+// and writes the raw bytes, reporting any write error to handler. It runs
+// outside the logger lock.
+func writeOutput(
+	o *Output,
+	l level.Level,
+	kind emitKind,
+	prefix string,
+	now time.Time,
+	sf *stackFrame,
+	body string,
+	handler func(o Output, n int, err error),
+) {
+	if o.Levels&l != l || !o.Enabled.IsTrue() {
+		return
+	}
 
-		buf := bufPool.Get().(*bytes.Buffer)
-		buf.Reset()
-		if o.TextStyle.IsTrue() {
-			appendText(buf, prefix, l, now, o, sf, body)
-		} else {
-			appendObject(buf, prefix, l, now, o, sf, kind, body)
-		}
-		o.Writer.Write(buf.Bytes())
-		bufPool.Put(buf)
+	p := prefix
+	if !o.WithPrefix.IsTrue() {
+		p = ""
+	}
+
+	buf := bufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	if o.TextStyle.IsTrue() {
+		appendText(buf, p, l, now, o, sf, body)
+	} else {
+		appendObject(buf, p, l, now, o, sf, kind, body)
+	}
+
+	n, err := o.Writer.Write(buf.Bytes())
+	bufPool.Put(buf)
+
+	if err != nil && handler != nil {
+		handler(*o, n, err)
 	}
 }
 

@@ -177,6 +177,12 @@ func Enabled(l level.Level) bool {
 	return self.Enabled(l)
 }
 
+// SetErrorHandler sets the write-error handler on the default logger.
+// Passing nil restores the default best-effort behaviour.
+func SetErrorHandler(handler func(o Output, n int, err error)) {
+	self.SetErrorHandler(handler)
+}
+
 // Fpanic creates message with Panic level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.

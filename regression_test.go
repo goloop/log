@@ -3,10 +3,12 @@ package log
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/goloop/log/v2/layout"
 	"github.com/goloop/log/v2/level"
@@ -19,7 +21,7 @@ func TestConcurrentFxxx(t *testing.T) {
 	logger := New()
 	if err := logger.SetOutputs(Output{
 		Name:   "t",
-		Writer: &nopWriter{}, // io.Discard is rejected by g.IsEmpty (empty struct)
+		Writer: io.Discard,
 		Levels: level.Default,
 	}); err != nil {
 		t.Fatal(err)
@@ -114,4 +116,87 @@ func FuzzNew(f *testing.F) {
 	f.Fuzz(func(t *testing.T, prefix string) {
 		_ = New(prefix) // must not panic
 	})
+}
+
+// TestAcceptsIoDiscard guards BUG-06: io.Discard is a valid writer.
+func TestAcceptsIoDiscard(t *testing.T) {
+	logger := New()
+	if err := logger.SetOutputs(Output{
+		Name:   "t",
+		Writer: io.Discard,
+		Levels: level.Default,
+	}); err != nil {
+		t.Errorf("io.Discard should be accepted, got: %v", err)
+	}
+}
+
+// TestRejectsTypedNilWriter ensures a typed-nil writer is still rejected.
+func TestRejectsTypedNilWriter(t *testing.T) {
+	logger := New()
+	var w *bytes.Buffer // typed nil
+	if err := logger.SetOutputs(Output{
+		Name:   "t",
+		Writer: w,
+		Levels: level.Default,
+	}); err == nil {
+		t.Error("typed-nil writer should be rejected")
+	}
+}
+
+type errWriter struct{}
+
+func (errWriter) Write(p []byte) (int, error) {
+	return 0, errors.New("disk full")
+}
+
+// TestErrorHandler guards BUG-03: write errors reach the handler.
+func TestErrorHandler(t *testing.T) {
+	logger := New()
+	var got error
+	logger.SetErrorHandler(func(o Output, n int, err error) { got = err })
+	if err := logger.SetOutputs(Output{
+		Name:   "t",
+		Writer: errWriter{},
+		Levels: level.Default,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	logger.Info("x")
+	if got == nil {
+		t.Error("error handler was not called on a failing write")
+	}
+}
+
+type reentrantWriter struct{ lg *Logger }
+
+func (w *reentrantWriter) Write(p []byte) (int, error) {
+	w.lg.SetPrefix("x") // acquires the write lock; must not deadlock
+	return len(p), nil
+}
+
+// TestReentrantWriterNoDeadlock guards BUG-04: the logger lock is released
+// before user writes, so a writer may call back into the logger.
+func TestReentrantWriterNoDeadlock(t *testing.T) {
+	logger := New()
+	w := &reentrantWriter{lg: logger}
+	if err := logger.SetOutputs(Output{
+		Name:   "t",
+		Writer: w,
+		Levels: level.Default,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	done := make(chan struct{})
+	go func() {
+		logger.Info("x")
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("deadlock: Info did not return (lock held during Write)")
+	}
 }
