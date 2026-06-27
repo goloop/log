@@ -35,28 +35,29 @@ type stackFrame struct {
 // example, when skip is larger than the call stack); in that case the
 // returned frame is empty rather than causing a panic.
 func getStackFrame(skip int) (*stackFrame, bool) {
-	sf := &stackFrame{}
-
 	// Return the single program counter at the requested depth. Only pc[0]
 	// is ever read, so a one-element buffer is enough regardless of skip.
 	pc := make([]uintptr, 1)
 	if n := runtime.Callers(skip, pc); n == 0 {
-		return sf, false
+		return &stackFrame{}, false
 	}
 
-	// Get a function at an address on the stack. A nil result means the
-	// program counter does not map to a known function (skip too large).
-	fn := runtime.FuncForPC(pc[0])
+	return frameFromPC(pc[0])
+}
+
+// The frameFromPC builds a stackFrame from a single program counter. The
+// boolean result is false when pc does not map to a known function, in
+// which case the returned frame is empty.
+func frameFromPC(pc uintptr) (*stackFrame, bool) {
+	fn := runtime.FuncForPC(pc)
 	if fn == nil {
-		return sf, false
+		return &stackFrame{}, false
 	}
 
-	// Get name, path and line of the file.
-	sf.FuncName = fn.Name()
-	sf.FuncAddress = fn.Entry()
-	sf.FilePath, sf.FileLine = fn.FileLine(pc[0])
-	if r := strings.Split(sf.FuncName, "."); len(r) > 0 {
-		sf.FuncName = r[len(r)-1]
+	sf := &stackFrame{FuncName: fn.Name(), FuncAddress: fn.Entry()}
+	sf.FilePath, sf.FileLine = fn.FileLine(pc)
+	if i := strings.LastIndexByte(sf.FuncName, '.'); i >= 0 {
+		sf.FuncName = sf.FuncName[i+1:]
 	}
 
 	return sf, true

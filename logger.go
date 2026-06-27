@@ -569,6 +569,19 @@ const (
 // message is additionally written to an ad-hoc output backed by w using the
 // Default settings; logger.outputs itself is never mutated.
 func (logger *Logger) echo(w io.Writer, l level.Level, kind emitKind, body string) {
+	logger.emit(w, l, kind, body, nil)
+}
+
+// The emit is the core of echo. When frame is non-nil it is used as the
+// stack frame instead of capturing one — the slog bridge passes the real
+// call site carried in the record's program counter.
+func (logger *Logger) emit(
+	w io.Writer,
+	l level.Level,
+	kind emitKind,
+	body string,
+	frame *stackFrame,
+) {
 	logger.mu.RLock()
 	defer logger.mu.RUnlock()
 
@@ -612,7 +625,11 @@ func (logger *Logger) echo(w io.Writer, l level.Level, kind emitKind, body strin
 	now := time.Now()
 	sf := emptyFrame
 	if needFrame {
-		sf, _ = getStackFrame(logger.skipStackFrames)
+		if frame != nil {
+			sf = frame
+		} else {
+			sf, _ = getStackFrame(logger.skipStackFrames)
+		}
 	}
 
 	// Second pass: render each interested message into a pooled buffer and
