@@ -1,4 +1,4 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/log) [![Stay with Ukraine](https://img.shields.io/static/v1?label=Stay%20with&message=Ukraine%20♥&color=ffD700&labelColor=0057B8&style=flat)](https://u24.gov.ua/)
+[![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://pkg.go.dev/github.com/goloop/log/v2) [![Stay with Ukraine](https://img.shields.io/static/v1?label=Stay%20with&message=Ukraine%20♥&color=ffD700&labelColor=0057B8&style=flat)](https://u24.gov.ua/)
 
 
 # log
@@ -29,14 +29,14 @@ A flexible, high-performance logging package for Go applications with support fo
   - Mutex-protected logging operations
 
 - **Performance Optimized**:
-  - Minimal allocations
-  - Efficient formatting
+  - Buffer pooling on the hot path (~5 allocations per call)
+  - Stack frame and formatting skipped when no output needs them
   - Level-based filtering at source
 
 ## Installation
 
 ```bash
-go get -u github.com/goloop/log
+go get -u github.com/goloop/log/v2
 ```
 
 ## Quick Start
@@ -46,7 +46,7 @@ go get -u github.com/goloop/log
 ```go
 package main
 
-import "github.com/goloop/log"
+import "github.com/goloop/log/v2"
 
 func main() {
     // Create logger with prefix.
@@ -72,9 +72,9 @@ package main
 
 import (
     "os"
-    "github.com/goloop/log"
-    "github.com/goloop/log/layout"
-    "github.com/goloop/log/level"
+    "github.com/goloop/log/v2"
+    "github.com/goloop/log/v2/layout"
+    "github.com/goloop/log/v2/level"
 )
 
 func main() {
@@ -118,8 +118,8 @@ func main() {
 package main
 
 import (
-    "github.com/goloop/log"
-    "github.com/goloop/log/layout"
+    "github.com/goloop/log/v2"
+    "github.com/goloop/log/v2/layout"
 )
 
 func main() {
@@ -147,13 +147,17 @@ APP: 2023/12/02 15:04:05 INFO main.go:42 Starting application
 ```json
 {
     "prefix": "APP",
-    "timestamp": "2023/12/02 15:04:05",
     "level": "INFO",
-    "file": "main.go",
-    "line": 42,
-    "message": "Starting application"
+    "timestamp": "2023/12/02 15:04:05",
+    "message": "Starting application",
+    "filePath": "/home/user/app/main.go",
+    "lineNumber": 42,
+    "funcName": "main"
 }
 ```
+
+The JSON keys are `prefix`, `level`, `timestamp`, `message`, `filePath`,
+`lineNumber`, `funcName` and `funcAddress`; empty fields are omitted.
 
 ## Performance Considerations
 
@@ -194,6 +198,53 @@ logger.SetOutputs(log.Output{
     Writer: &CustomWriter{},
     Levels: level.Info,
 })
+```
+
+### Ad-hoc Writer
+
+The `F`-prefixed methods (`Finfo`, `Ferrorf`, ...) write to the configured
+outputs *and additionally* to the writer passed as the first argument,
+without changing the logger's configuration:
+
+```go
+var buf bytes.Buffer
+logger.Finfo(&buf, "captured here and in the configured outputs")
+```
+
+## Structured Logging with slog
+
+The logger can act as a backend for the standard library's `log/slog`:
+
+```go
+import (
+    "log/slog"
+
+    "github.com/goloop/log/v2"
+)
+
+// A *slog.Logger backed by goloop/log's outputs.
+slogger := log.NewSlog("APP")
+slogger.Info("user logged in", "user", "bob", "id", 42)
+
+// Or attach the handler to an existing logger.
+logger := log.New("APP")
+slogger = slog.New(logger.Handler())
+```
+
+slog levels map onto the logger levels (Debug, Info, Warn, Error). Record
+attributes (including those added via `With`/`WithGroup`) are appended to the
+message as `key=value` pairs; in JSON outputs they appear inside the message
+field rather than as separate keys.
+
+### Conditional Logging
+
+Use `Enabled` to skip preparing expensive arguments for a level no output is
+interested in:
+
+```go
+if logger.Enabled(level.Debug) {
+    logger.Debug(expensiveDump())
+}
 ```
 
 ## Managing Outputs

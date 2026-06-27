@@ -50,13 +50,13 @@
 //	    log.Output{
 //	        Name:      "console",
 //	        Writer:    os.Stdout,
-//	        Levels:    log.level.Info | log.level.Debug,
+//	        Levels:    level.Info | level.Debug,
 //	        WithColor: true,
 //	    },
 //	    log.Output{
 //	        Name:      "file",
 //	        Writer:    fileWriter,
-//	        Levels:    log.level.Error | log.level.Fatal,
+//	        Levels:    level.Error | level.Fatal,
 //	        TextStyle: false,  // JSON output
 //	    },
 //	)
@@ -98,6 +98,23 @@
 //
 //		log.Info("Using global logger")
 //		log.SetPrefix("GLOBAL")
+//
+// Structured Logging:
+//
+//	The logger can act as a backend for the standard library log/slog via
+//	Logger.Handler, or use NewSlog for a ready *slog.Logger:
+//
+//		slogger := log.NewSlog("APP")
+//		slogger.Info("started", "addr", addr)
+//
+// Conditional Logging:
+//
+//	Use Enabled to skip preparing expensive arguments for a level that no
+//	output is interested in:
+//
+//		if logger.Enabled(level.Debug) {
+//			logger.Debug(expensiveDump())
+//		}
 //
 // Performance Considerations:
 //   - Use appropriate log levels to minimize runtime overhead
