@@ -19,6 +19,20 @@ func Log() *Logger {
 	return self
 }
 
+// SetDefault replaces the package-level default logger used by the
+// package-level logging functions (for example to redirect output in tests
+// or to install a pre-configured logger). A nil logger is ignored. Use Log
+// to read the current default.
+func SetDefault(logger *Logger) {
+	if logger == nil {
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	self = logger
+}
+
 // New returns a new Logger object with optional prefixes for log messages.
 // If one or more prefixes are provided, they will be concatenated with
 // hyphens and prepended to each log message. Leading and trailing whitespace

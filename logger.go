@@ -614,12 +614,20 @@ const (
 	kindPrintf                  // user-supplied format string
 )
 
+// logField is a single structured key/value pair carried alongside a log
+// message (used by the slog bridge). The value keeps its original type so
+// JSON outputs can render it as a typed field rather than text.
+type logField struct {
+	key string
+	val any
+}
+
 // The echo writes a pre-rendered message body to every configured output
 // whose level mask contains l and which is enabled. When w is not nil, the
 // message is additionally written to an ad-hoc output backed by w using the
 // Default settings; logger.outputs itself is never mutated.
 func (logger *Logger) echo(w io.Writer, l level.Level, kind emitKind, body string) {
-	logger.emit(w, l, kind, body, nil)
+	logger.emit(w, l, kind, body, nil, nil)
 }
 
 // The emit is the core of echo. When frame is non-nil it is used as the
@@ -631,6 +639,7 @@ func (logger *Logger) emit(
 	kind emitKind,
 	body string,
 	frame *stackFrame,
+	fields []logField,
 ) {
 	// Snapshot the immutable outputs map and config under the read lock,
 	// then release it and write outside the lock: a slow or re-entrant
@@ -686,10 +695,10 @@ func (logger *Logger) emit(
 
 	// Second pass: render and write each message outside the lock.
 	for _, o := range outputs {
-		writeOutput(o, l, kind, prefix, now, sf, body, handler)
+		writeOutput(o, l, kind, prefix, now, sf, body, fields, handler)
 	}
 	if adhoc != nil {
-		writeOutput(adhoc, l, kind, prefix, now, sf, body, handler)
+		writeOutput(adhoc, l, kind, prefix, now, sf, body, fields, handler)
 	}
 }
 
@@ -704,6 +713,7 @@ func writeOutput(
 	now time.Time,
 	sf *stackFrame,
 	body string,
+	fields []logField,
 	handler func(o Output, n int, err error),
 ) {
 	if o.Levels&l != l || !o.Enabled.IsTrue() {
@@ -718,9 +728,9 @@ func writeOutput(
 	buf := bufPool.Get().(*bytes.Buffer)
 	buf.Reset()
 	if o.TextStyle.IsTrue() {
-		appendText(buf, p, l, now, o, sf, body)
+		appendText(buf, p, l, now, o, sf, body, fields)
 	} else {
-		appendObject(buf, p, l, now, o, sf, kind, body)
+		appendObject(buf, p, l, now, o, sf, kind, body, fields)
 	}
 
 	n, err := o.Writer.Write(buf.Bytes())
@@ -755,46 +765,52 @@ func (logger *Logger) Enabled(l level.Level) bool {
 // for its operands and writes them to the configured outputs and to w.
 // Spaces are added between operands when neither is a string.
 func (logger *Logger) Fpanic(w io.Writer, a ...any) {
-	logger.echo(w, level.Panic, kindPrint, fmt.Sprint(a...))
-	panic(fmt.Sprint(a...))
+	msg := fmt.Sprint(a...)
+	logger.echo(w, level.Panic, kindPrint, msg)
+	panic(msg)
 }
 
 // Fpanicf creates message with Panic level, according to a format
 // specifier and writes to the configured outputs and additionally to w.
 func (logger *Logger) Fpanicf(w io.Writer, format string, a ...any) {
-	logger.echo(w, level.Panic, kindPrintf, fmt.Sprintf(format, a...))
-	panic(fmt.Sprintf(format, a...))
+	msg := fmt.Sprintf(format, a...)
+	logger.echo(w, level.Panic, kindPrintf, msg)
+	panic(msg)
 }
 
 // Fpanicln creates message with Panic level, using the default formats
 // for its operands and writes them to the configured outputs and to w.
 // Spaces are always added between operands and a newline is appended.
 func (logger *Logger) Fpanicln(w io.Writer, a ...any) {
-	logger.echo(w, level.Panic, kindPrintln, fmt.Sprintln(a...))
-	panic(fmt.Sprintln(a...))
+	msg := fmt.Sprintln(a...)
+	logger.echo(w, level.Panic, kindPrintln, msg)
+	panic(msg)
 }
 
 // Panic creates message with Panic level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string.
 func (logger *Logger) Panic(a ...any) {
-	logger.echo(nil, level.Panic, kindPrint, fmt.Sprint(a...))
-	panic(fmt.Sprint(a...))
+	msg := fmt.Sprint(a...)
+	logger.echo(nil, level.Panic, kindPrint, msg)
+	panic(msg)
 }
 
 // Panicf creates message with Panic level, according to a format specifier
 // and writes to log.Writer.
 func (logger *Logger) Panicf(format string, a ...any) {
-	logger.echo(nil, level.Panic, kindPrintf, fmt.Sprintf(format, a...))
-	panic(fmt.Sprintf(format, a...))
+	msg := fmt.Sprintf(format, a...)
+	logger.echo(nil, level.Panic, kindPrintf, msg)
+	panic(msg)
 }
 
 // Panicln creates message with Panic, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func (logger *Logger) Panicln(a ...any) {
-	logger.echo(nil, level.Panic, kindPrintln, fmt.Sprintln(a...))
-	panic(fmt.Sprintln(a...))
+	msg := fmt.Sprintln(a...)
+	logger.echo(nil, level.Panic, kindPrintln, msg)
+	panic(msg)
 }
 
 // Ffatal creates message with Fatal level, using the default formats

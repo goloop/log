@@ -3,6 +3,7 @@ package log
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"log/slog"
 	"strings"
 	"testing"
@@ -105,5 +106,42 @@ func TestSlogSourceFrame(t *testing.T) {
 
 	if !strings.Contains(buf.String(), "slog_test.go") {
 		t.Errorf("expected source file in %q", buf.String())
+	}
+}
+
+// TestSlogJSONStructured verifies that in JSON outputs the attributes become
+// typed top-level fields (group-qualified) rather than text in the message.
+func TestSlogJSONStructured(t *testing.T) {
+	buf := &bytes.Buffer{}
+	logger := New()
+	if err := logger.SetOutputs(Output{
+		Name:      "t",
+		Writer:    buf,
+		Levels:    level.Default,
+		TextStyle: trit.False, // JSON
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	sl := slog.New(logger.Handler()).With("svc", "api").WithGroup("req")
+	sl.Info("started", "addr", "127.0.0.1", "port", 8080)
+
+	var m map[string]any
+	if err := json.Unmarshal(bytes.TrimSpace(buf.Bytes()), &m); err != nil {
+		t.Fatalf("invalid JSON %q: %v", buf.String(), err)
+	}
+
+	if m["message"] != "started" {
+		t.Errorf("message = %v, want \"started\"", m["message"])
+	}
+	if m["svc"] != "api" {
+		t.Errorf("svc = %v, want \"api\"", m["svc"])
+	}
+	if m["req.addr"] != "127.0.0.1" {
+		t.Errorf("req.addr = %v, want \"127.0.0.1\"", m["req.addr"])
+	}
+	// The number must stay a typed JSON number, not a string.
+	if p, ok := m["req.port"].(float64); !ok || p != 8080 {
+		t.Errorf("req.port = %#v, want number 8080", m["req.port"])
 	}
 }

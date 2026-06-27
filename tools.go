@@ -169,6 +169,7 @@ func appendText(
 	o *Output,
 	sf *stackFrame,
 	body string,
+	fields []logField,
 ) {
 	// Logger prefix.
 	if p != "" {
@@ -195,16 +196,22 @@ func appendText(
 		buf.WriteString(o.Space)
 	}
 
+	// Read the layout bits once instead of decoding the mask repeatedly.
+	hasFile := o.Layouts.FilePath()
+	hasLine := o.Layouts.LineNumber()
+	hasFunc := o.Layouts.FuncName()
+	hasAddr := o.Layouts.FuncAddress()
+
 	// File path.
 	// The FullPath takes precedence over ShortPath.
-	if o.Layouts.FilePath() {
+	if hasFile {
 		if o.Layouts.FullFilePath() {
 			buf.WriteString(sf.FilePath)
 		} else {
 			buf.WriteString(cutFilePath(shortPathSections, sf.FilePath))
 		}
 
-		if o.Layouts.LineNumber() {
+		if hasLine {
 			buf.WriteByte(':')
 			buf.WriteString(strconv.Itoa(sf.FileLine))
 		}
@@ -213,15 +220,15 @@ func appendText(
 	}
 
 	// Line number.
-	if o.Layouts.LineNumber() && !o.Layouts.FilePath() {
+	if hasLine && !hasFile {
 		buf.WriteString(strconv.Itoa(sf.FileLine))
 		buf.WriteString(o.Space)
 	}
 
 	// Function name.
-	if o.Layouts.FuncName() {
+	if hasFunc {
 		buf.WriteString(sf.FuncName)
-		if o.Layouts.FuncAddress() {
+		if hasAddr {
 			buf.WriteByte(':')
 			writeHex(buf, sf.FuncAddress)
 		}
@@ -229,7 +236,7 @@ func appendText(
 	}
 
 	// Function address.
-	if o.Layouts.FuncAddress() && !o.Layouts.FuncName() {
+	if hasAddr && !hasFunc {
 		writeHex(buf, sf.FuncAddress)
 		buf.WriteString(o.Space)
 	}
@@ -238,6 +245,27 @@ func appendText(
 	// operand separators and any trailing newline (for the println kind),
 	// so the header is simply prefixed to it.
 	buf.WriteString(body)
+
+	// Structured fields (from the slog bridge) as space-separated key=value.
+	for i := range fields {
+		buf.WriteByte(' ')
+		buf.WriteString(fields[i].key)
+		buf.WriteByte('=')
+		writeValue(buf, fields[i].val)
+	}
+}
+
+// The writeValue writes v in its textual form (mirroring fmt's default
+// formatting) for a key=value structured field in text output.
+func writeValue(buf *bytes.Buffer, v any) {
+	switch x := v.(type) {
+	case string:
+		buf.WriteString(x)
+	case nil:
+		buf.WriteString("<nil>")
+	default:
+		fmt.Fprint(buf, x)
+	}
 }
 
 // The writeHex writes v as a "0x"-prefixed lowercase hexadecimal number,
@@ -259,6 +287,7 @@ func appendObject(
 	sf *stackFrame,
 	kind emitKind,
 	body string,
+	fields []logField,
 ) {
 	// Output object.
 	// A general structure for outputting a log in JSON format.
@@ -327,8 +356,10 @@ func appendObject(
 			buf.WriteByte(' ')
 		}
 		buf.WriteString(obj.Message)
-	} else {
+	} else if len(fields) == 0 {
 		buf.Write(data)
+	} else {
+		writeObjectWithFields(buf, data, fields)
 	}
 
 	// Add JSON formatting. The print kind keeps JSON blocks on a single
@@ -341,4 +372,35 @@ func appendObject(
 	if o.Space != "" {
 		buf.WriteString(o.Space)
 	}
+}
+
+// The writeObjectWithFields writes the marshalled object with the structured
+// fields spliced in as typed JSON keys before the closing brace.
+func writeObjectWithFields(buf *bytes.Buffer, data []byte, fields []logField) {
+	if len(data) < 2 || data[len(data)-1] != '}' {
+		buf.Write(data) // unexpected shape; emit as-is
+		return
+	}
+
+	buf.Write(data[:len(data)-1]) // everything but the closing brace
+	comma := len(data) > 2        // object already carries at least one field
+	for i := range fields {
+		if comma {
+			buf.WriteByte(',')
+		}
+		comma = true
+
+		if kb, err := json.Marshal(fields[i].key); err == nil {
+			buf.Write(kb)
+		} else {
+			buf.WriteString(`""`)
+		}
+		buf.WriteByte(':')
+		if vb, err := json.Marshal(fields[i].val); err == nil {
+			buf.Write(vb)
+		} else {
+			buf.WriteString("null")
+		}
+	}
+	buf.WriteByte('}')
 }

@@ -28,12 +28,12 @@ func NewSlog(prefixes ...string) *slog.Logger {
 
 // The slogHandler adapts a Logger to the slog.Handler interface.
 //
-// The prefix field holds the already-rendered " key=value" fragments
+// The attrs field holds the flattened, group-qualified key/value pairs
 // contributed by WithAttrs, while groups holds the active group names that
 // qualify the keys of the record's own attributes.
 type slogHandler struct {
 	logger *Logger
-	prefix string
+	attrs  []logField
 	groups []string
 }
 
@@ -56,18 +56,23 @@ func (h *slogHandler) Enabled(_ context.Context, l slog.Level) bool {
 	return h.logger.Enabled(slogLevel(l))
 }
 
-// Handle renders the record (message plus attributes) and emits it through
-// the logger, using the record's program counter as the call-site frame.
+// Handle flattens the record's attributes (combined with the handler's own)
+// and emits the message and fields through the logger, using the record's
+// program counter as the call-site frame.
 func (h *slogHandler) Handle(_ context.Context, r slog.Record) error {
-	var sb strings.Builder
-	sb.WriteString(r.Message)
-	sb.WriteString(h.prefix)
+	fields := h.attrs
+	if r.NumAttrs() > 0 {
+		combined := make([]logField, len(h.attrs), len(h.attrs)+r.NumAttrs())
+		copy(combined, h.attrs)
 
-	group := strings.Join(h.groups, ".")
-	r.Attrs(func(a slog.Attr) bool {
-		appendAttr(&sb, group, a)
-		return true
-	})
+		group := strings.Join(h.groups, ".")
+		rec := make([]slog.Attr, 0, r.NumAttrs())
+		r.Attrs(func(a slog.Attr) bool {
+			rec = append(rec, a)
+			return true
+		})
+		fields = flattenAttrs(group, rec, combined)
+	}
 
 	var frame *stackFrame
 	if r.PC != 0 {
@@ -76,26 +81,22 @@ func (h *slogHandler) Handle(_ context.Context, r slog.Record) error {
 		}
 	}
 
-	h.logger.emit(nil, slogLevel(r.Level), kindPrint, sb.String(), frame)
+	h.logger.emit(nil, slogLevel(r.Level), kindPrint, r.Message, frame, fields)
 	return nil
 }
 
-// WithAttrs returns a handler that pre-renders attrs with the current group
-// qualification and remembers them for every subsequent record.
+// WithAttrs returns a handler that remembers attrs (flattened and qualified
+// with the current group) for every subsequent record.
 func (h *slogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	if len(attrs) == 0 {
 		return h
 	}
 
-	var sb strings.Builder
-	sb.WriteString(h.prefix)
+	next := make([]logField, len(h.attrs), len(h.attrs)+len(attrs))
+	copy(next, h.attrs)
+	next = flattenAttrs(strings.Join(h.groups, "."), attrs, next)
 
-	group := strings.Join(h.groups, ".")
-	for _, a := range attrs {
-		appendAttr(&sb, group, a)
-	}
-
-	return &slogHandler{logger: h.logger, prefix: sb.String(), groups: h.groups}
+	return &slogHandler{logger: h.logger, attrs: next, groups: h.groups}
 }
 
 // WithGroup returns a handler whose subsequent attribute keys are qualified
@@ -109,43 +110,36 @@ func (h *slogHandler) WithGroup(name string) slog.Handler {
 	copy(groups, h.groups)
 	groups[len(h.groups)] = name
 
-	return &slogHandler{logger: h.logger, prefix: h.prefix, groups: groups}
+	return &slogHandler{logger: h.logger, attrs: h.attrs, groups: groups}
 }
 
-// appendAttr writes a single attribute as " group.key=value" into sb. Empty
-// attributes are skipped and group-valued attributes are expanded
-// recursively with their key folded into the qualifier.
-func appendAttr(sb *strings.Builder, group string, a slog.Attr) {
-	a.Value = a.Value.Resolve()
-	if a.Equal(slog.Attr{}) {
-		return
-	}
-
-	if a.Value.Kind() == slog.KindGroup {
-		sub := a.Value.Group()
-		if len(sub) == 0 {
-			return
+// flattenAttrs appends each attribute to dst as a key/value field, resolving
+// LogValuer values, qualifying keys with group and expanding group-valued
+// attributes recursively (their key folded into the qualifier). Empty
+// attributes are skipped.
+func flattenAttrs(group string, attrs []slog.Attr, dst []logField) []logField {
+	for _, a := range attrs {
+		a.Value = a.Value.Resolve()
+		if a.Equal(slog.Attr{}) {
+			continue
 		}
 
-		inner := a.Key
-		if inner != "" && group != "" {
-			inner = group + "." + inner
-		} else if inner == "" {
-			inner = group
+		key := a.Key
+		if group != "" {
+			if key != "" {
+				key = group + "." + key
+			} else {
+				key = group
+			}
 		}
 
-		for _, ga := range sub {
-			appendAttr(sb, inner, ga)
+		if a.Value.Kind() == slog.KindGroup {
+			dst = flattenAttrs(key, a.Value.Group(), dst)
+			continue
 		}
-		return
+
+		dst = append(dst, logField{key: key, val: a.Value.Any()})
 	}
 
-	sb.WriteByte(' ')
-	if group != "" {
-		sb.WriteString(group)
-		sb.WriteByte('.')
-	}
-	sb.WriteString(a.Key)
-	sb.WriteByte('=')
-	sb.WriteString(a.Value.String())
+	return dst
 }

@@ -22,10 +22,15 @@ First major release. The import path is now `github.com/goloop/log/v2`.
 
 - `log/slog` integration: `Logger.Handler()` returns a `slog.Handler`, and
   `NewSlog(prefixes ...string)` returns a ready `*slog.Logger` backed by the
-  logger's outputs. slog levels map onto the logger levels and record
-  attributes are appended to the message as `key=value` pairs.
+  logger's outputs. slog levels map onto the logger levels; record attributes
+  become typed JSON fields in JSON outputs and `key=value` pairs in text
+  outputs.
 - `Logger.Enabled(level.Level)` (and the package-level `Enabled`) to guard the
   preparation of expensive arguments for a level no output is interested in.
+- `Logger.SetErrorHandler` (and the package-level `SetErrorHandler`) to observe
+  output write errors, which were previously discarded.
+- `SetDefault(*Logger)` to swap the package-level default logger (paired with
+  the existing `Log`).
 - Buffer pooling on the hot path, plus benchmarks for the disabled-level and
   no-stack-frame fast paths.
 - godoc examples, regression tests, and fuzz tests for `cutFilePath` and `New`.
@@ -40,6 +45,13 @@ First major release. The import path is now `github.com/goloop/log/v2`.
   reused across all outputs.
 - A single timestamp and at most one stack frame are computed per call, and
   the stack frame is captured only when an output actually needs it.
+- The call site for file/function/line layouts is located by walking the stack
+  to the first frame outside the package, so it reports the caller regardless
+  of the logger's internal call depth. The default `SetSkipStackFrames` value
+  is now 0 (extra user wrapper frames only).
+- Outputs are rendered and written outside the logger lock; `EditOutputs` and
+  `DeleteOutputs` replace the outputs map copy-on-write, so a slow or
+  re-entrant writer can no longer block configuration or deadlock the logger.
 
 ### Removed
 
@@ -59,11 +71,24 @@ First major release. The import path is now `github.com/goloop/log/v2`.
   `SetSkipStackFrames` no longer relies on `recover`.
 - A JSON marshalling error no longer silently drops the message — it falls
   back to a plain text line.
+- File/function/line layouts reported the logger's own method (or runtime
+  internals through the package-level functions) instead of the caller's
+  source location; `SetSkipStackFrames` also clamped any value to 4 and so
+  could not correct it.
+- Write errors were silently discarded; they can now be observed via
+  `SetErrorHandler`.
+- The logger lock was held for the duration of each output write, so a slow or
+  re-entrant writer could block configuration or deadlock.
+- `io.Discard` and other zero-size writers were rejected as a "nil writer"
+  (typed-nil writers are still rejected).
+- slog attributes are now emitted as typed JSON fields in JSON outputs instead
+  of being flattened into the message string.
 
 ### Performance
 
-- A typical `Info` call now costs about 5 allocations (down from ~14); a
-  disabled level costs 1.
+- A typical `Info` call costs ~6 allocations (down from ~14); a disabled level
+  costs 1. Buffers and the call-site program-counter scratch are pooled, the
+  per-`Fxxx` map copy is gone, and panic message bodies are formatted once.
 
 ### Documentation
 

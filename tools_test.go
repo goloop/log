@@ -114,7 +114,7 @@ func TestTextMessage(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			appendText(&buf, prefix, level, timestamp, output, stackframe,
-				test.body)
+				test.body, nil)
 			result := buf.String()
 
 			if !strings.Contains(result, test.e) {
@@ -129,7 +129,7 @@ func TestTextMessage(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			appendText(&buf, prefix, level, timestamp, output, stackframe,
-				test.body)
+				test.body, nil)
 			result := buf.String()
 
 			if !strings.Contains(result, test.e) {
@@ -144,7 +144,7 @@ func TestTextMessage(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			appendText(&buf, prefix, level, timestamp, output, stackframe,
-				test.body)
+				test.body, nil)
 			result := buf.String()
 
 			if !strings.Contains(result, test.e) {
@@ -224,7 +224,7 @@ func TestObjectMessage(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			appendObject(&buf, prefix, level, timestamp, output, stackframe,
-				test.kind, test.body)
+				test.kind, test.body, nil)
 			result := buf.String()
 
 			// Unmarshal the JSON result into a map

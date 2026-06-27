@@ -118,6 +118,23 @@ func FuzzNew(f *testing.F) {
 	})
 }
 
+// TestSetDefault checks that the package-level default logger can be swapped.
+func TestSetDefault(t *testing.T) {
+	orig := Log()
+	defer SetDefault(orig)
+
+	custom := New("CUSTOM")
+	SetDefault(custom)
+	if Log() != custom {
+		t.Error("SetDefault did not install the custom logger")
+	}
+
+	SetDefault(nil) // must be ignored
+	if Log() != custom {
+		t.Error("SetDefault(nil) should be ignored")
+	}
+}
+
 // TestAcceptsIoDiscard guards BUG-06: io.Discard is a valid writer.
 func TestAcceptsIoDiscard(t *testing.T) {
 	logger := New()

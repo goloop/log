@@ -232,9 +232,8 @@ slogger = slog.New(logger.Handler())
 ```
 
 slog levels map onto the logger levels (Debug, Info, Warn, Error). Record
-attributes (including those added via `With`/`WithGroup`) are appended to the
-message as `key=value` pairs; in JSON outputs they appear inside the message
-field rather than as separate keys.
+attributes (including those added via `With`/`WithGroup`) become typed JSON
+fields in JSON outputs and `key=value` pairs in text outputs.
 
 ### Conditional Logging
 
@@ -245,6 +244,17 @@ interested in:
 if logger.Enabled(level.Debug) {
     logger.Debug(expensiveDump())
 }
+```
+
+### Observing Write Errors
+
+By default writes are best-effort and errors are ignored. Register a handler
+to observe them (for example to alert on a failing file or network output):
+
+```go
+logger.SetErrorHandler(func(o log.Output, n int, err error) {
+    fmt.Fprintf(os.Stderr, "log output %q failed: %v\n", o.Name, err)
+})
 ```
 
 ## Managing Outputs
