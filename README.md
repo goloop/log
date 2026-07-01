@@ -1,37 +1,29 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/goloop/log)](https://goreportcard.com/report/github.com/goloop/log) [![License](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/goloop/log/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://pkg.go.dev/github.com/goloop/log/v2) [![Stay with Ukraine](https://img.shields.io/static/v1?label=Stay%20with&message=Ukraine%20♥&color=ffD700&labelColor=0057B8&style=flat)](https://u24.gov.ua/)
 
-
 # log
 
-A flexible, high-performance logging package for Go applications with support for multiple output formats, logging levels, and concurrent operations.
+`log` is a leveled, multi-output logging package for Go. A single log call fans
+out to every configured **output**, and each output independently decides which
+levels it accepts, whether it renders text or JSON, whether it uses colour, and
+how the message prefix is laid out.
+
+It is safe for concurrent use, and work is skipped when nobody needs it: level
+filtering happens at the source, and stack-frame capture and formatting run only
+when at least one output requires them, so silent levels stay cheap.
 
 ## Features
 
-- **Multiple Log Levels** with clear semantics:
-  - `Panic`: For unrecoverable errors that require immediate attention (calls `panic()`)
-  - `Fatal`: For critical errors that prevent application startup/operation (calls `os.Exit(1)`)
-  - `Error`: For runtime errors that need investigation but don't stop the application
-  - `Warn`: For potentially harmful situations
-  - `Info`: For general operational information
-  - `Debug`: For detailed system state information
-  - `Trace`: For ultra-detailed debugging information
-
-- **Flexible Output Configuration**:
-  - Multiple simultaneous outputs (console, files, custom writers)
-  - Per-output level filtering
-  - Text and JSON formats
-  - ANSI color support for terminal output
-  - Custom prefix support
-  - Configurable timestamps and layouts
-
-- **Thread-Safe Operations**:
-  - Safe for concurrent use across goroutines
-  - Mutex-protected logging operations
-
-- **Performance Optimized**:
-  - Buffer pooling on the hot path (~5 allocations per call)
-  - Stack frame and formatting skipped when no output needs them
-  - Level-based filtering at source
+- **Seven levels** — `Panic`, `Fatal`, `Error`, `Warn`, `Info`, `Debug`,
+  `Trace`, each with plain / `…f` / `…ln` forms.
+- **Multiple outputs** — console, files and custom writers at once, each with
+  per-output level filtering, text or JSON, ANSI colour and a configurable
+  prefix layout.
+- **Thread-safe** — mutex-protected, with buffer pooling on the hot path.
+- **`slog` bridge** — back the standard `log/slog` with `NewSlog` or
+  `logger.Handler()`.
+- **Ad-hoc writers** — the `F`-family also tees a message to a one-off writer.
+- **Observability** — `Enabled` guards expensive work; `SetErrorHandler`
+  surfaces failing outputs.
 
 ## Installation
 
@@ -39,9 +31,13 @@ A flexible, high-performance logging package for Go applications with support fo
 go get -u github.com/goloop/log/v2
 ```
 
-## Quick Start
+```go
+import "github.com/goloop/log/v2"
+```
 
-### Basic Usage
+Requires Go 1.24 or newer.
+
+## Quick start
 
 ```go
 package main
@@ -49,290 +45,62 @@ package main
 import "github.com/goloop/log/v2"
 
 func main() {
-    // Create logger with prefix.
     logger := log.New("APP")
 
-    // Basic logging.
     logger.Info("Application started")
-    logger.Debug("Debug information")
-    logger.Error("Something went wrong")
-
-    // Formatted logging.
-    logger.Infof("User %s logged in", username)
-
-    // With newline.
+    logger.Infof("User %s logged in", "bob")
     logger.Errorln("Failed to connect to database")
 }
 ```
 
-### Advanced Configuration
+Fan out to a coloured console and a JSON file, each filtered by level:
 
 ```go
-package main
-
 import (
-    "os"
     "github.com/goloop/log/v2"
     "github.com/goloop/log/v2/layout"
     "github.com/goloop/log/v2/level"
 )
 
-func main() {
-    // Open log file.
-    file, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer file.Close()
-
-    // Configure multiple outputs.
-    log.SetOutputs(
-        // Console output with colors.
-        log.Output{
-            Name:      "console",
-            Writer:    os.Stdout,
-            Levels:    level.Info | level.Warn | level.Error,
-            Layouts:   layout.Default,
-            WithColor: 1,
-            TextStyle: 1,
-        },
-        // File output in JSON format.
-        log.Output{
-            Name:      "file",
-            Writer:    file,
-            Levels:    level.Error | level.Fatal,
-            TextStyle: -1, // JSON format
-            WithPrefix: 1,
-        },
-    )
-
-    // Use the logger
-    log.Info("System initialized")
-    log.Error("Database connection failed")
-}
-```
-
-### Custom Layout Configuration
-
-```go
-package main
-
-import (
-    "github.com/goloop/log/v2"
-    "github.com/goloop/log/v2/layout"
+log.SetOutputs(
+    log.Output{
+        Name:      "console",
+        Writer:    os.Stdout,
+        Levels:    level.Info | level.Warn | level.Error,
+        Layouts:   layout.Default,
+        WithColor: 1,
+        TextStyle: 1,
+    },
+    log.Output{
+        Name:      "file",
+        Writer:    file,
+        Levels:    level.Error | level.Fatal,
+        TextStyle: -1, // JSON
+    },
 )
 
-func main() {
-    logger := log.New("APP")
-
-    // Configure custom layout.
-    logger.SetOutputs(log.Output{
-        Name:    "custom",
-        Writer:  os.Stdout,
-        Layouts: layout.FullFilePath | layout.FuncName | layout.LineNumber,
-    })
-
-    logger.Info("Custom layout message")
-}
+log.Info("System initialized")
+log.Error("Database connection failed")
 ```
 
-## Output Formats
-
-### Text Format (Default)
-```
-APP: 2023/12/02 15:04:05 INFO main.go:42 Starting application
-```
-
-### JSON Format
-```json
-{
-    "prefix": "APP",
-    "level": "INFO",
-    "timestamp": "2023/12/02 15:04:05",
-    "message": "Starting application",
-    "filePath": "/home/user/app/main.go",
-    "lineNumber": 42,
-    "funcName": "main"
-}
-```
-
-The JSON keys are `prefix`, `level`, `timestamp`, `message`, `filePath`,
-`lineNumber`, `funcName` and `funcAddress`; empty fields are omitted.
-
-## Performance Considerations
-
-- Use appropriate log levels in production (typically Info and above)
-- Consider using JSON format only when structured logging is required
-- Disable debug/trace levels in production for optimal performance
-- Use formatted logging (`Infof`, etc.) only when necessary
-
-## Advanced Features
-
-### Stack Frame Skipping
+Back the standard `log/slog`:
 
 ```go
-logger := log.New("APP")
-logger.SetSkipStackFrames(2) // skip wrapper functions
-```
-
-### Multiple Prefix Support
-
-```go
-logger := log.New("APP", "SERVICE", "API")  // Results in "APP-SERVICE-API"
-```
-
-### Custom Writers
-
-```go
-type CustomWriter struct {
-    // implementation
-}
-
-func (w *CustomWriter) Write(p []byte) (n int, err error) {
-    // custom write logic.
-    return len(p), nil
-}
-
-logger.SetOutputs(log.Output{
-    Name: "custom",
-    Writer: &CustomWriter{},
-    Levels: level.Info,
-})
-```
-
-### Ad-hoc Writer
-
-The `F`-prefixed methods (`Finfo`, `Ferrorf`, ...) write to the configured
-outputs *and additionally* to the writer passed as the first argument,
-without changing the logger's configuration:
-
-```go
-var buf bytes.Buffer
-logger.Finfo(&buf, "captured here and in the configured outputs")
-```
-
-## Structured Logging with slog
-
-The logger can act as a backend for the standard library's `log/slog`:
-
-```go
-import (
-    "log/slog"
-
-    "github.com/goloop/log/v2"
-)
-
-// A *slog.Logger backed by goloop/log's outputs.
 slogger := log.NewSlog("APP")
 slogger.Info("user logged in", "user", "bob", "id", 42)
-
-// Or attach the handler to an existing logger.
-logger := log.New("APP")
-slogger = slog.New(logger.Handler())
 ```
 
-slog levels map onto the logger levels (Debug, Info, Warn, Error). Record
-attributes (including those added via `With`/`WithGroup`) become typed JSON
-fields in JSON outputs and `key=value` pairs in text outputs.
+## Documentation
 
-### Conditional Logging
-
-Use `Enabled` to skip preparing expensive arguments for a level no output is
-interested in:
-
-```go
-if logger.Enabled(level.Debug) {
-    logger.Debug(expensiveDump())
-}
-```
-
-### Observing Write Errors
-
-By default writes are best-effort and errors are ignored. Register a handler
-to observe them (for example to alert on a failing file or network output):
-
-```go
-logger.SetErrorHandler(func(o log.Output, n int, err error) {
-    fmt.Fprintf(os.Stderr, "log output %q failed: %v\n", o.Name, err)
-})
-```
-
-## Managing Outputs
-
-The logger provides several methods to manage outputs:
-
-### Get Current Outputs
-```go
-// Get all outputs.
-outputs := logger.Outputs()
-
-// Get specific outputs by name.
-stdoutOutput := logger.Outputs("stdout")
-```
-
-### Edit Outputs
-```go
-// Change output configuration.
-logger.EditOutputs(log.Output{
-    Name:    "stdout",
-    Levels:  level.Error | level.Fatal,  // change levels
-    WithColor: 1,                        // enable colors
-})
-
-// Disable specific output.
-logger.EditOutputs(log.Output{
-    Name:    "stdout",
-    Enabled: -1,  // or trit.False
-})
-```
-
-### Delete Outputs
-```go
-// Remove specific outputs,
-logger.DeleteOutputs("stdout", "file")
-
-// Or disable all logging by removing all outputs.
-logger.DeleteOutputs(logger.Outputs()...)
-```
-
-### Set New Outputs
-```go
-// Replace all outputs with new ones.
-logger.SetOutputs(
-    log.Output{
-        Name:    "console",
-        Writer:  os.Stdout,
-        Levels:  level.Info | level.Warn,
-    },
-    log.Output{
-        Name:    "errors",
-        Writer:  errorFile,
-        Levels:  level.Error | level.Fatal,
-    },
-)
-```
-
-## Why use this logger?
-
-- Flexible configuration
-- High performance
-- Multiple output support
-- Structured logging support
-- Thread safety
-- Comprehensive logging levels
-
-## Related Projects
-
-- [goloop/g](https://github.com/goloop/g) - Common utilities
-- [goloop/trit](https://github.com/goloop/trit) - Three-valued logic
-
+- Full reference and recipes: [DOC.md](DOC.md) · [DOC.UK.md](DOC.UK.md)
+- Package API: [pkg.go.dev/github.com/goloop/log/v2](https://pkg.go.dev/github.com/goloop/log/v2)
+- Changes between versions: [CHANGELOG.md](CHANGELOG.md)
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome. Please run `go test ./...`, `go vet ./...` and
+`gofmt -l .` before submitting a pull request.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-
+`log` is released under the MIT License. See [LICENSE](LICENSE).
