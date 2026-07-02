@@ -10,7 +10,7 @@ import (
 
 	"github.com/goloop/log/v2/layout"
 	"github.com/goloop/log/v2/level"
-	"github.com/goloop/trit"
+	"github.com/goloop/trit/v2"
 )
 
 // newTextSlog returns a slog.Logger that writes text into a buffer through
@@ -106,6 +106,31 @@ func TestSlogSourceFrame(t *testing.T) {
 
 	if !strings.Contains(buf.String(), "slog_test.go") {
 		t.Errorf("expected source file in %q", buf.String())
+	}
+}
+
+// TestSlogNewlineTerminated verifies that records are newline-terminated in
+// both text and JSON outputs, matching the convention of slog's own handlers.
+func TestSlogNewlineTerminated(t *testing.T) {
+	for _, asJSON := range []bool{false, true} {
+		buf := &bytes.Buffer{}
+		logger := New()
+		out := Output{Name: "t", Writer: buf, Levels: level.Default}
+		if asJSON {
+			out.TextStyle = trit.False
+		}
+		if err := logger.SetOutputs(out); err != nil {
+			t.Fatal(err)
+		}
+
+		sl := slog.New(logger.Handler())
+		sl.Info("one", "k", 1)
+		sl.Info("two", "k", 2)
+
+		if got := strings.Count(buf.String(), "\n"); got != 2 {
+			t.Errorf("json=%v: want 2 newline-terminated records, got %d in %q",
+				asJSON, got, buf.String())
+		}
 	}
 }
 

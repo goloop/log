@@ -168,6 +168,7 @@ func appendText(
 	t time.Time,
 	o *Output,
 	sf *stackFrame,
+	kind emitKind,
 	body string,
 	fields []logField,
 ) {
@@ -241,9 +242,12 @@ func appendText(
 		buf.WriteString(o.Space)
 	}
 
-	// Append the pre-rendered message body. The body already encodes the
-	// operand separators and any trailing newline (for the println kind),
-	// so the header is simply prefixed to it.
+	// Append the pre-rendered message body. For the println kind any trailing
+	// newline is stripped here and re-added after the fields, so the record
+	// ends with exactly one newline even when structured fields follow.
+	if kind == kindPrintln {
+		body = strings.TrimSuffix(body, "\n")
+	}
 	buf.WriteString(body)
 
 	// Structured fields (from the slog bridge) as space-separated key=value.
@@ -252,6 +256,11 @@ func appendText(
 		buf.WriteString(fields[i].key)
 		buf.WriteByte('=')
 		writeValue(buf, fields[i].val)
+	}
+
+	// Terminate println-style records with a single trailing newline.
+	if kind == kindPrintln {
+		buf.WriteByte('\n')
 	}
 }
 

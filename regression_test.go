@@ -12,7 +12,7 @@ import (
 
 	"github.com/goloop/log/v2/layout"
 	"github.com/goloop/log/v2/level"
-	"github.com/goloop/trit"
+	"github.com/goloop/trit/v2"
 )
 
 // TestConcurrentFxxx guards against the data race once present in echo: many

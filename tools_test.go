@@ -11,7 +11,7 @@ import (
 
 	"github.com/goloop/log/v2/layout"
 	"github.com/goloop/log/v2/level"
-	"github.com/goloop/trit"
+	"github.com/goloop/trit/v2"
 )
 
 // TetsIoCopy tests ioCopy function.
@@ -114,7 +114,7 @@ func TestTextMessage(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			appendText(&buf, prefix, level, timestamp, output, stackframe,
-				test.body, nil)
+				kindPrint, test.body, nil)
 			result := buf.String()
 
 			if !strings.Contains(result, test.e) {
@@ -129,7 +129,7 @@ func TestTextMessage(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			appendText(&buf, prefix, level, timestamp, output, stackframe,
-				test.body, nil)
+				kindPrint, test.body, nil)
 			result := buf.String()
 
 			if !strings.Contains(result, test.e) {
@@ -144,7 +144,7 @@ func TestTextMessage(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			appendText(&buf, prefix, level, timestamp, output, stackframe,
-				test.body, nil)
+				kindPrint, test.body, nil)
 			result := buf.String()
 
 			if !strings.Contains(result, test.e) {

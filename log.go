@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/goloop/g"
+	"github.com/goloop/g/v2"
 	"github.com/goloop/log/v2/level"
 )
 

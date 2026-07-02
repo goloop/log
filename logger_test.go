@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/goloop/log/v2/level"
-	"github.com/goloop/trit"
+	"github.com/goloop/trit/v2"
 )
 
 // TestEcho tests the echo method of the Logger.

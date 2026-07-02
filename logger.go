@@ -10,11 +10,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/goloop/g"
-	"github.com/goloop/is"
+	"github.com/goloop/g/v2"
+	"github.com/goloop/is/v2"
 	"github.com/goloop/log/v2/layout"
 	"github.com/goloop/log/v2/level"
-	"github.com/goloop/trit"
+	"github.com/goloop/trit/v2"
 )
 
 const (
@@ -756,7 +756,7 @@ func writeOutput(
 	buf := bufPool.Get().(*bytes.Buffer)
 	buf.Reset()
 	if o.TextStyle.IsTrue() {
-		appendText(buf, p, l, now, o, sf, body, fields)
+		appendText(buf, p, l, now, o, sf, kind, body, fields)
 	} else {
 		appendObject(buf, p, l, now, o, sf, kind, body, fields)
 	}

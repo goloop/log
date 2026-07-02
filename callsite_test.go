@@ -10,7 +10,7 @@ import (
 	"github.com/goloop/log/v2"
 	"github.com/goloop/log/v2/layout"
 	"github.com/goloop/log/v2/level"
-	"github.com/goloop/trit"
+	"github.com/goloop/trit/v2"
 )
 
 func callSiteLogger() (*log.Logger, *bytes.Buffer) {
