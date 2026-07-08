@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/goloop/log/v2/layout"
 	"github.com/goloop/log/v2/level"
 )
 
@@ -334,7 +335,7 @@ func BenchmarkGating(b *testing.B) {
 			Name:    "benchmark",
 			Writer:  &nopWriter{},
 			Levels:  level.Default,
-			Layouts: 0, // no file/func/line → stack frame is skipped
+			Layouts: layout.None, // no file/func/line -> stack frame is skipped
 		})
 
 		b.ResetTimer()

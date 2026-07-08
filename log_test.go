@@ -12,7 +12,7 @@ import (
 // TestLog tests the Log function.
 func TestLog(t *testing.T) {
 	// Clear the logger instance.
-	self = nil
+	self.Store(nil)
 
 	// Ensure that the logger instance is initialized.
 	InitializeDefaultLogger()
@@ -100,7 +100,7 @@ func TestCopy(t *testing.T) {
 	copy := Copy() // copy self logger
 
 	// Perform an in-depth comparison of objects.
-	if !reflect.DeepEqual(copy, self) {
+	if !reflect.DeepEqual(copy, self.Load()) {
 		t.Errorf("Copy method doesn't make a complete copy of the object.")
 	}
 }
@@ -316,7 +316,7 @@ func TestSetOutputs(t *testing.T) {
 
 		// Check names.
 		for _, n := range tt.names {
-			if _, ok := self.outputs[n]; !ok {
+			if _, ok := self.Load().outputs[n]; !ok {
 				t.Errorf("%s: %s output not found", tt.name, n)
 			}
 		}
@@ -384,7 +384,7 @@ func TestEditOutputs(t *testing.T) {
 
 		// Check names.
 		for _, o := range tt.in {
-			oo, ok := self.outputs[o.Name]
+			oo, ok := self.Load().outputs[o.Name]
 			if !ok {
 				t.Errorf("%s: %s output not found", tt.name, o.Name)
 			}
@@ -403,7 +403,7 @@ func TestDeleteOutputs(t *testing.T) {
 	defer SetOutputs(outputs...)
 
 	DeleteOutputs(Stdout.Name)
-	if _, ok := self.outputs[Stdout.Name]; ok {
+	if _, ok := self.Load().outputs[Stdout.Name]; ok {
 		t.Errorf("DeleteOutputs did not delete the output")
 	}
 }

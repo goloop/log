@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0]
+
+Concurrency, output-format and API-consistency fixes. Two output-format changes
+are noted below.
+
+### Added
+- `layout.None` to explicitly disable caller info (a zero `Layouts` still means
+  "use Default"); the logger then also skips the stack-frame capture.
+- `level.Level.Warn()` accessor, completing the per-level accessor set.
+
+### Fixed
+- Concurrent writes to one output are serialized with a per-output mutex, so a
+  writer that is not itself safe for concurrent use (a `bytes.Buffer`, a plain
+  file) is never written by two goroutines at once, as the documentation
+  promises.
+- The package-level default logger is held in an `atomic.Pointer`, so
+  `SetDefault` no longer races with the package-level logging functions.
+- `New` strips surrounding whitespace from a single prefix, matching the
+  documented behaviour and the multi-prefix path.
+- JSON string encoding replaces invalid UTF-8 with U+FFFD, so the output is
+  always a valid JSON document.
+- A structured (slog) attribute whose key collides with a built-in field
+  (`level`, `message`, `timestamp`, ...) is namespaced under `fields.` instead
+  of producing a duplicate JSON key.
+- `level.Level.IsSingle` returns false for an out-of-range bit.
+
+### Changed
+- **Output format:** every text record ends with exactly one newline, so
+  successive `Info`/`Infof` calls are delimited instead of glued together (as
+  the standard `log` package does).
+- **Output format:** JSON output is valid JSON Lines - one object per line
+  terminated by a single newline, with no stray `Space` around records.
+
 ## [2.0.0] - 2026-06-27
 
 First major release. The import path is now `github.com/goloop/log/v2`.

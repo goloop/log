@@ -33,6 +33,14 @@ const (
 
 	// Default is the default format for the log message.
 	Default = ShortFilePath | FuncName | LineNumber
+
+	// None is an explicit "no layout fields" sentinel for an Output's Layouts.
+	// A zero Layouts is treated as "use Default" for backward compatibility, so
+	// None is the way to actually disable caller info; the logger then also
+	// skips the (relatively expensive) stack-frame capture. It is a
+	// configuration marker consumed by SetOutputs/EditOutputs and never stored,
+	// so it is deliberately outside the valid single-flag range.
+	None Layout = 1 << 6
 )
 
 // Layout is the type of single flags of the the Layout.

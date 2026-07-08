@@ -3,20 +3,20 @@ package log
 import (
 	"io"
 	"strings"
-	"sync"
+	"sync/atomic"
 
 	"github.com/goloop/g/v2"
 	"github.com/goloop/log/v2/level"
 )
 
-var (
-	self *Logger // is the default logger instance
-	mu   sync.Mutex
-)
+// self is the default logger instance, held atomically so the package-level
+// wrappers can read it concurrently with SetDefault without a data race, as
+// slog.SetDefault does in the standard library.
+var self atomic.Pointer[Logger]
 
 // Log returns the default logger instance.
 func Log() *Logger {
-	return self
+	return self.Load()
 }
 
 // SetDefault replaces the package-level default logger used by the
@@ -27,10 +27,7 @@ func SetDefault(logger *Logger) {
 	if logger == nil {
 		return
 	}
-
-	mu.Lock()
-	defer mu.Unlock()
-	self = logger
+	self.Store(logger)
 }
 
 // New returns a new Logger object with optional prefixes for log messages.
@@ -73,9 +70,9 @@ func New(prefixes ...string) *Logger {
 	if len(prefixes) != 0 {
 		// Concatenate prefixes.
 		if l := len(prefixes); l == 1 {
-			// If there is only one prefix, use it as is.
-			// In this case, no changes are made to the prefix.
-			prefix = prefixes[0]
+			// A single prefix: strip surrounding whitespace, matching the
+			// documented behaviour and the multi-prefix path.
+			prefix = g.Trim(prefixes[0], " \t\n\r")
 		} else if l > 1 {
 			// Several words that characterize the prefix are given.
 			// In this case, they must be combined as ONE-TWO-THREE in
@@ -125,13 +122,11 @@ func New(prefixes ...string) *Logger {
 // The function is called when the module is initialized.
 // Calling the function again has no result.
 func InitializeDefaultLogger() {
-	mu.Lock()
-	defer mu.Unlock()
-
-	if self == nil {
-		// The package-level wrappers are themselves skipped automatically
-		// when capturing the call site, so no extra skip is needed here.
-		self = New()
+	// The package-level wrappers are themselves skipped automatically when
+	// capturing the call site, so no extra skip is needed here. CompareAndSwap
+	// makes the first-writer-wins initialization safe under concurrent calls.
+	if self.Load() == nil {
+		self.CompareAndSwap(nil, New())
 	}
 }
 
@@ -142,112 +137,112 @@ func init() {
 
 // Copy returns copy of the log object.
 func Copy() *Logger {
-	return self.Copy()
+	return self.Load().Copy()
 }
 
 // SetSkipStackFrames sets skip stack frames level.
 func SetSkipStackFrames(skips int) {
-	self.SetSkipStackFrames(skips)
+	self.Load().SetSkipStackFrames(skips)
 }
 
 // SkipStackFrames returns skip stack frames level.
 func SkipStackFrames() int {
-	return self.SkipStackFrames()
+	return self.Load().SkipStackFrames()
 }
 
 // SetPrefix sets the name of the logger object.
 func SetPrefix(prefix string) string {
-	return self.SetPrefix(prefix)
+	return self.Load().SetPrefix(prefix)
 }
 
 // Prefix returns the name of the log object.
 func Prefix() string {
-	return self.Prefix()
+	return self.Load().Prefix()
 }
 
 // SetOutputs sets the outputs of the log object.
 func SetOutputs(outputs ...Output) error {
-	return self.SetOutputs(outputs...)
+	return self.Load().SetOutputs(outputs...)
 }
 
 // EditOutputs edits the outputs of the log object.
 func EditOutputs(outputs ...Output) error {
-	return self.EditOutputs(outputs...)
+	return self.Load().EditOutputs(outputs...)
 }
 
 // DeleteOutputs deletes the outputs of the log object.
 func DeleteOutputs(names ...string) {
-	self.DeleteOutputs(names...)
+	self.Load().DeleteOutputs(names...)
 }
 
 // Outputs returns a list of outputs.
 func Outputs(names ...string) []Output {
-	return self.Outputs(names...)
+	return self.Load().Outputs(names...)
 }
 
 // Enabled reports whether at least one enabled output of the default logger
 // would emit a message at level l.
 func Enabled(l level.Level) bool {
-	return self.Enabled(l)
+	return self.Load().Enabled(l)
 }
 
 // SetErrorHandler sets the write-error handler on the default logger.
 // Passing nil restores the default best-effort behaviour.
 func SetErrorHandler(handler func(o Output, n int, err error)) {
-	self.SetErrorHandler(handler)
+	self.Load().SetErrorHandler(handler)
 }
 
 // Fpanic creates message with Panic level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Fpanic(w io.Writer, a ...any) {
-	self.Fpanic(w, a...)
+	self.Load().Fpanic(w, a...)
 }
 
 // Fpanicf creates message with Panic level, according to a format
 // specifier and writes to w.
 func Fpanicf(w io.Writer, format string, a ...any) {
-	self.Fpanicf(w, format, a...)
+	self.Load().Fpanicf(w, format, a...)
 }
 
 // Fpanicln creates message with Panic level, using the default formats
 // for its operands and writes to w. Spaces are always added between
 // operands and a newline is appended.
 func Fpanicln(w io.Writer, a ...any) {
-	self.Fpanicln(w, a...)
+	self.Load().Fpanicln(w, a...)
 }
 
 // Panic creates message with Panic level, using the default formats
 // for its operands and writes to log.Writer. Spaces are added between
 // operands when neither is a string.
 func Panic(a ...any) {
-	self.Panic(a...)
+	self.Load().Panic(a...)
 }
 
 // Panicf creates message with Panic level, according to a format specifier
 // and writes to log.Writer.
 func Panicf(format string, a ...any) {
-	self.Panicf(format, a...)
+	self.Load().Panicf(format, a...)
 }
 
 // Panicln creates message with Panic, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Panicln(a ...any) {
-	self.Panicln(a...)
+	self.Load().Panicln(a...)
 }
 
 // Ffatal creates message with Fatal level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Ffatal(w io.Writer, a ...any) {
-	self.Ffatal(w, a...)
+	self.Load().Ffatal(w, a...)
 }
 
 // Ffatalf creates message with Fatal level, according to a format
 // specifier and writes to w.
 func Ffatalf(w io.Writer, format string, a ...any) {
-	self.Ffatalf(w, format, a...)
+	self.Load().Ffatalf(w, format, a...)
 }
 
 // Ffatalln creates message with Fatal level, using the default formats
@@ -255,7 +250,7 @@ func Ffatalf(w io.Writer, format string, a ...any) {
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func Ffatalln(w io.Writer, a ...any) {
-	self.Ffatalln(w, a...)
+	self.Load().Ffatalln(w, a...)
 }
 
 // Fatal creates message with Fatal level, using the default formats
@@ -263,34 +258,34 @@ func Ffatalln(w io.Writer, a ...any) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func Fatal(a ...any) {
-	self.Fatal(a...)
+	self.Load().Fatal(a...)
 }
 
 // Fatalf creates message with Fatal level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func Fatalf(format string, a ...any) {
-	self.Fatalf(format, a...)
+	self.Load().Fatalf(format, a...)
 }
 
 // Fatalln creates message with Fatal, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Fatalln(a ...any) {
-	self.Fatalln(a...)
+	self.Load().Fatalln(a...)
 }
 
 // Ferror creates message with Error level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Ferror(w io.Writer, a ...any) {
-	self.Ferror(w, a...)
+	self.Load().Ferror(w, a...)
 }
 
 // Ferrorf creates message with Error level, according to a format
 // specifier and writes to w.
 func Ferrorf(w io.Writer, format string, a ...any) {
-	self.Ferrorf(w, format, a...)
+	self.Load().Ferrorf(w, format, a...)
 }
 
 // Ferrorln creates message with Error level, using the default formats
@@ -298,7 +293,7 @@ func Ferrorf(w io.Writer, format string, a ...any) {
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func Ferrorln(w io.Writer, a ...any) {
-	self.Ferrorln(w, a...)
+	self.Load().Ferrorln(w, a...)
 }
 
 // Error creates message with Error level, using the default formats
@@ -306,34 +301,34 @@ func Ferrorln(w io.Writer, a ...any) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func Error(a ...any) {
-	self.Error(a...)
+	self.Load().Error(a...)
 }
 
 // Errorf creates message with Error level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func Errorf(format string, a ...any) {
-	self.Errorf(format, a...)
+	self.Load().Errorf(format, a...)
 }
 
 // Errorln creates message with Error, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Errorln(a ...any) {
-	self.Errorln(a...)
+	self.Load().Errorln(a...)
 }
 
 // Fwarn creates message with Warn level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Fwarn(w io.Writer, a ...any) {
-	self.Fwarn(w, a...)
+	self.Load().Fwarn(w, a...)
 }
 
 // Fwarnf creates message with Warn level, according to a format
 // specifier and writes to w.
 func Fwarnf(w io.Writer, format string, a ...any) {
-	self.Fwarnf(w, format, a...)
+	self.Load().Fwarnf(w, format, a...)
 }
 
 // Fwarnln creates message with Warn level, using the default formats
@@ -341,7 +336,7 @@ func Fwarnf(w io.Writer, format string, a ...any) {
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func Fwarnln(w io.Writer, a ...any) {
-	self.Fwarnln(w, a...)
+	self.Load().Fwarnln(w, a...)
 }
 
 // Warn creates message with Warn level, using the default formats
@@ -349,34 +344,34 @@ func Fwarnln(w io.Writer, a ...any) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func Warn(a ...any) {
-	self.Warn(a...)
+	self.Load().Warn(a...)
 }
 
 // Warnf creates message with Warn level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func Warnf(format string, a ...any) {
-	self.Warnf(format, a...)
+	self.Load().Warnf(format, a...)
 }
 
 // Warnln creates message with Warn, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Warnln(a ...any) {
-	self.Warnln(a...)
+	self.Load().Warnln(a...)
 }
 
 // Finfo creates message with Info level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Finfo(w io.Writer, a ...any) {
-	self.Finfo(w, a...)
+	self.Load().Finfo(w, a...)
 }
 
 // Finfof creates message with Info level, according to a format
 // specifier and writes to w.
 func Finfof(w io.Writer, format string, a ...any) {
-	self.Finfof(w, format, a...)
+	self.Load().Finfof(w, format, a...)
 }
 
 // Finfoln creates message with Info level, using the default formats
@@ -384,7 +379,7 @@ func Finfof(w io.Writer, format string, a ...any) {
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func Finfoln(w io.Writer, a ...any) {
-	self.Finfoln(w, a...)
+	self.Load().Finfoln(w, a...)
 }
 
 // Info creates message with Info level, using the default formats
@@ -392,7 +387,7 @@ func Finfoln(w io.Writer, a ...any) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func Info(a ...any) {
-	self.Info(a...)
+	self.Load().Info(a...)
 }
 
 // Infof creates message with Info level, according to a format specifier
@@ -400,27 +395,27 @@ func Info(a ...any) {
 // write error encountered.
 func Infof(format string, a ...any) {
 
-	self.Infof(format, a...)
+	self.Load().Infof(format, a...)
 }
 
 // Infoln creates message with Info, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Infoln(a ...any) {
-	self.Infoln(a...)
+	self.Load().Infoln(a...)
 }
 
 // Fdebug creates message with Debug level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Fdebug(w io.Writer, a ...any) {
-	self.Fdebug(w, a...)
+	self.Load().Fdebug(w, a...)
 }
 
 // Fdebugf creates message with Debug level, according to a format
 // specifier and writes to w.
 func Fdebugf(w io.Writer, format string, a ...any) {
-	self.Fdebugf(w, format, a...)
+	self.Load().Fdebugf(w, format, a...)
 }
 
 // Fdebugln creates message with Debug level, using the default formats
@@ -428,7 +423,7 @@ func Fdebugf(w io.Writer, format string, a ...any) {
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func Fdebugln(w io.Writer, a ...any) {
-	self.Fdebugln(w, a...)
+	self.Load().Fdebugln(w, a...)
 }
 
 // Debug creates message with Debug level, using the default formats
@@ -436,34 +431,34 @@ func Fdebugln(w io.Writer, a ...any) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func Debug(a ...any) {
-	self.Debug(a...)
+	self.Load().Debug(a...)
 }
 
 // Debugf creates message with Debug level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func Debugf(format string, a ...any) {
-	self.Debugf(format, a...)
+	self.Load().Debugf(format, a...)
 }
 
 // Debugln creates message with Debug, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Debugln(a ...any) {
-	self.Debugln(a...)
+	self.Load().Debugln(a...)
 }
 
 // Ftrace creates message with Trace level, using the default formats
 // for its operands and writes to w. Spaces are added between operands
 // when neither is a string.
 func Ftrace(w io.Writer, a ...any) {
-	self.Ftrace(w, a...)
+	self.Load().Ftrace(w, a...)
 }
 
 // Ftracef creates message with Trace level, according to a format
 // specifier and writes to w.
 func Ftracef(w io.Writer, format string, a ...any) {
-	self.Ftracef(w, format, a...)
+	self.Load().Ftracef(w, format, a...)
 }
 
 // Ftraceln creates message with Trace level, using the default formats
@@ -471,7 +466,7 @@ func Ftracef(w io.Writer, format string, a ...any) {
 // operands and a newline is appended. It returns the number of bytes
 // written and any write error encountered.
 func Ftraceln(w io.Writer, a ...any) {
-	self.Ftraceln(w, a...)
+	self.Load().Ftraceln(w, a...)
 }
 
 // Trace creates message with Trace level, using the default formats
@@ -479,19 +474,19 @@ func Ftraceln(w io.Writer, a ...any) {
 // operands when neither is a string. It returns the number of bytes
 // written and any write error encountered.
 func Trace(a ...any) {
-	self.Trace(a...)
+	self.Load().Trace(a...)
 }
 
 // Tracef creates message with Trace level, according to a format specifier
 // and writes to log.Writer. It returns the number of bytes written and any
 // write error encountered.
 func Tracef(format string, a ...any) {
-	self.Tracef(format, a...)
+	self.Load().Tracef(format, a...)
 }
 
 // Traceln creates message with Trace, level using the default formats
 // for its operands and writes to log.Writer. Spaces are always added
 // between operands and a newline is appended.
 func Traceln(a ...any) {
-	self.Traceln(a...)
+	self.Load().Traceln(a...)
 }

@@ -9,9 +9,18 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/goloop/log/v2/level"
 )
+
+// reservedJSONKeys are the built-in object keys; a structured (slog) attribute
+// with one of these keys is namespaced under "fields." so the JSON object never
+// carries two identical keys, which would be ambiguous.
+var reservedJSONKeys = map[string]bool{
+	"prefix": true, "level": true, "timestamp": true, "message": true,
+	"filePath": true, "lineNumber": true, "funcName": true, "funcAddress": true,
+}
 
 // The bufPool recycles the byte buffers used to assemble a single log
 // message, keeping the hot path allocation-free across calls.
@@ -242,12 +251,11 @@ func appendText(
 		buf.WriteString(o.Space)
 	}
 
-	// Append the pre-rendered message body. For the println kind any trailing
-	// newline is stripped here and re-added after the fields, so the record
-	// ends with exactly one newline even when structured fields follow.
-	if kind == kindPrintln {
-		body = strings.TrimSuffix(body, "\n")
-	}
+	// Append the pre-rendered message body. Any trailing newline is stripped
+	// here and re-added after the fields, so every record - not just the
+	// println kind - ends with exactly one newline. A logger must delimit its
+	// timestamped records like the standard log package, never glue them.
+	body = strings.TrimSuffix(body, "\n")
 	buf.WriteString(body)
 
 	// Structured fields (from the slog bridge) as space-separated key=value.
@@ -258,10 +266,8 @@ func appendText(
 		writeValue(buf, fields[i].val)
 	}
 
-	// Terminate println-style records with a single trailing newline.
-	if kind == kindPrintln {
-		buf.WriteByte('\n')
-	}
+	// Terminate every record with a single trailing newline.
+	buf.WriteByte('\n')
 }
 
 // The writeValue writes v in its textual form (mirroring fmt's default
@@ -371,16 +377,10 @@ func appendObject(
 		writeObjectWithFields(buf, data, fields)
 	}
 
-	// Add JSON formatting. The print kind keeps JSON blocks on a single
-	// line; println and printf terminate each block with a newline.
-	if kind != kindPrint {
-		buf.WriteByte('\n')
-	}
-
-	// Add space if necessary.
-	if o.Space != "" {
-		buf.WriteString(o.Space)
-	}
+	// Every JSON record is one JSON Lines entry, terminated by exactly one
+	// newline for all kinds (a glued "{...} {...}" is not valid JSONL). The
+	// Space setting formats text-prefix blocks and has no place in JSON output.
+	buf.WriteByte('\n')
 }
 
 // The writeObjectWithFields writes the marshalled object with the structured
@@ -399,7 +399,13 @@ func writeObjectWithFields(buf *bytes.Buffer, data []byte, fields []logField) {
 		}
 		comma = true
 
-		writeJSONString(buf, fields[i].key)
+		key := fields[i].key
+		if reservedJSONKeys[key] {
+			// Avoid a duplicate key colliding with a built-in field; namespace
+			// the structured attribute instead of silently shadowing.
+			key = "fields." + key
+		}
+		writeJSONString(buf, key)
 		buf.WriteByte(':')
 		writeJSONValue(buf, fields[i].val)
 	}
@@ -447,9 +453,27 @@ func writeJSONValue(buf *bytes.Buffer, v any) {
 func writeJSONString(buf *bytes.Buffer, s string) {
 	buf.WriteByte('"')
 	start := 0
-	for i := 0; i < len(s); i++ {
+	for i := 0; i < len(s); {
 		c := s[i]
 		if c >= 0x20 && c != '"' && c != '\\' {
+			if c < utf8.RuneSelf {
+				i++
+				continue
+			}
+			// Multibyte: validate the UTF-8 sequence. An invalid byte is
+			// replaced with U+FFFD so the output is always a valid JSON string,
+			// as encoding/json does; valid runes pass through unchanged.
+			r, size := utf8.DecodeRuneInString(s[i:])
+			if r == utf8.RuneError && size == 1 {
+				if start < i {
+					buf.WriteString(s[start:i])
+				}
+				buf.WriteString("�")
+				i++
+				start = i
+				continue
+			}
+			i += size
 			continue
 		}
 		if start < i {
@@ -472,7 +496,8 @@ func writeJSONString(buf *bytes.Buffer, s string) {
 			buf.WriteByte(hex[c>>4])
 			buf.WriteByte(hex[c&0xF])
 		}
-		start = i + 1
+		i++
+		start = i
 	}
 	if start < len(s) {
 		buf.WriteString(s[start:])

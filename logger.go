@@ -231,6 +231,14 @@ type Output struct {
 	// For example, this can be for all F* functions (Ferror, Finfo etc.) that
 	// accept a target writer. Package generates a unique Output for them.
 	isSystem bool
+
+	// writeMu serializes concurrent writes to this output's Writer, so a
+	// Writer that is not itself safe for concurrent use (bytes.Buffer,
+	// bufio.Writer, a plain file) is never written by two goroutines at once.
+	// It is a pointer so copying an Output value shares one mutex rather than
+	// copying a lock; it is allocated by SetOutputs/EditOutputs and for the
+	// ad-hoc F* writers.
+	writeMu *sync.Mutex
 }
 
 // Logger is a structure that encapsulates logging functionality.
@@ -471,8 +479,14 @@ func (logger *Logger) SetOutputs(outputs ...Output) error {
 
 		// Set the new value if it is specified, otherwise set the default one.
 		//
-		// Note: g.Value returns the first non-empty value.
-		o.Layouts = g.Value(o.Layouts, layout.Default)
+		// Note: g.Value returns the first non-empty value. A zero Layouts means
+		// "use Default"; the explicit layout.None sentinel means "no layout
+		// fields" and is stored as an empty (zero) layout.
+		if o.Layouts == layout.None {
+			o.Layouts = 0
+		} else {
+			o.Layouts = g.Value(o.Layouts, layout.Default)
+		}
 		o.Levels = g.Value(o.Levels, level.Default)
 
 		o.Space = g.Value(o.Space, outSpace)
@@ -482,6 +496,7 @@ func (logger *Logger) SetOutputs(outputs ...Output) error {
 		o.TextStyle = g.Value(o.TextStyle, outTextStyle)
 		o.TimestampFormat = g.Value(o.TimestampFormat, outTimestampFormat)
 		o.LevelFormat = g.Value(o.LevelFormat, outLevelFormat)
+		o.writeMu = &sync.Mutex{} // serialize writes to this output
 
 		result[o.Name] = o
 	}
@@ -538,6 +553,9 @@ func (logger *Logger) EditOutputs(outputs ...Output) error {
 		edited := *old
 		edited.Writer = g.Value(in.Writer, edited.Writer)
 		edited.Layouts = g.Value(in.Layouts, edited.Layouts)
+		if edited.Layouts == layout.None {
+			edited.Layouts = 0 // explicit "no layout fields"
+		}
 		edited.Levels = g.Value(in.Levels, edited.Levels)
 
 		edited.Space = g.Value(in.Space, edited.Space)
@@ -689,6 +707,7 @@ func (logger *Logger) emit(
 		a := Default
 		a.Writer = w
 		a.isSystem = true
+		a.writeMu = &sync.Mutex{}
 		adhoc = &a
 	}
 
@@ -761,7 +780,18 @@ func writeOutput(
 		appendObject(buf, p, l, now, o, sf, kind, body, fields)
 	}
 
-	n, err := o.Writer.Write(buf.Bytes())
+	// Serialize the write so a Writer that is not concurrency-safe is never
+	// written by two goroutines at once. Only the write is locked; rendering
+	// into the pooled buffer above stays parallel.
+	var n int
+	var err error
+	if o.writeMu != nil {
+		o.writeMu.Lock()
+		n, err = o.Writer.Write(buf.Bytes())
+		o.writeMu.Unlock()
+	} else {
+		n, err = o.Writer.Write(buf.Bytes())
+	}
 	bufPool.Put(buf)
 
 	if err != nil && handler != nil {

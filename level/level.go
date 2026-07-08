@@ -63,8 +63,10 @@ var ColorLabels = map[Level]string{
 type Level uint8
 
 // IsSingle returns true if value contains single of the available flag.
+// An out-of-range bit (e.g. Level(128), which IsValid rejects) is not a valid
+// single flag, so the upper bound is checked as well.
 func (l *Level) IsSingle() bool {
-	return *l > 0 && bits.OnesCount(uint(*l)) == 1
+	return *l > 0 && bits.OnesCount(uint(*l)) == 1 && *l < overflowLevelValue
 }
 
 // Contains method returns true if value contains the specified flag.
@@ -120,6 +122,12 @@ func (l *Level) Fatal() bool {
 // Error returns true if value contains the Error flag.
 func (l *Level) Error() bool {
 	v, _ := l.Contains(Error)
+	return v
+}
+
+// Warn returns true if value contains the Warn flag.
+func (l *Level) Warn() bool {
+	v, _ := l.Contains(Warn)
 	return v
 }
 
