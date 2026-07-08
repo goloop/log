@@ -1,6 +1,6 @@
-github.com/goloop/g/v2 v2.1.0 h1:pz4yHFA1aeorwQ7QE8vajd92cGaZ80/mAfCKfTGcTR4=
-github.com/goloop/g/v2 v2.1.0/go.mod h1:Yp2g5obFAo0xuiWYu8fMCNRZwfhT0amqXXPJwr6eyhY=
-github.com/goloop/is/v2 v2.1.0 h1:/DavQq/6wW6muhCjFeE0ajHZaB1rI4EQ/Z7HrAHW4Ww=
-github.com/goloop/is/v2 v2.1.0/go.mod h1:Tllk7/8fKNPXw7tpp3xxmqg/W+b6sCCCHpwx4vcWnYU=
-github.com/goloop/trit/v2 v2.1.1 h1:up2FfSpvU9J3GVHCdkryAFwP5RiBYnzvKklsLH665zQ=
-github.com/goloop/trit/v2 v2.1.1/go.mod h1:L1IJvAXSzJm/A0yiR5hklDWLqipn/GNCYbTewxH5T6M=
+github.com/goloop/g/v2 v2.2.1 h1:cyLe7EfpF0ACu6WZRarneL1/7iltCK5ViwPFfXmlITo=
+github.com/goloop/g/v2 v2.2.1/go.mod h1:+Ge3HAtawvwcMzYPndp7T7+VX/+XU+Q0vf1oKM7ofo8=
+github.com/goloop/is/v2 v2.3.1 h1:RkmkzhNT2XnCz8zjpdFajFf3ciKKr6/MoW9OtyZTeCc=
+github.com/goloop/is/v2 v2.3.1/go.mod h1:2ieQe03pylOZ2Njx2Ya97mhZN3P0E8Z0XE+eY2nle9E=
+github.com/goloop/trit/v2 v2.2.0 h1:LWmuXNUO1T8OneIel6txIz5X3HGC6lElySJkiUcdzVU=
+github.com/goloop/trit/v2 v2.2.0/go.mod h1:L1IJvAXSzJm/A0yiR5hklDWLqipn/GNCYbTewxH5T6M=
