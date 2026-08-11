@@ -20,6 +20,7 @@ Ukrainian version: **[DOC.UK.md](DOC.UK.md)**.
 - [Structured logging with slog](#structured-logging-with-slog)
 - [Conditional logging and error handling](#conditional-logging-and-error-handling)
 - [Stack frames and prefixes](#stack-frames-and-prefixes)
+- [Carrying a logger in a context](#carrying-a-logger-in-a-context)
 - [Recipes and tips](#recipes-and-tips)
 
 ## Mental model
@@ -323,6 +324,26 @@ the prefix after construction.
 ```go
 logger.SetSkipStackFrames(2) // skip wrapper functions
 ```
+
+## Carrying a logger in a context
+
+`WithContext`, `FromContext` and `FromContextOr` move a prepared logger along
+with a request or a job, so lines deep in the call tree correlate with the work
+that caused them:
+
+```go
+ctx := log.WithContext(r.Context(), requestLogger)
+
+// anywhere below, with no logger threaded through:
+log.FromContextOr(ctx, defaultLogger).Errorf("upstream refused: %v", err)
+```
+
+`FromContext` returns nil when nothing was stored - use it to ask whether a
+logger was provided. `FromContextOr` is the call-site form: it never returns
+nil unless the fallback is, so a function that may or may not run inside a
+prepared context needs no branch. The practical alternative to these is not a
+threaded logger but no logger: lines written against a package-level one, tied
+to their request only by timestamps.
 
 ## Recipes and tips
 
