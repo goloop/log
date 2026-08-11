@@ -121,6 +121,21 @@
 //   - Consider using JSON format for structured logging needs
 //   - Disable unused log levels in production
 //
+// # Carrying a logger with a unit of work
+//
+// WithContext, FromContext and FromContextOr move a prepared logger along with
+// a request or a job:
+//
+//	ctx := log.WithContext(r.Context(), logger)
+//	// deeper in, with no plumbing in between:
+//	log.FromContextOr(ctx, fallback).Errorf("upstream refused: %v", err)
+//
+// The alternative in practice is not threading a logger at all: lines get
+// written against a package-level one, nothing ties them to the request that
+// produced them, and reconstructing an incident means matching timestamps.
+// FromContextOr never returns nil unless the fallback is, so a function that
+// may or may not run inside a prepared context needs no branch.
+//
 // Note on Fatal and Panic:
 //   - Fatal functions call os.Exit(1) after logging
 //   - Panic functions call panic() after logging

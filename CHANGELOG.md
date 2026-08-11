@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-08-11
+
+Minor release: carry a logger with the work it belongs to.
+
+### Added
+- `WithContext`, `FromContext` and `FromContextOr` put a prepared logger in a
+  context and take it out again. Without them the practical outcome is not a
+  threaded logger but no logger: lines get written against a package-level one,
+  nothing connects them to the request that caused them, and joining them
+  during an incident means matching on timestamps. `FromContextOr` never
+  returns nil unless its fallback is, so a call site that may or may not run
+  inside a prepared context does not have to branch.
+
 ## [2.2.0]
 
 Concurrency, output-format and API-consistency fixes. Two output-format changes
