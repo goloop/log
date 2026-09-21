@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/goloop/log/v2/layout"
 	"github.com/goloop/log/v2/level"
@@ -165,4 +167,82 @@ func TestLevelIsSingleUpperBound(t *testing.T) {
 	if invalid.IsSingle() {
 		t.Error("Level(128).IsSingle() = true, want false (out of range)")
 	}
+}
+
+// overlapWriter counts the calls to Write that are in flight at once and
+// remembers whether two ever overlapped. It is itself synchronized, so the
+// verdict does not depend on the outcome of a data race.
+type overlapWriter struct {
+	active  atomic.Int32
+	overlap atomic.Bool
+}
+
+func (w *overlapWriter) Write(p []byte) (int, error) {
+	if w.active.Add(1) > 1 {
+		w.overlap.Store(true)
+	}
+	time.Sleep(time.Millisecond)
+	w.active.Add(-1)
+	return len(p), nil
+}
+
+// TestCopySharesWriteLock guards the copy of a logger: the copy and the
+// original write to the same Writer under the same lock, so their writes
+// never overlap. The same holds for a logger reconfigured with its own
+// outputs and for outputs carried over with Outputs().
+func TestCopySharesWriteLock(t *testing.T) {
+	run := func(t *testing.T, a, b *Logger, w *overlapWriter) {
+		t.Helper()
+		var wg sync.WaitGroup
+		for _, l := range []*Logger{a, b} {
+			wg.Add(1)
+			go func(l *Logger) {
+				defer wg.Done()
+				for i := 0; i < 20; i++ {
+					l.Info("shared writer")
+				}
+			}(l)
+		}
+		wg.Wait()
+		if w.overlap.Load() {
+			t.Errorf("two loggers wrote to the same writer at once")
+		}
+	}
+
+	t.Run("copy", func(t *testing.T) {
+		w := &overlapWriter{}
+		l := New()
+		if err := l.SetOutputs(Output{Name: "test", Writer: w, Layouts: layout.None}); err != nil {
+			t.Fatalf("SetOutputs: %v", err)
+		}
+		run(t, l, l.Copy(), w)
+	})
+
+	t.Run("outputs carried over", func(t *testing.T) {
+		w := &overlapWriter{}
+		l := New()
+		if err := l.SetOutputs(Output{Name: "test", Writer: w, Layouts: layout.None}); err != nil {
+			t.Fatalf("SetOutputs: %v", err)
+		}
+		other := New()
+		if err := other.SetOutputs(l.Outputs()...); err != nil {
+			t.Fatalf("SetOutputs: %v", err)
+		}
+		run(t, l, other, w)
+	})
+
+	t.Run("reconfigured with the same name", func(t *testing.T) {
+		w := &overlapWriter{}
+		l := New()
+		if err := l.SetOutputs(Output{Name: "test", Writer: w, Layouts: layout.None}); err != nil {
+			t.Fatalf("SetOutputs: %v", err)
+		}
+		c := l.Copy()
+		// Reconfigure the original from a fresh literal; the copy keeps the
+		// previous configuration and must still share the lock.
+		if err := l.SetOutputs(Output{Name: "test", Writer: w, Layouts: layout.None}); err != nil {
+			t.Fatalf("SetOutputs: %v", err)
+		}
+		run(t, l, c, w)
+	})
 }

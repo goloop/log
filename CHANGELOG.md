@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.2] - 2026-09-21
+
+Patch release.
+
+### Fixed
+- A copied logger and its original serialize their writes to the shared
+  `Writer` under one lock. `Copy` carried the writer over but `SetOutputs`
+  gave the copy a new lock, so the two loggers could write to one
+  `bytes.Buffer`, `bufio.Writer` or other writer that is not safe for
+  concurrent use at the same time. The same lock is now kept by any `Output`
+  that came out of a logger (`Copy`, `Outputs`) and inherited by an output
+  that replaces one of the same name, so reconfiguring a logger cannot overlap
+  a write still in flight either.
+
 ## [2.3.1] - 2026-08-11
 
 Patch release.

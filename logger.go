@@ -236,7 +236,9 @@ type Output struct {
 	// Writer that is not itself safe for concurrent use (bytes.Buffer,
 	// bufio.Writer, a plain file) is never written by two goroutines at once.
 	// It is a pointer so copying an Output value shares one mutex rather than
-	// copying a lock; it is allocated by SetOutputs/EditOutputs and for the
+	// copying a lock: a copied logger and its original, or a logger that is
+	// reconfigured with its own outputs, all lock the same mutex. It is
+	// allocated by SetOutputs (only when the Output carries none) and for the
 	// ad-hoc F* writers.
 	writeMu *sync.Mutex
 }
@@ -496,7 +498,22 @@ func (logger *Logger) SetOutputs(outputs ...Output) error {
 		o.TextStyle = g.Value(o.TextStyle, outTextStyle)
 		o.TimestampFormat = g.Value(o.TimestampFormat, outTimestampFormat)
 		o.LevelFormat = g.Value(o.LevelFormat, outLevelFormat)
-		o.writeMu = &sync.Mutex{} // serialize writes to this output
+
+		// Serialize writes to this output. An Output that came out of a
+		// logger (Copy, Outputs) already carries the mutex of the output it
+		// was taken from, and keeps it, so the copy and the original never
+		// write to the same Writer under different locks. A fresh Output
+		// that replaces one with the same name inherits that one's mutex,
+		// so a write still in flight under the old configuration cannot
+		// overlap with the first write under the new one. Only an output
+		// that is new in every sense gets a new mutex.
+		if o.writeMu == nil {
+			if old, ok := logger.outputs[o.Name]; ok && old.writeMu != nil {
+				o.writeMu = old.writeMu
+			} else {
+				o.writeMu = &sync.Mutex{}
+			}
+		}
 
 		result[o.Name] = o
 	}
