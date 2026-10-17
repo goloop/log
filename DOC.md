@@ -364,3 +364,7 @@ respecifying the writer.
 **Bridge existing slog code.** If your app already logs via `slog`, install
 `logger.Handler()` so its records flow through the same outputs, colours and
 formats.
+
+## Release v2.3.3
+
+Keep structured log output valid for non-finite floating-point values.

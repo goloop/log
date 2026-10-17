@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math"
 	"runtime"
 	"strconv"
 	"strings"
@@ -436,7 +437,11 @@ func writeJSONValue(buf *bytes.Buffer, v any) {
 	case uint64:
 		buf.WriteString(strconv.FormatUint(x, 10))
 	case float64:
-		buf.WriteString(strconv.FormatFloat(x, 'g', -1, 64))
+		if math.IsNaN(x) || math.IsInf(x, 0) {
+			buf.WriteString("null")
+		} else {
+			buf.WriteString(strconv.FormatFloat(x, 'g', -1, 64))
+		}
 	default:
 		if vb, err := json.Marshal(v); err == nil {
 			buf.Write(vb)

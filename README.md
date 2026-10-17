@@ -104,3 +104,7 @@ Contributions are welcome. Please run `go test ./...`, `go vet ./...` and
 ## License
 
 `log` is released under the MIT License. See [LICENSE](LICENSE).
+
+## Release v2.3.3
+
+Keep structured log output valid for non-finite floating-point values.
