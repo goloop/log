@@ -368,3 +368,7 @@ formats.
 ## Release v2.3.3
 
 Keep structured log output valid for non-finite floating-point values.
+
+## Usage notes
+
+For JSON collectors, set Output.TimestampFormat to time.RFC3339Nano to include the offset and fractional seconds. The slog adapter uses Record.Time and omits a zero timestamp.

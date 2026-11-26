@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Preserve the timestamp of slog records.
 
+Show time zone offsets in JSON logs.
+
 ## [2.3.3] - 2026-10-18
 
 Keep structured log output valid for non-finite floating-point values.
