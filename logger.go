@@ -683,7 +683,7 @@ type logField struct {
 // message is additionally written to an ad-hoc output backed by w using the
 // Default settings; logger.outputs itself is never mutated.
 func (logger *Logger) echo(w io.Writer, l level.Level, kind emitKind, body string) {
-	logger.emit(w, l, kind, body, nil, nil)
+	logger.emit(w, l, kind, body, nil, nil, nil)
 }
 
 // The emit is the core of echo. When frame is non-nil it is used as the
@@ -696,6 +696,7 @@ func (logger *Logger) emit(
 	body string,
 	frame *stackFrame,
 	fields []logField,
+	recordTime *time.Time,
 ) {
 	// Fast path: when logging only to the configured outputs (w == nil), skip
 	// the whole call — no lock, no snapshot — if no enabled output is
@@ -747,7 +748,12 @@ func (logger *Logger) emit(
 	}
 
 	// One timestamp (and at most one stack frame) shared by all outputs.
-	now := time.Now()
+	var now time.Time
+	if recordTime == nil {
+		now = time.Now()
+	} else {
+		now = *recordTime
+	}
 	sf := emptyFrame
 	if needFrame {
 		if frame != nil {

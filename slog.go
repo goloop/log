@@ -83,7 +83,7 @@ func (h *slogHandler) Handle(_ context.Context, r slog.Record) error {
 
 	// Use println semantics so each record is newline-terminated, matching
 	// the convention of slog's own handlers (one record per line).
-	h.logger.emit(nil, slogLevel(r.Level), kindPrintln, r.Message, frame, fields)
+	h.logger.emit(nil, slogLevel(r.Level), kindPrintln, r.Message, frame, fields, &r.Time)
 	return nil
 }
 

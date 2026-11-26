@@ -189,8 +189,10 @@ func appendText(
 	}
 
 	// Timestamp.
-	buf.WriteString(t.Format(o.TimestampFormat))
-	buf.WriteString(o.Space)
+	if !t.IsZero() {
+		buf.WriteString(t.Format(o.TimestampFormat))
+		buf.WriteString(o.Space)
+	}
 
 	// Level name.
 	labels := level.Labels
@@ -324,7 +326,9 @@ func appendObject(
 	}
 
 	// Timestamp.
-	obj.Timestamp = t.Format(o.TimestampFormat)
+	if !t.IsZero() {
+		obj.Timestamp = t.Format(o.TimestampFormat)
+	}
 
 	// Level label.
 	if v, ok := level.Labels[l]; ok {
